@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/rig_weapon.gd" id="1_weapon"]
 
@@ -2028,6 +2028,47 @@ tracks/14/keys = {
 "values": [-1.9577]
 }
 
+[sub_resource type="Animation" id="Animation_fx"]
+resource_name = "fx"
+length = 4.18879
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Skeleton2D/root/pelvis/spine/cape_1:rotation")
+tracks/0/interp = 3
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.06545, 0.1309, 0.19635, 0.2618, 0.32725, 0.3927, 0.45815, 0.5236, 0.58905, 0.6545, 0.71995, 0.7854, 0.85085, 0.9163, 0.98175, 1.0472, 1.11265, 1.1781, 1.24355, 1.309, 1.37445, 1.4399, 1.50535, 1.5708, 1.63625, 1.7017, 1.76715, 1.8326, 1.89805, 1.9635, 2.02895, 2.0944, 2.15984, 2.22529, 2.29074, 2.35619, 2.42164, 2.48709, 2.55254, 2.61799, 2.68344, 2.74889, 2.81434, 2.87979, 2.94524, 3.01069, 3.07614, 3.14159, 3.20704, 3.27249, 3.33794, 3.40339, 3.46884, 3.53429, 3.59974, 3.66519, 3.73064, 3.79609, 3.86154, 3.92699, 3.99244, 4.05789, 4.12334, 4.18879),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.7707, -2.78984, -2.80606, -2.8169, -2.8207, -2.8169, -2.80606, -2.78984, -2.7707, -2.75157, -2.73535, -2.72451, -2.7207, -2.72451, -2.73535, -2.75157, -2.7707, -2.78984, -2.80606, -2.8169, -2.8207, -2.8169, -2.80606, -2.78984, -2.7707, -2.75157, -2.73535, -2.72451, -2.7207, -2.72451, -2.73535, -2.75157, -2.7707, -2.78984, -2.80606, -2.8169, -2.8207, -2.8169, -2.80606, -2.78984, -2.7707, -2.75157, -2.73535, -2.72451, -2.7207, -2.72451, -2.73535, -2.75157, -2.7707, -2.78984, -2.80606, -2.8169, -2.8207, -2.8169, -2.80606, -2.78984, -2.7707, -2.75157, -2.73535, -2.72451, -2.7207, -2.72451, -2.73535, -2.75157, -2.7707]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Skeleton2D/root/pelvis/spine/cape_1/cape_2:rotation")
+tracks/1/interp = 3
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.06545, 0.1309, 0.19635, 0.2618, 0.32725, 0.3927, 0.45815, 0.5236, 0.58905, 0.6545, 0.71995, 0.7854, 0.85085, 0.9163, 0.98175, 1.0472, 1.11265, 1.1781, 1.24355, 1.309, 1.37445, 1.4399, 1.50535, 1.5708, 1.63625, 1.7017, 1.76715, 1.8326, 1.89805, 1.9635, 2.02895, 2.0944, 2.15984, 2.22529, 2.29074, 2.35619, 2.42164, 2.48709, 2.55254, 2.61799, 2.68344, 2.74889, 2.81434, 2.87979, 2.94524, 3.01069, 3.07614, 3.14159, 3.20704, 3.27249, 3.33794, 3.40339, 3.46884, 3.53429, 3.59974, 3.66519, 3.73064, 3.79609, 3.86154, 3.92699, 3.99244, 4.05789, 4.12334, 4.18879),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.06267, 0.03887, 0.00915, -0.02196, -0.04973, -0.06992, -0.07948, -0.07693, -0.06267, -0.03887, -0.00915, 0.02196, 0.04973, 0.06992, 0.07948, 0.07693, 0.06267, 0.03887, 0.00915, -0.02196, -0.04973, -0.06992, -0.07948, -0.07693, -0.06267, -0.03887, -0.00915, 0.02196, 0.04973, 0.06992, 0.07948, 0.07693, 0.06267, 0.03887, 0.00915, -0.02196, -0.04973, -0.06992, -0.07948, -0.07693, -0.06267, -0.03887, -0.00915, 0.02196, 0.04973, 0.06992, 0.07948, 0.07693, 0.06267, 0.03887, 0.00915, -0.02196, -0.04973, -0.06992, -0.07948, -0.07693, -0.06267, -0.03887, -0.00915, 0.02196, 0.04973, 0.06992, 0.07948, 0.07693, 0.06267]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Skeleton2D/root/pelvis/spine/head/halo:rotation")
+tracks/2/interp = 3
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.06545, 0.1309, 0.19635, 0.2618, 0.32725, 0.3927, 0.45815, 0.5236, 0.58905, 0.6545, 0.71995, 0.7854, 0.85085, 0.9163, 0.98175, 1.0472, 1.11265, 1.1781, 1.24355, 1.309, 1.37445, 1.4399, 1.50535, 1.5708, 1.63625, 1.7017, 1.76715, 1.8326, 1.89805, 1.9635, 2.02895, 2.0944, 2.15984, 2.22529, 2.29074, 2.35619, 2.42164, 2.48709, 2.55254, 2.61799, 2.68344, 2.74889, 2.81434, 2.87979, 2.94524, 3.01069, 3.07614, 3.14159, 3.20704, 3.27249, 3.33794, 3.40339, 3.46884, 3.53429, 3.59974, 3.66519, 3.73064, 3.79609, 3.86154, 3.92699, 3.99244, 4.05789, 4.12334, 4.18879),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-0.1974, -0.09922, -0.00105, 0.09713, 0.1953, 0.29348, 0.39165, 0.48983, 0.588, 0.68618, 0.78435, 0.88253, 0.9807, 1.07888, 1.17705, 1.27523, 1.3734, 1.47158, 1.56975, 1.66793, 1.7661, 1.86427, 1.96245, 2.06062, 2.1588, 2.25697, 2.35515, 2.45332, 2.5515, 2.64967, 2.74785, 2.84602, 2.9442, 3.04237, 3.14055, 3.23873, 3.3369, 3.43508, 3.53325, 3.63143, 3.7296, 3.82777, 3.92595, 4.02412, 4.1223, 4.22047, 4.31865, 4.41682, 4.515, 4.61317, 4.71135, 4.80952, 4.9077, 5.00587, 5.10405, 5.20222, 5.3004, 5.39857, 5.49675, 5.59492, 5.6931, 5.79127, 5.88944, 5.98762, 6.08579]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_rig"]
 _data = {
 "idle": SubResource("Animation_idle"),
@@ -2041,6 +2082,11 @@ _data = {
 "swing": SubResource("Animation_swing"),
 "hurt": SubResource("Animation_hurt"),
 "down": SubResource("Animation_down")
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]
+_data = {
+"fx": SubResource("Animation_fx")
 }
 
 [node name="Rig_utopia_boss" type="Node2D"]
@@ -2168,6 +2214,30 @@ auto_calculate_length_and_angle = false
 length = 8
 bone_angle = 0.0
 
+[node name="cape_1" type="Bone2D" parent="Skeleton2D/root/pelvis/spine"]
+position = Vector2(34, -1)
+rotation = -2.7707
+rest = Transform2D(-0.932, -0.36245, 0.36245, -0.932, 34, -1)
+auto_calculate_length_and_angle = false
+length = 28.97
+bone_angle = 0.0
+
+[node name="cape_2" type="Bone2D" parent="Skeleton2D/root/pelvis/spine/cape_1"]
+position = Vector2(28.97, 0)
+rotation = 0
+rest = Transform2D(1, 0, 0, 1, 28.97, 0)
+auto_calculate_length_and_angle = false
+length = 28.97
+bone_angle = 0.0
+
+[node name="halo" type="Bone2D" parent="Skeleton2D/root/pelvis/spine/head"]
+position = Vector2(30.986, -3.138)
+rotation = -0.1974
+rest = Transform2D(0.98058, -0.19612, 0.19612, 0.98058, 30.986, -3.138)
+auto_calculate_length_and_angle = false
+length = 6
+bone_angle = 0.0
+
 [node name="WeaponRemote" type="RemoteTransform2D" parent="Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo/weapon"]
 remote_path = NodePath("../../../../../../../../Parts/WeaponSlot")
 
@@ -2176,8 +2246,8 @@ remote_path = NodePath("../../../../../../../../Parts/WeaponSlot")
 [node name="cape" type="Polygon2D" parent="Parts"]
 color = Color(0.6, 0.95, 1, 0.7)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(-8, -70, 6, -70, -14, -14, -30, -18)
-bones = [NodePath("root/pelvis/spine"), PackedFloat32Array(1, 1, 1, 1)]
+polygon = PackedVector2Array(-8, -70, 6, -70, -4, -42, -14, -14, -30, -18, -19, -44)
+bones = [NodePath("root/pelvis/spine"), PackedFloat32Array(1, 1, 0, 0, 0, 0), NodePath("root/pelvis/spine/cape_1"), PackedFloat32Array(0, 0, 1, 0, 0, 1), NodePath("root/pelvis/spine/cape_1/cape_2"), PackedFloat32Array(0, 0, 0, 1, 1, 0)]
 
 [node name="arm_b_up" type="Polygon2D" parent="Parts"]
 color = Color(0.68, 0.76, 0.8, 1)
@@ -2270,88 +2340,88 @@ polygon = PackedVector2Array(7, -85, 10, -85, 10, -82, 7, -82)
 bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1)]
 
 [node name="hair_0" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.2884)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(14.8, -99, 13.9, -97.441, 12.1, -97.441, 11.2, -99, 12.1, -100.559, 13.9, -100.559)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(14.067, -99, 13.534, -98.076, 12.466, -98.076, 11.933, -99, 12.466, -99.924, 13.534, -99.924)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_1" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.3393)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(13.81, -94.661, 12.91, -93.102, 11.11, -93.102, 10.21, -94.661, 11.11, -96.22, 12.91, -96.22)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(13.154, -94.661, 12.582, -93.67, 11.438, -93.67, 10.865, -94.661, 11.438, -95.652, 12.582, -95.652)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_2" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.3902)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(11.035, -91.182, 10.135, -89.623, 8.335, -89.623, 7.435, -91.182, 8.335, -92.741, 10.135, -92.741)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(10.456, -91.182, 9.846, -90.124, 8.624, -90.124, 8.013, -91.182, 8.624, -92.239, 9.846, -92.239)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_3" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.4411)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(7.025, -89.251, 6.125, -87.692, 4.325, -87.692, 3.425, -89.251, 4.325, -90.81, 6.125, -90.81)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(6.524, -89.251, 5.874, -88.126, 4.576, -88.126, 3.927, -89.251, 4.576, -90.375, 5.874, -90.375)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_4" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.492)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(2.575, -89.251, 1.675, -87.692, -0.125, -87.692, -1.025, -89.251, -0.125, -90.81, 1.675, -90.81)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(2.151, -89.251, 1.463, -88.059, 0.087, -88.059, -0.601, -89.251, 0.087, -90.442, 1.463, -90.442)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_5" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.5429)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(-1.435, -91.182, -2.335, -89.623, -4.135, -89.623, -5.035, -91.182, -4.135, -92.741, -2.335, -92.741)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(-1.782, -91.182, -2.508, -89.923, -3.961, -89.923, -4.688, -91.182, -3.961, -92.44, -2.508, -92.44)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_6" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.5938)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(-4.21, -94.661, -5.11, -93.102, -6.91, -93.102, -7.81, -94.661, -6.91, -96.22, -5.11, -96.22)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(-4.48, -94.661, -5.245, -93.336, -6.775, -93.336, -7.54, -94.661, -6.775, -95.986, -5.245, -95.986)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_7" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.6446)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(-5.2, -99, -6.1, -97.441, -7.9, -97.441, -8.8, -99, -7.9, -100.559, -6.1, -100.559)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(-5.393, -99, -6.196, -97.608, -7.804, -97.608, -8.607, -99, -7.804, -100.392, -6.196, -100.392)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_8" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.6955)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(-4.21, -103.339, -5.11, -101.78, -6.91, -101.78, -7.81, -103.339, -6.91, -104.898, -5.11, -104.898)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(-4.325, -103.339, -5.168, -101.88, -6.852, -101.88, -7.694, -103.339, -6.852, -104.797, -5.168, -104.797)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_9" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.7464)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(-1.435, -106.818, -2.335, -105.259, -4.135, -105.259, -5.035, -106.818, -4.135, -108.377, -2.335, -108.377)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(-1.473, -106.818, -2.354, -105.293, -4.116, -105.293, -4.996, -106.818, -4.116, -108.344, -2.354, -108.344)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_10" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.7973)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(2.575, -108.749, 1.675, -107.19, -0.125, -107.19, -1.025, -108.749, -0.125, -110.308, 1.675, -110.308)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(2.613, -108.749, 1.694, -107.157, -0.144, -107.157, -1.064, -108.749, -0.144, -110.342, 1.694, -110.342)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_11" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.8482)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(7.025, -108.749, 6.125, -107.19, 4.325, -107.19, 3.425, -108.749, 4.325, -110.308, 6.125, -110.308)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(7.141, -108.749, 6.183, -107.09, 4.267, -107.09, 3.309, -108.749, 4.267, -110.408, 6.183, -110.408)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_12" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.8991)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(11.035, -106.818, 10.135, -105.259, 8.335, -105.259, 7.435, -106.818, 8.335, -108.377, 10.135, -108.377)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(11.228, -106.818, 10.231, -105.092, 8.238, -105.092, 7.242, -106.818, 8.238, -108.544, 10.231, -108.544)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_13" type="Polygon2D" parent="Parts"]
-color = Color(0.5, 1, 1, 0.85)
+color = Color(0.5, 1, 1, 0.95)
 skeleton = NodePath("../../Skeleton2D")
-polygon = PackedVector2Array(13.81, -103.339, 12.91, -101.78, 11.11, -101.78, 10.21, -103.339, 11.11, -104.898, 12.91, -104.898)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+polygon = PackedVector2Array(14.08, -103.339, 13.045, -101.546, 10.975, -101.546, 9.94, -103.339, 10.975, -105.132, 13.045, -105.132)
+bones = [NodePath("root/pelvis/spine/head/halo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
 
 [node name="hair_14" type="Polygon2D" parent="Parts"]
 color = Color(0.2, 1, 1, 1)
@@ -2384,3 +2454,9 @@ bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 
 libraries = {
 "": SubResource("AnimationLibrary_rig")
 }
+
+[node name="FXPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_fx")
+}
+autoplay = "fx"

@@ -53,9 +53,23 @@ do rig (`WeaponSlot`), como no desenho original.
 - O script descobre sozinho as convenções de eixo do Blender e escolhe o ângulo de polo de
   cada membro testando qual reproduz a pose de repouso (erro 0 px).
 
+## Efeitos animados (capas, halo e ÉON)
+
+Alguns acessórios têm **ossos de efeito** e uma Action própria (`<rig>_fx`, um loop de ~4,2 s),
+que no `.blend` toca por cima do corpo numa faixa de NLA e no Godot vira um segundo
+`AnimationPlayer` (`FXPlayer`, com `autoplay`). Assim eles se movem sempre, inclusive durante
+golpes e tombos, seguindo o tronco ou a cabeça:
+
+| Efeito | Ossos | Movimento |
+|---|---|---|
+| Capas dos chefes | `cape_1` → `cape_2` (corrente presa ao tronco) | a barra ondula ~8 px; o topo fica preso nos ombros (pesos por vértice) |
+| Halo da IA Aurora | `halo` | o anel de luz gira (pontos em rastro de cometa para o giro aparecer) |
+| ÉON, o Eterno | `hourglass`, `eon_ring`, `orb_0..2` | a ampulheta flutua 2 px, o anel gira e as 3 esferas orbitam em elipse 18×8 |
+
 ## Como vira cena do Godot (`rig_to_godot.py`)
 
 - `Bone2D` com `rest` igual à pose de repouso do Blender.
+- Peças deformadas por mais de um osso (a capa) recebem os pesos de cada vértice.
 - As peças são `Polygon2D` com **skinning** no `Skeleton2D` (peso 1 no osso da peça), todas
   num nó `Parts` na ordem de desenho — assim a ordem das camadas não depende de `z_index`
   (que quebraria a ordenação por profundidade entre os lutadores).

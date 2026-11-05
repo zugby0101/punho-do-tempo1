@@ -18,6 +18,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import poses as P  # noqa: E402
 
+POS_TRACK_BONES = {"pelvis", "hourglass", "orb_0", "orb_1", "orb_2"}  # ossos com trilha de posição
+
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "art" / "rigs" / "json"
 DST = ROOT / "rigs"
@@ -67,9 +69,10 @@ def build_scene(rig):
     paths = bone_paths(bones)
     subs = []  # (id, texto)
     anim_ids = []
+    fx_ids = []
     for an, a in rig["animations"].items():
         aid = "Animation_%s" % an
-        anim_ids.append((an, aid))
+        (fx_ids if a.get("fx") else anim_ids).append((an, aid))
         # loops: segundos; golpes: 0..1 = fase -1..1; poses paradas: 0
         times = [k["t"] for k in a["keys"]]
         lines = ['[sub_resource type="Animation" id="%s"]' % aid, 'resource_name = "%s"' % an,
@@ -78,11 +81,11 @@ def build_scene(rig):
             lines.append("loop_mode = 1")
         ti = 0
         for bn in bones:
-            if bn == "root":
+            if bn == "root" or bn not in a["keys"][0]["bones"]:
                 continue
             rots = unwrap([k["bones"][bn]["rot"] for k in a["keys"]])
             tracks = [("rotation", rots, 3)]
-            if bn == "pelvis":
+            if bn in POS_TRACK_BONES:
                 tracks.append(("position", [k["bones"][bn]["pos"] for k in a["keys"]], 1))
             for prop, vals, interp in tracks:
                 lines += [
@@ -105,6 +108,9 @@ def build_scene(rig):
     lib.append(",\n".join('"%s": SubResource("%s")' % (an, aid) for an, aid in anim_ids))
     lib.append("}")
     subs.append(("AnimationLibrary_rig", "\n".join(lib)))
+    if fx_ids:
+        subs.append(("AnimationLibrary_fx", "\n".join(['[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]', "_data = {",
+                     ",\n".join('"%s": SubResource("%s")' % (an, aid) for an, aid in fx_ids), "}"])))
 
     out = ['[gd_scene load_steps=%d format=3]' % (len(subs) + 2), "",
            '[ext_resource type="Script" path="res://scripts/rig_weapon.gd" id="1_weapon"]', ""]
@@ -133,16 +139,24 @@ def build_scene(rig):
             out += ['[node name="WeaponSlot" type="Node2D" parent="Parts"]', 'script = ExtResource("1_weapon")', ""]
             weapon_done = True
         n = len(p["rest_polygon"])
+        weights = p.get("weights") or [p["bone"]] * n
+        bone_arr = []
+        for bn in dict.fromkeys(weights):  # ossos na ordem em que aparecem
+            bone_arr.append('NodePath("%s"), PackedFloat32Array(%s)' % (paths[bn], ", ".join("1" if w == bn else "0" for w in weights)))
         out += ['[node name="%s" type="Polygon2D" parent="Parts"]' % p["name"],
                 "color = %s" % color(p["color"]),
                 'skeleton = NodePath("../../Skeleton2D")',
                 "polygon = PackedVector2Array(%s)" % ", ".join("%s, %s" % (f(x), f(y)) for x, y in p["rest_polygon"]),
-                'bones = [NodePath("%s"), PackedFloat32Array(%s)]' % (paths[p["bone"]], ", ".join("1" for _ in range(n))),
+                "bones = [%s]" % ", ".join(bone_arr),
                 ""]
     if not weapon_done:
         out += ['[node name="WeaponSlot" type="Node2D" parent="Parts"]', 'script = ExtResource("1_weapon")', ""]
     out += ['[node name="AnimationPlayer" type="AnimationPlayer" parent="."]', "libraries = {",
             '"": SubResource("AnimationLibrary_rig")', "}", ""]
+    if fx_ids:
+        # efeitos (capa, halo, ampulheta): tocam sozinhos em loop, por cima da pose do corpo
+        out += ['[node name="FXPlayer" type="AnimationPlayer" parent="."]', "libraries = {",
+                '"": SubResource("AnimationLibrary_fx")', "}", 'autoplay = "fx"', ""]
     return "\n".join(out)
 
 
@@ -168,6 +182,8 @@ def check(rig):
     reach = {"hf": ("arm_f_lo", P.FOREARM), "hb": ("arm_b_lo", P.FOREARM), "ff": ("leg_f_lo", P.SHIN), "bf": ("leg_b_lo", P.SHIN)}
     worst = (0.0, "")
     for an, a in rig["animations"].items():
+        if a.get("fx"):
+            continue
         smp = P.samples(an)
         for (t, ps), key in zip(smp, a["keys"]):
             for target, (bone, ln) in reach.items():

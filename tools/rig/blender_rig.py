@@ -105,8 +105,15 @@ def line(a, b, w):
     return capsule(a, b, w, 3)
 
 
-def dots_ring(cx, cy, r, n, rad, col):
-    return [(circle(cx + math.cos(i * 2 * math.pi / n) * r, cy + math.sin(i * 2 * math.pi / n) * r, rad, 6), col) for i in range(n)]
+def dots_ring(cx, cy, r, n, rad, col, trail=False):
+    """Anel de pontos. Com trail=True os pontos crescem em tamanho e brilho ao longo do anel
+    (rastro de cometa), para que o giro animado fique visível."""
+    out = []
+    for i in range(n):
+        k = (i + 1) / n if trail else 1.0
+        c = (col[0], col[1], col[2], col[3] * (0.25 + 0.75 * k)) if trail else col
+        out.append((circle(cx + math.cos(i * 2 * math.pi / n) * r, cy + math.sin(i * 2 * math.pi / n) * r, rad * (0.55 + 0.6 * k), 6), c))
+    return out
 
 
 def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
@@ -265,7 +272,7 @@ def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
         front.append((line(H(-4, -11), H(-6, -19), 2.0), darken(skin, 0.3)))
         front.append((circle(hx - 6, hy - 20, 2.5, 8), eye))
     elif style == "halo":
-        front += dots_ring(hx, hy - 16, 10.0, 14, 1.8, (0.5, 1, 1, 0.85))
+        front += [(pl, cl, "halo") for pl, cl in dots_ring(hx, hy - 16, 10.0, 14, 1.8, (0.5, 1, 1, 0.95), trail=True)]
         front.append((rect(hx - 1, hy - 4, 11, 4), (0.2, 1, 1, 1)))
     elif style == "goggles":
         for i in range(3):
@@ -278,14 +285,14 @@ def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
     elif style == "eon":
         gold = (1, 0.82, 0.3, 1)
         y0 = -26.0
-        front.append(([H(-9, y0 - 10), H(9, y0 - 10), H(0, y0)], gold))
-        front.append(([H(-9, y0 + 10), H(9, y0 + 10), H(0, y0)], gold))
-        front += dots_ring(hx, hy + y0, 15.0, 16, 1.2, (1, 0.85, 0.4, 0.6))
+        front.append(([H(-9, y0 - 10), H(9, y0 - 10), H(0, y0)], gold, "hourglass"))
+        front.append(([H(-9, y0 + 10), H(9, y0 + 10), H(0, y0)], gold, "hourglass"))
+        front += [(pl, cl, "eon_ring") for pl, cl in dots_ring(hx, hy + y0, 15.0, 16, 1.2, (1, 0.85, 0.4, 0.8), trail=True)]
         front.append((rect(hx + 2, hy - 3, 4, 3), (0.4, 1, 1, 1)))
         front.append((rect(hx + 7, hy - 3, 3, 3), (0.4, 1, 1, 1)))
         for k in range(3):
             a = k * 2 * math.pi / 3
-            front.append((circle(hx + math.cos(a) * 18, hy + y0 + math.sin(a) * 8, 2.0, 8), (0.7, 0.9, 1, 0.8)))
+            front.append((circle(hx + math.cos(a) * 18, hy + y0 + math.sin(a) * 8, 2.0, 8), (0.7, 0.9, 1, 0.8), "orb_%d" % k))
     if f and style not in ("luchamask", "headwrap"):
         front.append((rect(hx + 5, hy + 0.3, 2.5, 1.4), (0.05, 0.05, 0.05, 1)))  # cílios
     return back, front
@@ -325,6 +332,45 @@ def fix_bend(j):
         b = two_bone(hp, ft, P.THIGH, P.SHIN, -1)
         j["kn_" + side] = a if a[0] > b[0] else b
     return j
+
+
+def _mid(a, b):
+    return ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+
+
+def cape_points(j):
+    hip, sh = j["hip"], j["shoulder"]
+    A, B = (sh[0] - 8, sh[1] - 2), (sh[0] + 6, sh[1] - 2)
+    D, E = (hip[0] - 14, hip[1] + 22), (hip[0] - 30, hip[1] + 18)
+    return A, B, _mid(B, D), D, E, _mid(A, E)
+
+
+# Ossos de efeito (animados em loop pelo FXPlayer, independentes da pose do corpo)
+FX_LEN = 4.0 * math.pi / 3.0   # 1 volta das órbitas; 2 subidas da ampulheta; 4 ondas da capa
+FX_SAMPLES = 64
+POS_TRACK_BONES = {"pelvis", "hourglass", "orb_0", "orb_1", "orb_2"}
+
+
+def fx_bone_specs(c, j):
+    out = []
+    head = j["head"]
+    if c.get("cape", (0, 0, 0, 0))[3] > 0:
+        A, B, C, D, E, F = cape_points(j)
+        top, mid, bot = _mid(A, B), _mid(C, F), _mid(D, E)
+        out += [("cape_1", top, mid, "spine", False, True, True),
+                ("cape_2", mid, bot, "cape_1", True, True, True)]
+    if c["hat"] == "halo":
+        hc = (head[0], head[1] - 16)
+        out.append(("halo", hc, (hc[0], hc[1] - 6), "head", False, True, True))
+    if c["hat"] == "eon":
+        g = (head[0], head[1] - 26)
+        out += [("hourglass", g, (g[0], g[1] - 6), "head", False, True, True),
+                ("eon_ring", g, (g[0], g[1] - 6), "hourglass", False, True, True)]
+        for k in range(3):
+            a = k * 2 * math.pi / 3
+            o = (g[0] + math.cos(a) * 18, g[1] + math.sin(a) * 8)
+            out.append(("orb_%d" % k, o, (o[0], o[1] - 4), "hourglass", False, True, True))
+    return out
 
 
 # (nome, cabeça, cauda, pai, conectado, herda_rotação, exporta)
@@ -370,7 +416,7 @@ def set_active(obj):
     obj.select_set(True)
 
 
-def build_armature(name, j, offset_x):
+def build_armature(name, j, offset_x, extra_specs=()):
     arm_data = bpy.data.armatures.new(name + "_armature")
     arm = bpy.data.objects.new(name + "_RIG", arm_data)
     arm.location = (offset_x, 0, 0)
@@ -379,7 +425,7 @@ def build_armature(name, j, offset_x):
     set_active(arm)
     bpy.ops.object.mode_set(mode="EDIT")
     eb = arm_data.edit_bones
-    specs = bone_specs(j)
+    specs = bone_specs(j) + list(extra_specs)
     for nm, h, t, parent, conn, inh, exp in specs:
         b = eb.new(nm)
         b.head = g2b(*h)
@@ -534,15 +580,17 @@ def build_parts(c, j):
     # capa (chefes) atrás de tudo
     if c.get("cape", (0, 0, 0, 0))[3] > 0:
         cp = c["cape"]
-        parts.insert(0, ("cape", "spine", -1, cp, [(sh[0] - 8, sh[1] - 2), (sh[0] + 6, sh[1] - 2), (hip[0] - 14, hip[1] + 22), (hip[0] - 30, hip[1] + 18)]))
-    for i, (poly, col) in enumerate(back):
-        add("hair_back_%d" % i, "head", 4, col, poly)
+        A, B, C, D, E, F = cape_points(j)
+        # topo preso ao tronco; meio no osso cape_1; barra no cape_2 (ondula)
+        parts.insert(0, ("cape", "spine", -1, cp, [A, B, C, D, E, F], ["spine", "spine", "cape_1", "cape_2", "cape_2", "cape_1"]))
+    for i, item in enumerate(back):
+        add("hair_back_%d" % i, item[2] if len(item) > 2 else "head", 4, item[1], item[0])
     add("neck", "head", 5, skin, capsule(sh, head, 6.0, 3))
     add("head_hair", "head", 5, skin if c["hat"] == "bald" else hair, circle(head[0], head[1], 10.0))
     add("face", "head", 5, skin, circle(head[0] + 2, head[1] + 2, 8.5))
     add("eye", "head", 5, (0.05, 0.05, 0.05, 1), rect(head[0] + 4, head[1] - 2, 3, 3))
-    for i, (poly, col) in enumerate(front):
-        add("hair_%d" % i, "head", 6, col, poly)
+    for i, item in enumerate(front):
+        add("hair_%d" % i, item[2] if len(item) > 2 else "head", 6, item[1], item[0])
     # braço da frente
     add("arm_f_up", "arm_f_up", 7, skin, capsule(j["sh_f"], j["el_f"], 6.5))
     add("arm_f_lo", "arm_f_lo", 7, skin, capsule(j["el_f"], j["hf"], 6.5))
@@ -552,7 +600,11 @@ def build_parts(c, j):
 
 def make_part_objects(arm, parts, name):
     """Cria as malhas no Blender, presas aos ossos (BONE parent)."""
-    for nm, bone_name, z, col, poly in parts:
+    for part in parts:
+        nm, bone_name, z, col, poly = part[:5]
+        if len(part) > 5:
+            _weighted_part(arm, name, nm, z, col, poly, part[5])
+            continue
         me = bpy.data.meshes.new("%s_%s" % (name, nm))
         bone = arm.data.bones[bone_name]
         # espaço local de um filho de osso: origem na CAUDA do osso, eixos do osso
@@ -568,6 +620,72 @@ def make_part_objects(arm, parts, name):
         ob.parent_bone = bone_name
         ob.matrix_parent_inverse = Matrix.Identity(4)
         ob["z_order"] = z
+
+
+def _weighted_part(arm, name, nm, z, col, poly, weights):
+    """Peça deformada por vários ossos (ex.: capa): grupos de vértices + modificador Armature."""
+    me = bpy.data.meshes.new("%s_%s" % (name, nm))
+    verts = [g2b(x, y) + Vector((0, -0.001 * z, 0)) for x, y in poly]
+    me.from_pydata([tuple(v) for v in verts], [], [list(range(len(verts)))])
+    me.materials.append(material(col))
+    ob = bpy.data.objects.new("%s_%s" % (name, nm), me)
+    bpy.context.scene.collection.objects.link(ob)
+    ob.parent = arm
+    ob.matrix_parent_inverse = Matrix.Identity(4)
+    for bone_name in sorted(set(weights)):
+        vg = ob.vertex_groups.new(name=bone_name)
+        vg.add([i for i, w in enumerate(weights) if w == bone_name], 1.0, "REPLACE")
+    mod = ob.modifiers.new("Armature", "ARMATURE")
+    mod.object = arm
+    ob["z_order"] = z
+
+
+def make_fx_action(arm, name, fx_names):
+    """Loop dos efeitos: capa ondulando, halo girando, ampulheta flutuando e órbitas do ÉON."""
+    act = bpy.data.actions.new("%s_fx" % name)
+    act.use_fake_user = True
+    arm.animation_data_create()
+    arm.animation_data.action = act
+    pbs = arm.pose.bones
+    rs = CONV["rot_sign"]
+    frames = []
+    for i in range(FX_SAMPLES + 1):
+        t = FX_LEN * i / FX_SAMPLES
+        f = i  # 1 quadro por amostra; o tempo real vai no JSON
+        if "cape_1" in fx_names:
+            pbs["cape_1"].rotation_euler = (0, 0, 0.05 * math.sin(t * 6.0) * rs)
+            pbs["cape_2"].rotation_euler = (0, 0, 0.08 * math.sin(t * 6.0 - 0.9) * rs)
+            pbs["cape_1"].keyframe_insert("rotation_euler", frame=f)
+            pbs["cape_2"].keyframe_insert("rotation_euler", frame=f)
+        if "halo" in fx_names:
+            pbs["halo"].rotation_euler = (0, 0, -t * 1.5 * rs)
+            pbs["halo"].keyframe_insert("rotation_euler", frame=f)
+        if "hourglass" in fx_names:
+            dy = math.sin(t * 3.0) * 2.0  # px, y do jogo (para baixo)
+            pbs["hourglass"].location = loc_vec(0.0, -dy * PX)
+            pbs["hourglass"].keyframe_insert("location", frame=f)
+            pbs["eon_ring"].rotation_euler = (0, 0, t * 1.5 * rs)
+            pbs["eon_ring"].keyframe_insert("rotation_euler", frame=f)
+            for k in range(3):
+                a0 = k * 2 * math.pi / 3
+                a = t * 1.5 + a0
+                dx = (math.cos(a) - math.cos(a0)) * 18
+                dyo = (math.sin(a) - math.sin(a0)) * 8
+                pbs["orb_%d" % k].location = loc_vec(dx * PX, -dyo * PX)
+                pbs["orb_%d" % k].keyframe_insert("location", frame=f)
+        frames.append((t, f))
+    _linear(act)
+    return act, frames
+
+
+def _linear(act):
+    try:
+        curves = act.fcurves
+    except AttributeError:  # Actions em camadas (Blender 4.4+)
+        curves = [fc for layer in act.layers for strip in layer.strips for bag in strip.channelbags for fc in bag.fcurves]
+    for fc in curves:
+        for kp in fc.keyframe_points:
+            kp.interpolation = "LINEAR"
 
 
 # ---------------------------------------------------------------------------
@@ -630,10 +748,10 @@ def bone_global(arm, name):
     return h, math.atan2(-(t.z - h.z), t.x - h.x)  # ângulo em coordenadas do jogo (y para baixo)
 
 
-def export_frame(arm, specs):
+def export_frame(arm, specs, only=None, skip=()):
     out = {}
     for nm, _h, _t, parent, _c, _i, exp in specs:
-        if not exp:
+        if not exp or nm in skip or (only is not None and nm not in only):
             continue
         h, a = bone_global(arm, nm)
         if parent:
@@ -681,12 +799,16 @@ def rest_frame(arm, specs):
 def parts_to_local(parts, rest):
     """Converte os polígonos (coordenadas do jogo) para o espaço local de cada osso no Godot."""
     out = []
-    for nm, bone, z, col, poly in parts:
+    for part in parts:
+        nm, bone, z, col, poly = part[:5]
         (gx, gy), ga = rest[bone]["global"]
         ca, sa = math.cos(-ga), math.sin(-ga)
         loc = [[round((x - gx) * ca - (y - gy) * sa, 3), round((x - gx) * sa + (y - gy) * ca, 3)] for x, y in poly]
-        out.append({"name": nm, "bone": bone, "z": z, "color": [round(v, 4) for v in col], "polygon": loc,
-                    "rest_polygon": [[round(x, 3), round(y, 3)] for x, y in poly]})
+        item = {"name": nm, "bone": bone, "z": z, "color": [round(v, 4) for v in col], "polygon": loc,
+                "rest_polygon": [[round(x, 3), round(y, 3)] for x, y in poly]}
+        if len(part) > 5:
+            item["weights"] = part[5]
+        out.append(item)
     return out
 
 
@@ -741,7 +863,9 @@ def build_group(characters, blend_name, json_dir, preview_name, cols, anims):
     for i, c in enumerate(characters):
         name = c["slug"]
         ox, oz = (i % cols) * 1.4, -(i // cols) * 1.5
-        arm, specs = build_armature(name, j, ox)
+        fx_specs = fx_bone_specs(c, j)
+        fx_names = [sp[0] for sp in fx_specs]
+        arm, specs = build_armature(name, j, ox, fx_specs)
         arm.location.z = oz
         if not CONV:
             detect_conventions(arm)
@@ -763,9 +887,24 @@ def build_group(characters, blend_name, json_dir, preview_name, cols, anims):
             keys = []
             for t, f in frames:
                 scn.frame_set(f)
-                keys.append({"t": round(t, 5), "bones": export_frame(arm, specs)})
+                keys.append({"t": round(t, 5), "bones": export_frame(arm, specs, skip=fx_names)})
             data_anims[anim] = {"length": round(P.anim_length(anim), 5), "loop": P.ANIMATIONS[anim]["kind"] == "loop", "keys": keys}
+        if fx_names:
+            fx_act, frames = make_fx_action(arm, name, fx_names)
+            keys = []
+            for t, f in frames:
+                scn.frame_set(f)
+                keys.append({"t": round(t, 5), "bones": export_frame(arm, specs, only=fx_names)})
+            data_anims["fx"] = {"length": round(FX_LEN, 5), "loop": True, "fx": True, "keys": keys}
         arm.animation_data.action = bpy.data.actions["%s_idle" % name]
+        if fx_names:
+            # no .blend, os efeitos tocam por cima do corpo numa faixa de NLA
+            try:
+                tr = arm.animation_data.nla_tracks.new()
+                tr.name = "efeitos"
+                tr.strips.new("fx", 0, bpy.data.actions["%s_fx" % name])
+            except Exception as e:  # noqa: BLE001
+                print("aviso: NLA dos efeitos não criada:", e)
         data = {"name": c["name"], "slug": c["slug"], "size": c["size"], "group": c.get("group", "players"),
                 "bones": rest, "parts": parts_to_local(parts, rest), "animations": data_anims, "fps": FPS}
         if "era" in c:
@@ -773,7 +912,8 @@ def build_group(characters, blend_name, json_dir, preview_name, cols, anims):
             data["kind"] = c["kind"]
         (json_dir / ("%s.json" % c["slug"])).write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         rigs.append((arm, c))
-        print("Rig %-22s ossos=%d peças=%d animações=%d" % (c["slug"], len(rest), len(parts), len(data_anims)))
+        print("Rig %-22s ossos=%d peças=%d animações=%d%s" % (c["slug"], len(rest), len(parts), len(data_anims),
+                                                         "  efeitos: " + ", ".join(fx_names) if fx_names else ""))
     bpy.ops.wm.save_as_mainfile(filepath=str(OUT / blend_name))
     if "--no-render" not in sys.argv:
         render_preview(rigs, OUT / preview_name, cols)
