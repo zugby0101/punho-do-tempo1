@@ -41,6 +41,10 @@ const LIST := [
 	["last_life", "POR UM FIO", "Conclua uma era com a última vida.", "flag", "last_life", 1, Color(1, 0.4, 0.5)],
 	["score_100k", "DONO DA RUA", "Some 100.000 pontos numa partida.", "max", "score", 100000, Color(1, 0.85, 0.3)],
 	["score_500k", "LENDA VIVA", "Some 500.000 pontos numa partida.", "max", "score", 500000, Color(1, 0.75, 0.1)],
+	# Sobrevivência
+	["wave_10", "RESISTENTE", "Chegue à onda 10 da Sobrevivência.", "max", "wave", 10, Color(0.6, 1, 0.5)],
+	["wave_25", "INQUEBRÁVEL", "Chegue à onda 25 da Sobrevivência.", "max", "wave", 25, Color(0.45, 0.95, 0.4)],
+	["wave_50", "ETERNO", "Chegue à onda 50 da Sobrevivência.", "max", "wave", 50, Color(0.3, 0.85, 0.3)],
 	# Multijogador
 	["coop_2", "JUNTOS SOMOS FORTES", "Conclua uma era em co-op.", "flag", "coop2", 1, Color(0.5, 0.75, 1)],
 	["coop_4", "ESQUADRÃO COMPLETO", "Conclua uma era com 4 jogadores.", "flag", "coop4", 1, Color(0.35, 0.6, 1)],

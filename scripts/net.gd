@@ -401,6 +401,7 @@ const SCORE_KEY := "punho-do-tempo-ranking-v1"
 
 var ranking: Array = []        # última lista recebida
 var ranking_status := ""       # "carregando", "ok" ou mensagem de erro
+var ranking_board := "story"    # "story" (História) ou "survival" (Sobrevivência)
 var last_ranks: Array = []     # posições obtidas no último envio
 
 
@@ -413,15 +414,19 @@ func scores_url() -> String:
 
 func _sign(e: Dictionary) -> String:
 	var msg := "%s|%s|%d|%d|%d|%d|%d" % [e.name, e.char, e.score, e.stage, e.players, 1 if e.done else 0, e.ts]
+	if e.has("board"):
+		msg += "|%s|%d" % [e.board, e.wave]
 	var ctx := HMACContext.new()
 	ctx.start(HashingContext.HASH_SHA256, SCORE_KEY.to_utf8_buffer())
 	ctx.update(msg.to_utf8_buffer())
 	return ctx.finish().hex_encode()
 
 
-func fetch_ranking() -> void:
+func fetch_ranking(board := "") -> void:
+	if board != "":
+		ranking_board = board
 	ranking_status = "carregando"
-	_http(scores_url() + "?limit=10", HTTPClient.METHOD_GET, "", _on_ranking)
+	_http(scores_url() + "?limit=10&board=" + ranking_board, HTTPClient.METHOD_GET, "", _on_ranking)
 
 
 ## entries: [{name, char, score, stage, players, done}]
@@ -454,6 +459,10 @@ func _http(url: String, method: int, body: String, cb: Callable) -> void:
 
 func _on_ranking(ok: bool, code: int, data) -> void:
 	if ok and code == 200 and data is Dictionary:
+		if ranking_board != "story" and not data.has("board"):
+			ranking = []
+			ranking_status = "O servidor precisa ser atualizado para ter este ranking (publique a versão nova)."
+			return
 		ranking = data.get("scores", [])
 		ranking_status = "ok"
 	else:

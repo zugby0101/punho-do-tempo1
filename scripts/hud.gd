@@ -180,8 +180,10 @@ func _draw_main() -> void:
 		"gameover":
 			draw_rect(Rect2(0, 0, W, 540), Color(0, 0, 0, 0.6))
 			_center(200, "FIM DE JOGO", 72, Color(1, 0.2, 0.2))
-			_scores_block(260)
-			_center(420, "ENTER ou SOCO para continuar nesta era", 22, Color(1, 0.9, 0.3))
+			if game.survival:
+				_center(240, "Vocês chegaram à ONDA %d" % game.surv_wave, 26, Color(1, 0.85, 0.3))
+			_scores_block(275)
+			_center(420, "ENTER ou SOCO para tentar de novo (onda 1)" if game.survival else "ENTER ou SOCO para continuar nesta era", 22, Color(1, 0.9, 0.3))
 			if not game.score_sent and not game.versus:
 				_center(455, "R: enviar a pontuação ao RANKING ONLINE", 18, Color(0.5, 0.9, 1))
 		"ending": _draw_ending()
@@ -224,7 +226,7 @@ func _draw_game_hud() -> void:
 		if pl.out:
 			_text(Vector2(x, 30), "P%d" % (i + 1), 18, col)
 			if int(t * 2.0) % 2 == 0:
-				_text(Vector2(x, 54), "SOCO p/ continuar", 15, Color(1, 1, 1))
+				_text(Vector2(x, 54), "FORA" if game.survival else "SOCO p/ continuar", 15, Color(1, 0.5, 0.5) if game.survival else Color(1, 1, 1))
 			continue
 		_text(Vector2(x, 28), tag, 16 if n > 1 else 20, col)
 		_bar(Vector2(x, 36), pw - 60.0, 12, float(pl.hp) / pl.max_hp, Color(1, 0.85, 0.15))
@@ -242,6 +244,10 @@ func _draw_game_hud() -> void:
 	var footer := "FASE %d · %s · %s" % [game.stage_idx + 1, game.stage.name, game.stage.year]
 	if game.versus:
 		footer = "VERSUS · ROUND %d · ARENA: %s" % [game.round_num, game.stage.name]
+	elif game.survival:
+		footer = "SOBREVIVÊNCIA · ONDA %d · ERA: %s" % [game.surv_wave, game.stage.name]
+		if game.surv_wave > 0:
+			_text(Vector2(0, 104), "ONDA %d" % game.surv_wave, 26, Color(1, 0.85, 0.3), HORIZONTAL_ALIGNMENT_CENTER, W)
 	_text(Vector2(0, 530), footer, 14, Color(1, 1, 1, 0.8), HORIZONTAL_ALIGNMENT_CENTER, W)
 	# Inimigo atual (na parte de baixo da tela)
 	if enemy_timer > 0.0 and is_instance_valid(enemy_ref) and game.mode == "play":
@@ -276,13 +282,20 @@ func _draw_title() -> void:
 	for i in lines.size():
 		_center(200 + i * 26, lines[i], 15, Color(1, 1, 1))
 	var vs: bool = game.game_mode == "versus"
-	_center(318, "Modo (▲ ▼):   %s     %s" % ["[ HISTÓRIA ]" if not vs else "HISTÓRIA", "[ VERSUS ]" if vs else "VERSUS"], 19, Color(1, 0.6, 0.8))
-	_center(342, "Arena (◄ ►):" if vs else "Fase inicial (◄ ►):", 15, Color(0.8, 0.8, 0.9))
+	var gm: String = game.game_mode
+	var names := {"story": "HISTÓRIA", "versus": "VERSUS", "survival": "SOBREVIVÊNCIA"}
+	var parts: Array = []
+	for k in ["story", "versus", "survival"]:
+		parts.append("[ %s ]" % names[k] if k == gm else names[k])
+	_center(318, "Modo (▲ ▼):   " + "    ".join(parts), 19, Color(1, 0.6, 0.8))
+	_center(342, "Arena (◄ ►):" if vs or gm == "survival" else "Fase inicial (◄ ►):", 15, Color(0.8, 0.8, 0.9))
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
 	_center(415, "ONLINE: O = criar/entrar numa sala  •  R = ranking  •  M = conquistas (%d/%d)" % [Ach.unlocked_count(), Ach.LIST.size()], 16, Color(0.5, 0.9, 1))
-	if vs:
+	if gm == "survival":
+		_center(485, "Sobrevivência: ondas infinitas que ficam cada vez mais difíceis. Até onde você chega?", 15, Color(0.8, 0.8, 0.9))
+	elif vs:
 		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
 	else:
 		_center(485, "Os outros jogadores entram na tela de seleção apertando SOCO", 15, Color(0.8, 0.8, 0.9))
@@ -439,7 +452,9 @@ func _draw_online_menu() -> void:
 
 func _draw_ranking() -> void:
 	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.9))
-	_center(60, "RANKING ONLINE — MODO HISTÓRIA", 36, Color(1, 0.85, 0.3))
+	var surv: bool = Net.ranking_board == "survival"
+	_center(60, "RANKING ONLINE — " + ("SOBREVIVÊNCIA" if surv else "MODO HISTÓRIA"), 34, Color(1, 0.85, 0.3))
+	_center(484, "◄ ► trocar entre História e Sobrevivência", 13, Color(0.6, 0.9, 1))
 	var st: String = Net.ranking_status
 	if st == "carregando":
 		_center(270, "Carregando..." + ".".repeat(int(t * 3.0) % 3), 24, Color(1, 1, 1))
@@ -455,7 +470,7 @@ func _draw_ranking() -> void:
 		if not mine.is_empty():
 			_center(92, " • ".join(mine), 16, Color(0.4, 1, 0.5))
 		var cols := [60.0, 120.0, 330.0, 480.0, 640.0, 760.0]
-		var heads := ["#", "NOME", "LUTADOR", "PONTOS", "ERA", "JOG."]
+		var heads := ["#", "NOME", "LUTADOR", "PONTOS", "ONDA" if surv else "ERA", "JOG."]
 		for k in heads.size():
 			_text(Vector2(cols[k], 128), heads[k], 15, Color(0.6, 0.9, 1))
 		if Net.ranking.is_empty():
@@ -469,6 +484,8 @@ func _draw_ranking() -> void:
 			_text(Vector2(cols[2], y), String(e.get("char", "")), 16, col)
 			_text(Vector2(cols[3], y), "%d" % int(e.get("score", 0)), 18, col)
 			var era := "FINAL ★" if e.get("done", false) else "Fase %d" % int(e.get("stage", 1))
-			_text(Vector2(cols[4], y), era, 16, Color(0.4, 1, 0.5) if e.get("done", false) else col)
+			if surv:
+				era = "%d" % int(e.get("wave", 0))
+			_text(Vector2(cols[4], y), era, 16, Color(0.4, 1, 0.5) if e.get("done", false) and not surv else col)
 			_text(Vector2(cols[5], y), "%dP" % int(e.get("players", 1)), 16, col)
 	_center(510, "ESC, ENTER ou SOCO para voltar", 15, Color(0.8, 0.8, 0.9))

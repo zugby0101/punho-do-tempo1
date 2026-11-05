@@ -66,6 +66,15 @@ const nextBin = (ws) => new Promise((r) => ws.once("message", (d) => r(d)));
   r = await (await fetch(`${base}/scores?limit=5`)).json();
   assert.deepEqual(r.scores.map((x) => [x.name, x.score]), [["BIA", 9000], ["ANA", 5000]]);
 
+  // quadro de sobrevivência (formato novo de assinatura) e quadro antigo intactos
+  const mkS = (name, score, wave) => { const e = { name, char: "MEI", score, stage: 3, players: 2, done: false, ts, board: "survival", wave }; return { ...e, sig: sign(e) }; };
+  r = await (await fetch(`${base}/scores`, { method: "POST", body: JSON.stringify({ entries: [mkS("Caio", 7000, 12)] }) })).json();
+  assert.equal(r.ok, true);
+  r = await (await fetch(`${base}/scores?board=survival`)).json();
+  assert.deepEqual(r.scores.map((x) => [x.name, x.wave]), [["CAIO", 12]]);
+  r = await (await fetch(`${base}/scores`)).json();
+  assert.equal(r.scores.length, 2); // o quadro da História não mudou
+
   console.log("OK: todos os testes do relay passaram");
   g2.close();
   wss.close();

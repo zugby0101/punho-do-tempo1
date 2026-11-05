@@ -46,6 +46,17 @@ No título, use **▲ ▼ para escolher o modo** (História ou Versus) e **◄ �
 - Quem fica de pé por último vence o round; quem vencer **2 rounds** é o campeão.
 - No fim: ENTER ou SOCO para revanche com os mesmos lutadores, ESC para voltar ao título.
 
+## Modo Sobrevivência (1 a 4 jogadores)
+
+No título, escolha **SOBREVIVÊNCIA** com ▲ ▼ e a era inicial com ◄ ►. Ondas infinitas de inimigos:
+
+- Cada onda traz **mais inimigos**, com **mais vida e mais dano**, e os tiers difíceis ficam mais frequentes.
+- **Sub-chefe a cada 5 ondas** e **chefe a cada 10**.
+- **A cada 5 ondas, uma viagem no tempo**: a arena muda para a próxima era (cenário, inimigos e música novos).
+- Cada onda vencida dá pontos extras; comida aparece a cada 3 ondas e armas caem do céu.
+- Não há "continuar": quando todos caem, a partida acaba. Dá para jogar em co-op e online.
+- Tem **ranking próprio** (pontos e onda alcançada) e conquistas para chegar às ondas 10, 25 e 50.
+
 ## Modo Online (pela internet)
 
 Funciona com o modo História (co-op) e com o Versus, para até 4 jogadores no total
@@ -75,7 +86,7 @@ Os menus entre as fases podem ser confirmados por qualquer jogador.
 
 ## Conquistas
 
-São **32 conquistas desbloqueáveis**, salvas no computador de cada jogador. Um aviso aparece
+São **35 conquistas desbloqueáveis**, salvas no computador de cada jogador. Um aviso aparece
 na tela quando uma é desbloqueada. No título, **M** (ou **Tab**) mostra todas, com o progresso
 das que faltam.
 
@@ -85,12 +96,14 @@ das que faltam.
 | Combate | 1, 100 e 1000 nocautes; combos de 10, 25 e 50 golpes; sub-chefes e chefes (incluindo os 12) |
 | Armas e golpes | pegar armas, coletar as 24 armas, acertar arremessos, 50 especiais, quebrar caixas, comer |
 | Desafios | concluir uma era sem perder vida, sem levar dano ou com a última vida; 100 mil e 500 mil pontos |
+| Sobrevivência | chegar às ondas 10, 25 e 50 |
 | Multijogador | co-op com 2 e com 4 jogadores, vencer no Versus (e sem perder round), jogar online, entrar no Top 10 |
 
 Online, cada convidado desbloqueia as conquistas do próprio lutador no próprio computador.
 
 ## Ranking online
 
+São dois rankings: **História** e **Sobrevivência** (na tela do ranking, ◄ ► troca entre eles).
 No fim de jogo ou no final da história, aperte **R** para enviar a pontuação: cada jogador
 digita o nome (no co-op, cada um entra com a própria pontuação). No título, **R** mostra o
 **Top 10** com nome, lutador, pontos, até onde chegou e quantos jogadores eram.

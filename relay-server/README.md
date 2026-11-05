@@ -14,8 +14,9 @@ o servidor não processa nada do jogo, então é bem leve.
 
 ## Ranking online
 
-O mesmo servidor guarda o **ranking de pontuação** do modo História
-(`GET /scores` lista o Top 10, `POST /scores` envia novas pontuações).
+O mesmo servidor guarda os **rankings de pontuação**: `story` (modo História) e `survival`
+(Sobrevivência). `GET /scores?board=survival` lista o Top 10 de um quadro (sem `board`, é o da
+História) e `POST /scores` envia novas pontuações.
 
 **Importante no Render gratuito:** o disco é apagado sempre que o servidor reinicia ou "dorme",
 então o ranking seria zerado de tempos em tempos. Para guardar de forma permanente, use o

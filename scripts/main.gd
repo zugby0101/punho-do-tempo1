@@ -32,7 +32,8 @@ const DEFAULT_CHARS := [8, 9, 0, 3]
 static var stage_idx := 0
 static var party: Array = []
 static var skip_title := false
-static var game_mode := "story"  # "story" (história/co-op) ou "versus"
+static var game_mode := "story"  # "story" (história/co-op), "versus" ou "survival"
+static var survival_start := 0    # era em que a sobrevivência começou (para recomeçar)
 
 const VERSUS_WINS := 2  # rounds para vencer a partida
 
@@ -48,6 +49,13 @@ var round_num := 1
 var round_wins: Array = [0, 0, 0, 0]
 var round_winner := -1   # -1 = empate
 var drop_timer := 0.0
+
+# Sobrevivência
+var survival := false
+var surv_wave := 0
+var surv_queue: Array = []    # [tipo, lado, atraso]
+var surv_break := 0.0         # pausa entre ondas
+var surv_in_wave := false
 
 # Online
 var net_client := false   # este computador é convidado (só desenha o que recebe)
@@ -132,6 +140,7 @@ func _ready() -> void:
 	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 	versus = game_mode == "versus"
+	survival = game_mode == "survival"
 	Net.game = self
 	if Net.is_client():
 		Net.close()
@@ -141,7 +150,7 @@ func _ready() -> void:
 		if Net.is_host() and not Net.peer_sets.is_empty():
 			net_events.append(["s", n])
 	for c in crate_spots:
-		if versus:
+		if versus or survival:
 			break
 		var cr = CrateScript.new()
 		cr.game = self
@@ -154,6 +163,8 @@ func _ready() -> void:
 		_spawn_party()
 		if versus:
 			_start_round()
+		elif survival:
+			_start_survival()
 		else:
 			_set_mode("intro")
 			_play_stage_music(false)
@@ -267,6 +278,10 @@ func _physics_process(delta: float) -> void:
 				_set_mode("online_menu")
 			return
 		"ranking":
+			if Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("move_right"):
+				Net.fetch_ranking("survival" if Net.ranking_board == "story" else "story")
+				sfx.play("whoosh", 0.0)
+				return
 			if mode_time > 0.4 and (Input.is_physical_key_pressed(KEY_ESCAPE) or _confirm() or Input.is_action_just_pressed("ranking")):
 				_set_mode(ranking_return)
 				mode_time = 2.0  # volta direto, sem esperar a animação
@@ -312,8 +327,11 @@ func _physics_process(delta: float) -> void:
 				sfx.play("go", 0.0)
 				return
 			if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
-				game_mode = "versus" if game_mode == "story" else "story"
+				var modes := ["story", "versus", "survival"]
+				var step := 1 if Input.is_action_just_pressed("move_down") else -1
+				game_mode = modes[posmod(modes.find(game_mode) + step, modes.size())]
 				versus = game_mode == "versus"
+				survival = game_mode == "survival"
 				sfx.play("whoosh", 0.0)
 			elif Input.is_action_just_pressed("move_right"):
 				_change_stage(1)
@@ -345,9 +363,12 @@ func _physics_process(delta: float) -> void:
 		"gameover":
 			if Input.is_action_just_pressed("ranking") and not score_sent and not versus:
 				_start_score_entry("gameover")
+				Net.ranking_board = "survival" if survival else "story"
 				return
 			if mode_time > 1.0 and _confirm():
-				# Continua na mesma fase, com vidas cheias
+				# Continua na mesma fase, com vidas cheias (na sobrevivência, recomeça da onda 1)
+				if survival:
+					stage_idx = survival_start
 				_save_party()
 				for info in party:
 					info.lives = 3
@@ -395,6 +416,9 @@ func _physics_process(delta: float) -> void:
 
 	if versus:
 		_update_versus(delta)
+		return
+	if survival:
+		_update_survival(delta)
 		return
 
 	# Jogador eliminado pode continuar enquanto o grupo segue vivo
@@ -531,6 +555,9 @@ func _start_game() -> void:
 	sfx.play("start", 0.0)
 	if versus:
 		_start_round()
+	elif survival:
+		survival_start = stage_idx
+		_start_survival()
 	else:
 		_play_stage_music(false)
 		_set_mode("intro")
@@ -666,7 +693,7 @@ func _show_ending_page() -> void:
 		p.queue_redraw()
 
 
-func _spawn_enemy(kind: String, side: int) -> void:
+func _spawn_enemy(kind: String, side: int):
 	var e = EnemyScript.new()
 	e.game = self
 	e.add_to_group("enemies")
@@ -688,6 +715,7 @@ func _spawn_enemy(kind: String, side: int) -> void:
 		hud.show_message("SUB-CHEFE: " + e.display_name, 2.2)
 		hud.show_enemy(e)
 		sfx.play("roar", 0.0)
+	return e
 
 
 func _alive_enemies() -> Array:
@@ -807,6 +835,9 @@ func player_died(p) -> void:
 		p.out = true
 		sfx.play("ko", 0.0)
 		if active_players().is_empty():
+			if survival:
+				for pl in players:
+					Ach.best(pl, "score", pl.score)
 			_set_mode("gameover")
 			music.stop()
 		else:
@@ -1167,7 +1198,7 @@ func net_snapshot() -> Array:
 	net_events = []
 	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, shake_amt,
 		round_num, round_wins, round_winner, ending_page, game_mode, slot_s,
-		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents]
+		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents, surv_wave]
 
 
 func _apply_fighter(n, d: Array, i: int) -> int:
@@ -1215,6 +1246,9 @@ func net_apply(snap: Array) -> void:
 	hud.message = snap[15]
 	hud.message_timer = snap[16]
 	hud.enemy_timer = snap[18]
+	survival = game_mode == "survival"
+	if snap.size() > 23:
+		surv_wave = snap[23]
 	# Entidades
 	var seen := {}
 	for d in snap[22]:
@@ -1341,7 +1375,7 @@ func _net_create(d: Array):
 # =================== Ranking online ===================
 func _open_ranking(back_to: String) -> void:
 	ranking_return = back_to
-	Net.fetch_ranking()
+	Net.fetch_ranking("survival" if game_mode == "survival" else "story")
 	_set_mode("ranking")
 	sfx.play("go", 0.0)
 
@@ -1392,5 +1426,145 @@ func _on_name_submitted(v: String) -> void:
 	last_names[p.pid] = v
 	name_entries.append({"name": v, "char": p.display_name, "score": int(p.score), "stage": stage_idx + 1,
 		"players": players.size(), "done": ranking_return == "ending"})
+	if survival:
+		name_entries[-1]["board"] = "survival"
+		name_entries[-1]["wave"] = maxi(surv_wave, 1)
 	sfx.play("pickup", 0.0)
 	_ask_next_name()
+
+
+# =================== Modo Sobrevivência ===================
+func _start_survival() -> void:
+	cam_x = HALF_W
+	locked = true
+	surv_wave = 0
+	surv_queue = []
+	surv_in_wave = false
+	surv_break = 2.5
+	drop_timer = 9.0
+	var spots := [Vector2(220, 400), Vector2(220, 480), Vector2(300, 440), Vector2(140, 440)]
+	for i in players.size():
+		players[i].position = spots[i] + Vector2(cam_left(), 0)
+		players[i].facing = 1
+	_play_stage_music(false)
+	hud.show_message("SOBREVIVÊNCIA!", 2.0)
+	_set_mode("play")
+	_flag_online()
+
+
+## Monta a onda n: mais inimigos, tiers mais fortes, sub-chefe a cada 5 e chefe a cada 10.
+func _survival_wave(n: int) -> Array:
+	var q: Array = []
+	var count := mini(3 + n, 14) + (players.size() - 1) * 2
+	var delay := 0.0
+	if n % 10 == 0:
+		q.append(["boss", 1, 0.5])
+		count = maxi(2, count / 2)
+		delay = 3.0
+	elif n % 5 == 0:
+		q.append(["subboss", 1, 0.5])
+		count = maxi(2, count * 2 / 3)
+		delay = 2.0
+	var brute_p := clampf(0.05 * (n - 3), 0.0, 0.35)
+	var knife_p := clampf(0.15 + 0.04 * n, 0.0, 0.45)
+	for i in count:
+		var r := randf()
+		var kind := "thug"
+		if n >= 4 and r < brute_p:
+			kind = "brute"
+		elif n >= 2 and r < brute_p + knife_p:
+			kind = "knife"
+		q.append([kind, 1 if i % 2 == 0 else -1, delay])
+		delay += randf_range(0.5, 1.4) / (1.0 + n * 0.03)
+	return q
+
+
+func _update_survival(delta: float) -> void:
+	if hitstop > 0.0:
+		hitstop -= delta
+		_update_camera(delta)
+		return
+	combo_timer -= delta
+	if combo_timer <= 0.0:
+		combo_count = 0
+	_update_camera(delta)
+	_assign_aggression()
+	_check_pickups()
+	# Armas caem do céu de vez em quando
+	drop_timer -= delta
+	if drop_timer <= 0.0:
+		drop_timer = randf_range(9.0, 14.0)
+		var pos := Vector2(randf_range(cam_left() + 120.0, cam_right() - 120.0), randf_range(DEPTH_MIN + 20.0, DEPTH_MAX - 20.0))
+		var ws := Weapons.for_stage(stage_idx)
+		spawn_weapon_item(Weapons.equip(ws[randi() % 2]), pos, 1, 260.0)
+
+	if not surv_in_wave:
+		surv_break -= delta
+		if surv_break <= 0.0:
+			surv_wave += 1
+			surv_in_wave = true
+			surv_queue = _survival_wave(surv_wave)
+			var tag := " — CHEFE!" if surv_wave % 10 == 0 else (" — SUB-CHEFE!" if surv_wave % 5 == 0 else "")
+			hud.show_message("ONDA %d%s" % [surv_wave, tag], 1.8)
+			sfx.play("go", 0.0)
+			for p in active_players():
+				Ach.best(p, "wave", surv_wave)
+		return
+
+	# Solta os inimigos da onda aos poucos (com limite na tela)
+	var cap := 5 + players.size() * 2
+	var alive := _alive_enemies().size()
+	for item in surv_queue:
+		item[2] -= delta
+		if item[2] <= 0.0 and alive < cap:
+			_toughen(_spawn_enemy(item[0], item[1]))
+			alive += 1
+	surv_queue = surv_queue.filter(func(it): return it[2] > 0.0)
+
+	if surv_queue.is_empty() and _alive_enemies().is_empty():
+		_survival_wave_cleared()
+
+
+## Dificuldade extra conforme a onda (além da força natural de cada era).
+func _toughen(e) -> void:
+	if e == null or not is_instance_valid(e):
+		return
+	var hp_mult := 1.0 + 0.07 * (surv_wave - 1)
+	e.max_hp = int(e.max_hp * hp_mult)
+	e.hp = e.max_hp
+	var dmg_mult := 1.0 + 0.03 * (surv_wave - 1)
+	for a in e.attacks:
+		a.dmg = int(round(float(a.dmg) * dmg_mult))
+	for a in e.base_attacks:
+		if not (a in e.attacks):
+			a.dmg = int(round(float(a.dmg) * dmg_mult))
+	if not e.special_attack.is_empty():
+		e.special_attack.dmg = int(round(float(e.special_attack.dmg) * dmg_mult))
+	e.move_speed *= minf(1.0 + 0.01 * surv_wave, 1.4)
+	e.score_value = int(e.score_value * (1.0 + 0.05 * surv_wave))
+
+
+func _survival_wave_cleared() -> void:
+	surv_in_wave = false
+	surv_break = 3.5
+	var bonus := 500 * surv_wave
+	for p in active_players():
+		p.score += bonus
+		Ach.best(p, "score", p.score)
+	hud.show_message("ONDA %d VENCIDA! +%d" % [surv_wave, bonus], 2.0)
+	_play_stage_music(false)
+	sfx.play("pickup", 0.0)
+	# Comida a cada 3 ondas
+	if surv_wave % 3 == 0:
+		spawn_pickup("chicken", Vector2(cam_x + randf_range(-150, 150), randf_range(DEPTH_MIN + 20, DEPTH_MAX - 20)))
+	# Viagem no tempo a cada 5 ondas: nova era, novos inimigos, nova música
+	if surv_wave % 5 == 0:
+		stage_idx = (stage_idx + 1) % stages.size()
+		stage = stages[stage_idx]
+		bg.stage = stage
+		_play_stage_music(false)
+		surv_break = 4.5
+		hud.show_message("VIAGEM NO TEMPO: %s" % stage.name, 3.0)
+		shake(8.0)
+		for k in 8:
+			spawn_spark(Vector2(cam_x + randf_range(-400, 400), randf_range(120, 480)), Color(0.6, 0.9, 1), 1.5)
