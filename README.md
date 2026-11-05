@@ -60,10 +60,14 @@ No título, escolha o modo e a fase/arena e aperte **O** para abrir o menu onlin
 | Entrar direto por IP | Para a opção acima ou para jogar na mesma rede. |
 | Configurar servidor | Endereço do servidor intermediário. |
 
-**Criar sala** e **Entrar em sala** usam o **servidor intermediário** da pasta
-[`relay-server/`](relay-server/README.md). Ele precisa ser publicado uma vez, de graça (por exemplo no Render,
-que já vem configurado pelo arquivo `render.yaml`). Depois, coloque o endereço em
-*Configurar servidor* ou em `DEFAULT_RELAY_URL` no `scripts/net.gd`.
+**Criar sala** e **Entrar em sala** usam o **servidor intermediário** oficial do jogo,
+`wss://punho-do-tempo-relay.onrender.com` (já configurado por padrão — não precisa fazer nada).
+O código dele está na pasta [`relay-server/`](relay-server/README.md). Para usar outro servidor,
+mude o endereço em *Configurar servidor* (deixar em branco volta ao padrão).
+
+> O servidor está no plano gratuito do Render: depois de ~15 minutos sem uso ele "dorme" e leva
+> cerca de 1 minuto para acordar. Se "Criar sala" falhar, espere um pouco e tente de novo
+> (ou abra https://punho-do-tempo-relay.onrender.com no navegador para acordá-lo).
 
 Como funciona: o anfitrião roda a partida; os convidados enviam só os comandos e recebem
 o estado do jogo (~30 vezes por segundo, compactado, cerca de 20–25 KB/s por convidado).

@@ -1,5 +1,7 @@
 # Servidor intermediário (relay) do Punho do Tempo
 
+Servidor oficial publicado: **wss://punho-do-tempo-relay.onrender.com** (já é o padrão do jogo).
+
 Com este servidor, os amigos jogam online **sem abrir portas no roteador**:
 o anfitrião e os convidados só fazem conexões de saída para o servidor, que
 repassa as mensagens entre eles. O jogo continua rodando no computador do anfitrião;

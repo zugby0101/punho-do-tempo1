@@ -19,7 +19,7 @@ const CONFIG_PATH := "user://online.cfg"
 ## Endereço padrão do servidor intermediário. Depois de publicar o relay-server,
 ## coloque o endereço aqui (ex.: "wss://punho-relay.onrender.com") para que todos
 ## que baixarem o jogo já usem o seu servidor. Também dá para configurar pelo menu.
-const DEFAULT_RELAY_URL := ""
+const DEFAULT_RELAY_URL := "wss://punho-do-tempo-relay.onrender.com"
 
 var game                     # main.gd atual (troca a cada fase)
 var role := ""               # "", "host" ou "client"
@@ -76,6 +76,8 @@ func _load_config() -> void:
 	relay_url = DEFAULT_RELAY_URL
 	if cfg.load(CONFIG_PATH) == OK:
 		relay_url = cfg.get_value("online", "relay_url", relay_url)
+		if relay_url == "":
+			relay_url = DEFAULT_RELAY_URL
 		last_ip = cfg.get_value("online", "last_ip", last_ip)
 		last_code = cfg.get_value("online", "last_code", last_code)
 
@@ -93,7 +95,7 @@ func set_relay_url(url: String) -> void:
 	var u := url.strip_edges()
 	if u != "" and not (u.begins_with("ws://") or u.begins_with("wss://")):
 		u = ("ws://" if u.begins_with("localhost") or u.begins_with("127.") or u.begins_with("192.168.") else "wss://") + u
-	relay_url = u
+	relay_url = u if u != "" else DEFAULT_RELAY_URL  # vazio = volta ao servidor padrão
 	save_config()
 
 
