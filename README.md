@@ -245,7 +245,7 @@ As trilhas são geradas numa thread, em menos de 1 segundo cada.
 Na história (e na fase secreta), chefes e sub-chefes **conversam com o lutador** quando entram em cena,
 e o chefe tem uma última fala ao ser derrotado — seguida da comemoração do herói:
 
-- **13 chefes** com fala de entrada (2 linhas) e de derrota próprias; **12 sub-chefes** com uma provocação.
+- **13 chefes** com fala de entrada (2 linhas) e de derrota próprias; **cada sub-chefe** com uma provocação.
 - **Cada um dos 14 lutadores** responde no seu jeito (3 respostas a chefes, 2 a sub-chefes, 2 de vitória
   e uma fala especial para o ÉON).
 - **Encontros especiais**: alguns pares têm diálogo próprio (Kai e Mei contra o Shogun, Dmitri e Oksana
