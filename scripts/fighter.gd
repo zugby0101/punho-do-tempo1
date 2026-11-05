@@ -141,7 +141,9 @@ func _physics_process(delta: float) -> void:
 					vz = 230.0
 					height = 0.1
 					vel.x *= 0.5
-					game.shake(5.0)
+					game.shake(5.0, Vector2(0, 0.5))
+					if is_in_group("players"):
+						game.rumble(self, 0.4, 0.5, 0.15)
 					game.sfx.play("thud")
 				else:
 					vz = 0.0

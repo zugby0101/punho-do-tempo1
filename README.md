@@ -267,6 +267,27 @@ investidas e golpes giratórios de sub-chefes e chefes (vermelho; roxo no ÉON) 
 **fitas de luz** presas às pontas reais dos ossos: pés nos chutes, mãos nos socos e investidas, mão e
 pé nos giros, e a ponta da arma quando há uma. No visual clássico ficam só as fitas.
 
+## Tremor de tela e vibração
+
+**Tremor por "trauma"**: cada impacto soma trauma (0..1), que decai sozinho; a tela treme com
+amplitude proporcional a trauma², com ruído suave, então socos leves quase não mexem a câmera e
+golpes fortes sacodem de verdade. Golpes fortes ainda dão um **tranco na direção do golpe** (para
+cima no gancho e na pancada). Golpes seguidos se acumulam.
+
+**Vibração dos controles** (motor leve / motor pesado):
+
+| Situação | Quem vibra | Intensidade |
+|---|---|---|
+| acertar um golpe forte | quem bateu | leve, curta |
+| levar um golpe forte | quem apanhou | forte (cresce com o dano) |
+| cair no chão / perder vida / ser nocauteado | o jogador | forte, longa |
+| especial de impacto no chão (pancada, onda sísmica) | quem usou | média |
+| chefe entrando em cena | todos | média, longa |
+| nocaute de sub-chefe / chefe | todos | forte / máxima |
+
+Teclado não vibra; no online o convidado recebe a vibração no controle dele. **B** no título
+liga/desliga a vibração (salvo nas configurações).
+
 ## Câmera lenta no golpe final
 
 O golpe que derruba um **chefe** (inclusive o ÉON) vira uma cena: congelamento do impacto com clarão

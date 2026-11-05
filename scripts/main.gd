@@ -85,9 +85,11 @@ var name_entries: Array = []
 var ach_page := 0
 var _v_held := false
 var _p_held := false
+var _b_held := false
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
 static var fx_enabled := true    # partículas dos golpes (P no título)
+static var vibration := true     # vibração dos controles (B no título)
 static var settings_loaded := false
 const ONLINE_OPTIONS := [
 	["CRIAR SALA", "pelo servidor intermediário — ninguém precisa abrir portas"],
@@ -116,7 +118,10 @@ var slowmo_focus := Vector2.ZERO
 var slowmo_usec := 0
 var cine := 0.0                # 0..1: faixas de cinema / intensidade (lido pelo HUD)
 var ko_flash := 0.0            # clarão branco do impacto final
-var shake_amt := 0.0
+var shake_amt := 0.0           # amplitude atual do tremor (px), derivada do trauma
+var trauma := 0.0              # 0..1: soma dos impactos recentes; tremor = trauma² (fortes tremem muito mais)
+var shake_kick := Vector2.ZERO # tranco da câmera na direção do golpe
+var shake_t := 0.0
 var combo_count := 0
 var combo_timer := 0.0
 var ending_page := 0
@@ -362,6 +367,16 @@ func _physics_process(delta: float) -> void:
 					spawn_fx("energy", Vector2(cam_x, 470), Vector2(cam_x, 500), 1, Color(1, 0.8, 0.3))
 			elif not Input.is_physical_key_pressed(KEY_P):
 				_p_held = false
+			if Input.is_physical_key_pressed(KEY_B) and not _b_held:
+				_b_held = true
+				vibration = not vibration
+				_save_settings()
+				sfx.play("whoosh", 0.0)
+				if vibration:
+					for j in Input.get_connected_joypads():
+						Input.start_joy_vibration(j, 0.5, 0.7, 0.25)
+			elif not Input.is_physical_key_pressed(KEY_B):
+				_b_held = false
 			if Input.is_action_just_pressed("achievements"):
 				ach_page = 0
 				_set_mode("achievements")
@@ -655,9 +670,20 @@ func _update_camera(delta: float) -> void:
 		if desired > cam_x:
 			cam_x = move_toward(cam_x, desired, 500.0 * delta)
 		cam_x = minf(cam_x, STAGE_LEN - HALF_W)
-	shake_amt = move_toward(shake_amt, 0.0, 40.0 * delta)
-	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_amt
-	camera.position = Vector2(cam_x, 270.0) + off
+	camera.position = Vector2(cam_x, 270.0) + _shake_offset(delta)
+
+
+## Tremor: ruído suave (não pulos aleatórios) com amplitude trauma², mais o tranco direcional.
+func _shake_offset(delta: float) -> Vector2:
+	if not net_client:
+		trauma = maxf(0.0, trauma - 1.5 * delta)
+		shake_amt = trauma * trauma * 20.0
+	else:
+		shake_amt = move_toward(shake_amt, 0.0, 30.0 * delta)
+	shake_kick = shake_kick.lerp(Vector2.ZERO, 1.0 - exp(-12.0 * delta))
+	shake_t += delta
+	var n := Vector2(sin(shake_t * 47.0) + 0.6 * sin(shake_t * 83.0 + 1.3), sin(shake_t * 53.0 + 2.1) + 0.6 * sin(shake_t * 97.0 + 0.4)) / 1.6
+	return n * shake_amt + shake_kick
 
 
 # ---------- Câmera lenta (golpe final em chefes) ----------
@@ -862,6 +888,7 @@ func _spawn_enemy(kind: String, side: int):
 		hud.show_enemy(e)
 		sfx.play("roar", 0.0)
 		shake(12.0)
+		rumble_all(0.4, 0.6, 0.6)
 	elif kind == "boss":
 		hud.show_message("CHEFE: " + e.display_name, 2.5)
 		hud.show_enemy(e)
@@ -919,7 +946,17 @@ func _check_pickups() -> void:
 func on_hit(attacker, target, atk: Dictionary) -> void:
 	var heavy: bool = atk.get("heavy", false)
 	hitstop = 0.09 if heavy else 0.05
-	shake(6.0 if heavy else 2.5)
+	# golpe forte: tremor grande com tranco na direção do golpe e vibração em quem bate e em quem apanha
+	var power := clampf(float(atk.get("dmg", 8)) / 14.0, 0.6, 1.4)
+	var hit_dir := Vector2(attacker.facing, -0.25 if atk.get("pose", "") in ["upper", "slam"] else 0.0)
+	if heavy:
+		shake(7.0 * power, hit_dir)
+		if attacker in players:
+			rumble(attacker, 0.35, 0.5 * power, 0.13)
+		if target in players:
+			rumble(target, 0.7, minf(1.0, 0.85 * power), 0.24)
+	else:
+		shake(1.6, hit_dir * 0.4)
 	var s: float = target.get("body_scale") if target.get("body_scale") != null else 1.0
 	var pos: Vector2 = target.position + Vector2(-attacker.facing * 6.0, -58.0 * s - target.height)
 	var by_player: bool = attacker in players
@@ -967,12 +1004,15 @@ func on_enemy_killed(e) -> void:
 	spawn_fx("ko", e.position + Vector2(0, -50.0 * e.body_scale - e.height), e.position, -e.facing, Color(1, 0.75, 0.3) if big == 1.0 else Color(1, 0.4, 0.9), big)
 	if e.kind == "subboss":
 		hitstop = maxf(hitstop, SLOWMO_SUB.freeze)
+		shake(11.0, Vector2(-e.facing, -0.3))
+		rumble_all(0.7, 0.8, 0.4)
 		shake(10.0)
 		hud.show_message("SUB-CHEFE DERROTADO!", 2.0)
 		_play_stage_music(false)
 	elif e.kind in ["boss", "secret_boss"]:
 		hitstop = maxf(hitstop, SLOWMO_BOSS.freeze)
-		shake(14.0)
+		shake(16.0, Vector2(-e.facing, -0.3))
+		rumble_all(1.0, 1.0, 0.7)
 		hud.show_message("K.O.!", 2.5)
 		pending.clear()
 		if not versus and not survival:
@@ -990,8 +1030,10 @@ func player_died(p) -> void:
 		sfx.play("ko", 0.0)
 		hitstop = 0.3
 		shake(10.0)
+		rumble(p, 1.0, 1.0, 0.5)
 		return
 	p.lives -= 1
+	rumble(p, 0.9, 1.0, 0.45)
 	if p.lives > 0:
 		p.respawn()
 		hud.show_message("P%d: %d VIDAS" % [p.pid + 1, p.lives] if players.size() > 1 else "VIDAS: %d" % p.lives, 1.5)
@@ -1013,8 +1055,30 @@ func player_died(p) -> void:
 			hud.show_message("P%d FORA! (soco para continuar)" % (p.pid + 1), 2.0)
 
 
-func shake(amount: float) -> void:
-	shake_amt = maxf(shake_amt, amount)
+## Tremor de tela. amount ~2 (leve) .. 14 (enorme); dir dá um tranco da câmera para aquele lado.
+func shake(amount: float, dir := Vector2.ZERO) -> void:
+	trauma = minf(1.0, trauma + amount / 16.0)
+	shake_kick = (shake_kick + dir * amount * 0.9).limit_length(16.0)
+
+
+## Vibração no(s) controle(s) de um jogador: fraco = motor leve, forte = motor pesado (0..1).
+## Teclado não vibra; convidados online recebem um evento e vibram o controle deles.
+func rumble(p, weak: float, strong: float, dur: float) -> void:
+	if p == null or not ("sets" in p):
+		return
+	for s in p.sets:
+		var st := String(s)
+		if st.begins_with("j"):
+			if vibration:
+				Input.start_joy_vibration(int(st.substr(1)), clampf(weak, 0, 1), clampf(strong, 0, 1), dur)
+		elif st.begins_with("n") and Net.is_host():
+			net_events.append(["v", st, weak, strong, dur])
+
+
+func rumble_all(weak: float, strong: float, dur: float) -> void:
+	for p in players:
+		if not p.out:
+			rumble(p, weak, strong, dur)
 
 
 func spawn_spark(pos: Vector2, col: Color, size: float = 1.0) -> void:
@@ -1331,9 +1395,7 @@ func _client_tick(delta: float) -> void:
 		if is_instance_valid(n) and n.has_meta("net_target"):
 			var tgt: Vector2 = n.get_meta("net_target")
 			n.position = tgt if n.position.distance_to(tgt) > 150.0 else n.position.lerp(tgt, 0.45)
-	shake_amt = move_toward(shake_amt, 0.0, 40.0 * delta)
-	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_amt
-	camera.position = Vector2(cam_x, 270.0) + off
+	camera.position = Vector2(cam_x, 270.0) + _shake_offset(delta)
 
 
 func _fighter_fields(f) -> Array:
@@ -1377,7 +1439,7 @@ func net_snapshot() -> Array:
 		music_key = music.want
 	var ev := net_events
 	net_events = []
-	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, shake_amt,
+	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, Vector3(shake_amt, shake_kick.x, shake_kick.y),
 		round_num, round_wins, round_winner, ending_page, game_mode, slot_s,
 		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents, surv_wave,
 		dialog_line, dialog_chars, _slowmo_snap()]
@@ -1421,7 +1483,10 @@ func net_apply(snap: Array) -> void:
 	combo_timer = snap[5]
 	show_go = snap[6]
 	cam_x = snap[7]
-	shake_amt = maxf(shake_amt, snap[8])
+	if snap[8] is Vector3:
+		shake_amt = maxf(shake_amt, snap[8].x)
+		if Vector2(snap[8].y, snap[8].z).length() > shake_kick.length():
+			shake_kick = Vector2(snap[8].y, snap[8].z)
 	round_num = snap[9]
 	round_wins = snap[10]
 	round_winner = snap[11]
@@ -1521,6 +1586,10 @@ func net_apply(snap: Array) -> void:
 		match ev[0]:
 			"s": sfx.play_exact(ev[1], float(ev[2]) if ev.size() > 2 else 1.0)
 			"k": spawn_spark(Vector2(ev[1], ev[2]), ev[3], ev[4])
+			"v":
+				if ev[1] == Net.my_set and vibration:
+					for j in Input.get_connected_joypads():
+						Input.start_joy_vibration(j, ev[2], ev[3], ev[4])
 			"x": spawn_fx(ev[1], Vector2(ev[2], ev[3]), Vector2(ev[4], ev[5]), ev[6], ev[7], ev[8])
 			"p": popup(ev[1], Vector2(ev[2], ev[3]), ev[4])
 			"a":
@@ -1789,6 +1858,7 @@ func _load_settings() -> void:
 	if cfg.load("user://settings.cfg") == OK:
 		rig_mode = cfg.get_value("visual", "rig_mode", true)
 		fx_enabled = cfg.get_value("visual", "particles", true)
+		vibration = cfg.get_value("controls", "vibration", true)
 
 
 func _save_settings() -> void:
@@ -1796,6 +1866,7 @@ func _save_settings() -> void:
 	cfg.load("user://settings.cfg")
 	cfg.set_value("visual", "rig_mode", rig_mode)
 	cfg.set_value("visual", "particles", fx_enabled)
+	cfg.set_value("controls", "vibration", vibration)
 	cfg.save("user://settings.cfg")
 
 
