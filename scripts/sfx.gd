@@ -12,6 +12,8 @@ const RATE := 22050
 static var streams := {}
 var players: Array = []
 var idx := 0
+var voice_players: Array = []  # vozes em canais próprios (um grito não corta o impacto)
+var vidx := 0
 var hook: Callable  # online: o anfitrião repassa os sons (nome, tom) aos convidados
 
 
@@ -21,6 +23,11 @@ func _ready() -> void:
 		pl.volume_db = -6.0
 		add_child(pl)
 		players.append(pl)
+	for i in 5:
+		var vp := AudioStreamPlayer.new()
+		vp.volume_db = -3.0
+		add_child(vp)
+		voice_players.append(vp)
 	if streams.is_empty():
 		_build_all()
 
@@ -28,6 +35,8 @@ func _ready() -> void:
 # ============================ Reprodução ============================
 ## pitch: tom base (ex.: personagens grandes mais graves); pitch_var: variação aleatória.
 func play(name: String, pitch_var: float = 0.08, pitch: float = 1.0) -> void:
+	if not streams.has(name) and name.begins_with("vo_"):
+		_load_voice(name)
 	if not streams.has(name):
 		return
 	var final := pitch * (1.0 + randf_range(-pitch_var, pitch_var))
@@ -37,13 +46,49 @@ func play(name: String, pitch_var: float = 0.08, pitch: float = 1.0) -> void:
 
 
 func play_exact(name: String, pitch: float) -> void:
+	if not streams.has(name) and name.begins_with("vo_"):
+		_load_voice(name)
 	if not streams.has(name):
 		return
-	var p: AudioStreamPlayer = players[idx]
-	idx = (idx + 1) % players.size()
+	var p: AudioStreamPlayer
+	if name.begins_with("vo_"):
+		p = voice_players[vidx]
+		vidx = (vidx + 1) % voice_players.size()
+	else:
+		p = players[idx]
+		idx = (idx + 1) % players.size()
 	p.stream = streams[name]
 	p.pitch_scale = clampf(pitch, 0.4, 2.5)
 	p.play()
+
+
+# ============================ Vozes ============================
+## Falas geradas por tools/audio/voices.py (síntese de formantes) em audio/voices/<voz>_<fala>.wav
+const VOICE_DIR := "res://audio/voices/%s.wav"
+const VARIANTS := {"atk": ["atk1", "atk2", "atk3"], "hurt": ["hurt1", "hurt2"]}
+
+
+func _load_voice(name: String) -> void:
+	var path := VOICE_DIR % name.substr(3)
+	if ResourceLoader.exists(path):
+		streams[name] = load(path)
+
+
+## Fala de um personagem. chance: probabilidade de falar; o intervalo mínimo evita
+## uma metralhadora de gritos nos combos.
+func voice(f, line: String, chance := 1.0, min_gap := 0.35) -> void:
+	if f == null or not is_instance_valid(f) or not ("voice_id" in f) or f.voice_id == "":
+		return
+	if randf() > chance:
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - float(f.get_meta("voice_t", -10.0)) < min_gap:
+		return
+	f.set_meta("voice_t", now)
+	var pick: String = line
+	if VARIANTS.has(line):
+		pick = VARIANTS[line][randi() % VARIANTS[line].size()]
+	play("vo_%s_%s" % [f.voice_id, pick], 0.04)
 
 
 # ============================ Síntese ============================

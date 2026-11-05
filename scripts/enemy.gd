@@ -150,6 +150,15 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 		wi = stage_idx % 2
 	if randf() < chance:
 		equip_weapon(era_weapons[wi])
+	# Voz: por tipo; robôs, Ecos da fase secreta e o ÉON têm vozes próprias
+	if hat in ["robot", "visor"]:
+		voice_id = "robot"
+	elif kind == "secret_boss":
+		voice_id = "eon"
+	elif stage.get("style", "") == "void":
+		voice_id = "boss" if kind == "subboss" else "ghost"
+	else:
+		voice_id = kind
 	# Rig 2D da era e do tipo (gerado por tools/rig a partir do Blender)
 	if stage.has("style"):
 		attach_rig("res://rigs/enemies/%s_%s.tscn" % [stage.style, kind])
@@ -298,6 +307,7 @@ func _eon_time_warp() -> void:
 	game.hitstop = 0.6
 	game.shake(14.0)
 	game.sfx.play("warp", 0.0)
+	game.sfx.voice(self, "laugh", 1.0, 0.0)
 	game.popup("ÉON DOBRA O TEMPO!", position + Vector2(0, -170.0), Color(1, 0.85, 0.4))
 	for k in 8:
 		var a := k * TAU / 8.0

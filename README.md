@@ -218,6 +218,26 @@ Quando aparece o sub-chefe ou o chefe, a música muda para uma versão mais ráp
 
 O tom acompanha o porte: grandalhões e chefes soam mais graves. Online, o convidado ouve
 exatamente o mesmo som e tom do anfitrião.
+
+**Vozes e gritos** (`audio/voices/`, geradas por `tools/audio/voices.py` com síntese de formantes
+— sem gravações): **22 vozes** (os 14 lutadores, cada um com tom e timbre próprios, e 8 de inimigos:
+brigão, ágil, grandalhão rosnando, sub-chefe, chefe com eco, robô, fantasma sussurrado e o ÉON
+com voz dupla e eco), cada uma com 12 falas:
+
+| Fala | Quando |
+|---|---|
+| "hah!", "hyah!", "tah!" | ao golpear (variam; os inimigos falam menos) |
+| "hoa-aah!" | golpes fortes |
+| grito de assinatura | especial — ex.: Kai "ki-a-i!", Mei "hwa-ta!", Tama "ka-ma-te!", Itzel "a-ri-ba!" |
+| "uh!", "agh!" | ao levar dano |
+| "waaah" | ao ser derrubado |
+| "aaagh" | nocaute |
+| "hup!" | pulo |
+| "yeah!" | vitória (fim da era, round do Versus) |
+| "ha-ha-ha" | chefes e sub-chefes ao chegar; o ÉON ao dobrar o tempo |
+
+As vozes tocam em canais próprios (não cortam os efeitos) e cada personagem tem um intervalo
+mínimo entre falas. Para regerar: `python tools/audio/voices.py` (precisa de numpy e scipy).
 As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
 ## Rigs 2D (Blender + Godot)
@@ -246,7 +266,8 @@ scripts/characters.gd   os 14 personagens e seus finais
 scripts/background.gd   os 12 cenários procedurais
 scripts/hud.gd          interface e telas
 scripts/music.gd        trilha sonora gerada por algoritmo
-scripts/sfx.gd          efeitos sonoros sintetizados
+scripts/sfx.gd          efeitos sonoros sintetizados e reprodução das vozes
+audio/voices/           vozes e gritos (gerados por tools/audio/voices.py)
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante
 scripts/weapon_item.gd, thrown.gd   arma no chão e arma arremessada

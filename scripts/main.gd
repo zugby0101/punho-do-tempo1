@@ -657,6 +657,8 @@ func _update_waves(delta: float) -> void:
 
 
 func _stage_cleared() -> void:
+	for p in active_players():
+		sfx.voice(p, "win", 1.0, 0.0)
 	for p in players:
 		if not p.out:
 			p.score += 2000 + p.lives * 1000
@@ -731,6 +733,8 @@ func _spawn_enemy(kind: String, side: int):
 	entities.add_child(e)
 	if e.is_boss():
 		_play_stage_music(true)
+	if e.is_boss():
+		sfx.voice(e, "laugh", 1.0, 0.0)
 	if kind == "secret_boss":
 		hud.show_message("CHEFE SECRETO: " + e.display_name, 3.0)
 		hud.show_enemy(e)
@@ -1050,6 +1054,7 @@ func _update_versus(delta: float) -> void:
 		if alive.size() == 1:
 			round_winner = alive[0].pid
 			round_wins[round_winner] += 1
+			sfx.voice(alive[0], "win", 1.0, 0.0)
 			alive[0].invuln = 3.0
 		else:
 			round_winner = -1

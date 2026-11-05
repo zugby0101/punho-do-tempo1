@@ -63,6 +63,7 @@ func apply_character(c: Dictionary) -> void:
 	move_speed = Vector2(230, 140) * float(c.speed)
 	special_def = c.get("special", {})
 	attach_rig("res://rigs/%s.tscn" % rig_slug(c.name))
+	voice_id = rig_slug(c.name)
 	queue_redraw()
 
 
@@ -112,6 +113,7 @@ func _update(delta: float) -> void:
 				game.sfx.play("special")
 			elif Controls.just(sets, "jump"):
 				set_state("jump")
+				game.sfx.voice(self, "jump", 0.45)
 				vz = 640.0
 				height = 0.1
 				vel *= 1.15
@@ -198,6 +200,7 @@ func _start_special() -> void:
 			attack.pose = "slam"
 			attack.phase = -1.0
 	game.sfx.play("sp_" + rig_slug(display_name), 0.02)
+	game.sfx.voice(self, "special", 1.0, 0.0)
 	game.popup(sp.name + "!", position + Vector2(0, -130.0 * body_scale), sp.color)
 
 

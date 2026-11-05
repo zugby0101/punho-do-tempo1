@@ -44,6 +44,7 @@ var net_pose := ""
 var net_phase := 0.0
 var net_df := 1
 var net_rig_anim := "idle"
+var voice_id := ""  # voz em audio/voices (ver tools/audio/voices.py)
 var net_rig_u := 0.0
 # Rig 2D (Skeleton2D gerado do Blender). Quando existe e está ativo, substitui o desenho procedural.
 var rig: Node2D = null
@@ -202,6 +203,13 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 		set_state("hurt")
 		vel = Vector2(dir * 130.0, 0.0)
 	_on_hurt()
+	if game != null and dmg > 0:
+		if hp <= 0:
+			game.sfx.voice(self, "ko", 1.0, 0.0)
+		elif state == "knockdown":
+			game.sfx.voice(self, "fall", 0.85, 0.2)
+		else:
+			game.sfx.voice(self, "hurt", 0.55, 0.45)
 
 
 func start_attack(a: Dictionary) -> void:
@@ -221,6 +229,8 @@ func _process_attack(delta: float, targets: Array) -> bool:
 		lunged = true
 		vel.x = facing * float(a.get("lunge", 0.0))
 		game.sfx.play(game.sfx.swing_for(attack, weapon), 0.06, game.sfx.body_pitch(body_scale))
+		var talk := 0.55 if is_in_group("players") else 0.3
+		game.sfx.voice(self, "heavy" if attack.get("heavy", false) else "atk", talk * (1.3 if attack.get("heavy", false) else 1.0))
 	elif a.has("dash") and t >= act_start and t < act_end:
 		vel.x = facing * float(a.dash)
 	else:
