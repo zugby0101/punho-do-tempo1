@@ -1189,7 +1189,7 @@ func _client_tick(delta: float) -> void:
 
 func _fighter_fields(f) -> Array:
 	return [f.position.x, f.position.y, f.height, f.facing, f.state, f.state_time, f.anim_t, f.flash, f.invuln,
-		f._current_pose(), f._attack_phase(), f.draw_facing(), f.body_scale, f.hp, f.max_hp, f.weapon]
+		f._current_pose(), f._attack_phase(), f.draw_facing(), f.body_scale, f.hp, f.max_hp, f.weapon] + f.rig_anim()
 
 
 ## Anfitrião: monta o estado completo da partida.
@@ -1249,7 +1249,9 @@ func _apply_fighter(n, d: Array, i: int) -> int:
 	n.hp = d[i + 13]
 	n.max_hp = d[i + 14]
 	n.weapon = d[i + 15]
-	return i + 16
+	n.net_rig_anim = d[i + 16]
+	n.net_rig_u = d[i + 17]
+	return i + 18
 
 
 ## Convidado: aplica o estado recebido do anfitrião.
@@ -1380,7 +1382,7 @@ func _net_create(d: Array):
 			n = EnemyScript.new()
 			n.game = self
 			n.add_to_group("enemies")
-			n.setup(d[18], stage, stage_idx)
+			n.setup(d[20], stage, stage_idx)
 		"C":
 			n = CrateScript.new()
 			n.game = self

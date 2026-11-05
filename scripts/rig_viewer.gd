@@ -9,7 +9,7 @@ const KINDS := [["thug", "★"], ["knife", "★★"], ["brute", "★★★"], ["
 const KIND_SCALE := {"thug": 1.0, "knife": 1.0, "brute": 1.3, "subboss": 1.3, "boss": 1.5, "secret_boss": 1.6}
 const Weapons = preload("res://scripts/weapons.gd")
 const ANIMS := ["idle", "walk", "jab", "cross", "upper", "kick", "jumpkick", "jump", "special",
-	"swing", "throw", "slam", "charge", "dive", "hurt", "down"]
+	"swing", "throw", "slam", "charge", "dive", "hurt", "fall", "getup", "down"]
 
 var rigs: Array = []
 var anim_i := 0
@@ -90,7 +90,7 @@ func _process(delta: float) -> void:
 		var ap: AnimationPlayer = r[0].get_node("AnimationPlayer")
 		var an2: String = an if ap.has_animation(an) else "idle"
 		var anim := ap.get_animation(an2)
-		var pos := fmod(t, anim.length) if anim.loop_mode != Animation.LOOP_NONE else clampf(fmod(t, 1.2) / 1.0, 0.0, anim.length)
+		var pos := fmod(t, anim.length) if anim.loop_mode != Animation.LOOP_NONE else clampf(fmod(t, 1.4) / 1.0, 0.0, anim.length)
 		ap.play(an2)
 		ap.seek(pos, true)
 		ap.pause()

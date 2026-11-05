@@ -25,6 +25,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chars as chars_mod  # noqa: E402
 import looks as looks_mod  # noqa: E402
+import moves as M  # noqa: E402
 import poses as P  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -735,6 +736,44 @@ def key_pose(arm, j, ps, frame):
         pbs[nm].keyframe_insert("rotation_euler", frame=frame)
 
 
+FRAMES_U = 60  # golpes e estados: u = 0..1 vira os quadros 0..60
+
+
+def make_move_action(arm, j, cname, anim, prof):
+    """Cria a Action a partir das poses-chave de moves.py, com a curva de cada trecho."""
+    mv = M.build(anim, prof)
+    act = bpy.data.actions.new("%s_%s" % (cname, anim))
+    act.use_fake_user = True
+    arm.animation_data_create()
+    arm.animation_data.action = act
+    curve = {}
+    for k in mv["keys"]:
+        f = round(k["t"] * FPS) if mv["loop"] else round(k["t"] * FRAMES_U)
+        key_pose(arm, j, k["pose"], f)
+        curve[f] = k
+    try:
+        fcurves = act.fcurves
+    except AttributeError:  # Actions em camadas (Blender 4.4+)
+        fcurves = [fc for layer in act.layers for strip in layer.strips for bag in strip.channelbags for fc in bag.fcurves]
+    for fc in fcurves:
+        for kp in fc.keyframe_points:
+            k = curve.get(round(kp.co.x))
+            if k is None:
+                continue
+            kp.interpolation = k["interp"]
+            if k["interp"] not in ("CONSTANT", "LINEAR", "BEZIER"):
+                kp.easing = k["easing"]
+            if "back" in k:
+                kp.back = k["back"]
+        fc.update()
+    last = round(mv["length"] * FPS) if mv["loop"] else FRAMES_U
+    step = 2 if mv["loop"] and last > 60 else 1
+    frames = [(f / FPS if mv["loop"] else f / FRAMES_U, f) for f in range(0, last + 1, step)]
+    if frames[-1][1] != last:
+        frames.append((last / FPS if mv["loop"] else 1.0, last))
+    return act, frames, mv
+
+
 def make_action(arm, j, cname, anim):
     act = bpy.data.actions.new("%s_%s" % (cname, anim))
     act.use_fake_user = True
@@ -897,13 +936,15 @@ def build_group(characters, blend_name, json_dir, preview_name, cols, anims):
         make_part_objects(arm, parts, name)
         rest = rest_frame(arm, specs)
         data_anims = {}
+        prof = c["profile"]
         for anim in anims:
-            _act, frames = make_action(arm, j, name, anim)
+            _act, frames, mv = make_move_action(arm, j, name, anim, prof)
             keys = []
             for t, f in frames:
                 scn.frame_set(f)
-                keys.append({"t": round(t, 5), "bones": export_frame(arm, specs, skip=fx_names)})
-            data_anims[anim] = {"length": round(P.anim_length(anim), 5), "loop": P.ANIMATIONS[anim]["kind"] == "loop", "keys": keys}
+                tg = {k: b2g(arm.pose.bones[cb].head) for k, cb in (("hf", "ctrl_hand_f"), ("hb", "ctrl_hand_b"), ("ff", "ctrl_foot_f"), ("bf", "ctrl_foot_b"))}
+                keys.append({"t": round(t, 5), "bones": export_frame(arm, specs, skip=fx_names), "targets": tg})
+            data_anims[anim] = {"length": round(mv["length"], 5), "loop": mv["loop"], "keys": keys, "poses": len(mv["keys"])}
         if fx_names:
             fx_act, frames = make_fx_action(arm, name, fx_names)
             keys = []
@@ -947,10 +988,14 @@ def main():
         for c in players:
             c["slug"] = chars_mod.slug(c["name"])
             c["group"] = "players"
-        build_group(players, "punho_rigs.blend", OUT / "json", "preview.png", 14, list(P.ANIMATIONS))
+            c["profile"] = M.player_profile(c["slug"])
+        build_group(players, "punho_rigs.blend", OUT / "json", "preview.png", 14, M.PLAYER_ANIMS)
     if group in ("all", "enemies"):
-        build_group(looks_mod.enemy_rigs(), "punho_rigs_inimigos.blend", OUT / "json" / "enemies",
-                    "preview_inimigos.png", 5, ENEMY_ANIMS)
+        enemies = looks_mod.enemy_rigs()
+        for c in enemies:
+            c["profile"] = M.enemy_profile(c["kind"], c["hat"])
+        build_group(enemies, "punho_rigs_inimigos.blend", OUT / "json" / "enemies",
+                    "preview_inimigos.png", 5, M.ENEMY_ANIMS)
     print("OK:", OUT)
 
 

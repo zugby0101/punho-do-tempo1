@@ -43,6 +43,8 @@ var weapon: Dictionary = {}  # arma na mão (vazia = desarmado)
 var net_pose := ""
 var net_phase := 0.0
 var net_df := 1
+var net_rig_anim := "idle"
+var net_rig_u := 0.0
 # Rig 2D (Skeleton2D gerado do Blender). Quando existe e está ativo, substitui o desenho procedural.
 var rig: Node2D = null
 var rig_ap: AnimationPlayer = null
@@ -327,7 +329,8 @@ func _draw() -> void:
 	if state == "special" and pose == "dive":
 		rot = PI * 0.45
 	if use_rig:
-		_sync_rig(off, rot * df, Vector2(df * s, s), pose, net_phase if net else _attack_phase())
+		var ra: Array = [net_rig_anim, net_rig_u] if net else rig_anim()
+		_sync_rig(off, rot * df, Vector2(df * s, s), ra[0], ra[1], net_phase if net else _attack_phase())
 		return
 	draw_set_transform(off, rot * df, Vector2(df * s, s))
 	_draw_body(pose, net_phase if net else _attack_phase())
@@ -351,19 +354,71 @@ func _weapon_angle(pose: String, p: float) -> float:
 
 ## Coloca o rig 2D na mesma pose que o desenho procedural teria.
 ## Idle/andar tocam pelo relógio do lutador; golpes usam a fase (-1..1 -> 0..1 na animação).
-func _sync_rig(off: Vector2, rot: float, scl: Vector2, pose: String, phase: float) -> void:
+## Qual animação do rig tocar e em que ponto (0..1), a partir do estado real do lutador.
+## Golpes: preparação -> 0..0.30, janela de acerto -> 0.30..0.42, recuperação -> 0.42..1
+## (o quadro de impacto da animação cai no início exato da janela de acerto).
+func rig_anim() -> Array:
+	match state:
+		"idle", "walk":
+			return [state, -1.0]  # loop pelo relógio do lutador
+		"attack":
+			if attack.is_empty():
+				return ["idle", -1.0]
+			return [attack.get("pose", "jab"), _attack_u()]
+		"special":
+			return [attack.get("pose", "special"), _phase_u(float(attack.get("phase", 1.0)))]
+		"jump":
+			if not attack.is_empty():
+				var at: float = get("air_t") if get("air_t") != null else state_time
+				return ["jumpkick", clampf(at / 0.16, 0.0, 1.0)]
+			return ["jump", clampf(0.5 - vz / 1280.0, 0.0, 1.0)]
+		"hurt":
+			return ["hurt", clampf(state_time / maxf(hurt_time, 0.01), 0.0, 1.0)]
+		"knockdown":
+			return ["fall", clampf(state_time / 0.5, 0.0, 1.0)]
+		"getup":
+			return ["getup", clampf(state_time / 0.4, 0.0, 1.0)]
+		"down", "dead":
+			return ["down", 0.0]
+	return ["idle", -1.0]
+
+
+func _attack_u() -> float:
+	var st: float = attack.startup
+	var ac: float = attack.active
+	var rc: float = attack.recovery
+	var t := state_time
+	if t < st:
+		return 0.30 * t / maxf(st, 0.001)
+	if t < st + ac:
+		return 0.30 + 0.12 * (t - st) / maxf(ac, 0.001)
+	return 0.42 + 0.58 * clampf((t - st - ac) / maxf(rc, 0.001), 0.0, 1.0)
+
+
+## Especiais controlam a fase à mão (-1 preparando, 1 golpeando, 1->0 recuperando).
+func _phase_u(p: float) -> float:
+	if p < 0.0:
+		return 0.30 * -p
+	if p >= 1.0:
+		return 0.36
+	return 0.42 + 0.58 * (1.0 - p)
+
+
+func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, phase: float) -> void:
 	rig.visible = true
 	rig.position = off
 	rig.rotation = rot
 	rig.scale = scl
 	rig.modulate = Color(5, 5, 5) if flash > 0.0 else Color(1, 1, 1)
-	var an := pose if rig_ap.has_animation(pose) else "idle"
+	if not rig_ap.has_animation(an):
+		an = "idle"
+		u = -1.0
 	var anim := rig_ap.get_animation(an)
 	var tpos := 0.0
-	if anim.loop_mode != Animation.LOOP_NONE:
+	if anim.loop_mode != Animation.LOOP_NONE or u < 0.0:
 		tpos = fmod(anim_t, anim.length)
-	elif anim.length > 0.5:
-		tpos = clampf((phase + 1.0) * 0.5, 0.0, anim.length)
+	else:
+		tpos = clampf(u, 0.0, 1.0) * anim.length
 	if rig_ap.assigned_animation != an:
 		rig_ap.play(an)
 		rig_ap.pause()

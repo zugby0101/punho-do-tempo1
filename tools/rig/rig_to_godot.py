@@ -64,6 +64,39 @@ def unwrap(values):
     return out
 
 
+def reduce_keys(times, values, tol):
+    """Redução de keyframes (Douglas-Peucker no tempo): mantém só as chaves necessárias para
+    reproduzir a curva amostrada dentro da tolerância. Valores: float ou [x, y]."""
+    n = len(times)
+    if n <= 2:
+        return list(range(n))
+
+    def dist(i, a, b):
+        tt = (times[i] - times[a]) / max(times[b] - times[a], 1e-9)
+        va, vb, vi = values[a], values[b], values[i]
+        if isinstance(vi, (list, tuple)):
+            return max(abs(va[c] + (vb[c] - va[c]) * tt - vi[c]) for c in range(len(vi)))
+        return abs(va + (vb - va) * tt - vi)
+
+    keep = {0, n - 1}
+    stack = [(0, n - 1)]
+    while stack:
+        a, b = stack.pop()
+        best, bi = 0.0, -1
+        for i in range(a + 1, b):
+            d = dist(i, a, b)
+            if d > best:
+                best, bi = d, i
+        if bi >= 0 and best > tol:
+            keep.add(bi)
+            stack += [(a, bi), (bi, b)]
+    return sorted(keep)
+
+
+ROT_TOL = 0.004   # rad (~0,2°)
+POS_TOL = 0.06    # px
+
+
 def build_scene(rig):
     bones = rig["bones"]
     paths = bone_paths(bones)
@@ -88,6 +121,9 @@ def build_scene(rig):
             if bn in POS_TRACK_BONES:
                 tracks.append(("position", [k["bones"][bn]["pos"] for k in a["keys"]], 1))
             for prop, vals, interp in tracks:
+                idx = reduce_keys(times, vals, ROT_TOL if prop == "rotation" else POS_TOL)
+                tk = [times[i] for i in idx]
+                vals = [vals[i] for i in idx]
                 lines += [
                     'tracks/%d/type = "value"' % ti,
                     "tracks/%d/imported = false" % ti,
@@ -96,8 +132,8 @@ def build_scene(rig):
                     "tracks/%d/interp = %d" % (ti, interp),
                     "tracks/%d/loop_wrap = true" % ti,
                     "tracks/%d/keys = {" % ti,
-                    '"times": PackedFloat32Array(%s),' % ", ".join(f(t) for t in times),
-                    '"transitions": PackedFloat32Array(%s),' % ", ".join("1" for _ in times),
+                    '"times": PackedFloat32Array(%s),' % ", ".join(f(t) for t in tk),
+                    '"transitions": PackedFloat32Array(%s),' % ", ".join("1" for _ in tk),
                     '"update": 0,',
                     '"values": [%s]' % ", ".join(f(v) if prop == "rotation" else vec(v) for v in vals),
                     "}",
@@ -177,28 +213,25 @@ def fk(bones, frame, name):
 
 
 def check(rig):
-    """Confere se as mãos e pés do rig (após o IK do Blender) chegam onde o jogo pede."""
+    """Confere, com a cinemática direta dos dados exportados (o mesmo cálculo do Godot), se mãos
+    e pés chegam aos alvos de IK do Blender — descontando quando o alvo está além do alcance."""
     bones = rig["bones"]
-    reach = {"hf": ("arm_f_lo", P.FOREARM), "hb": ("arm_b_lo", P.FOREARM), "ff": ("leg_f_lo", P.SHIN), "bf": ("leg_b_lo", P.SHIN)}
+    reach = {"hf": ("arm_f_lo", P.FOREARM, P.UPPER_ARM), "hb": ("arm_b_lo", P.FOREARM, P.UPPER_ARM),
+             "ff": ("leg_f_lo", P.SHIN, P.THIGH), "bf": ("leg_b_lo", P.SHIN, P.THIGH)}
     worst = (0.0, "")
     for an, a in rig["animations"].items():
         if a.get("fx"):
             continue
-        smp = P.samples(an)
-        for (t, ps), key in zip(smp, a["keys"]):
-            for target, (bone, ln) in reach.items():
+        for key in a["keys"]:
+            for target, (bone, ln, up_ln) in reach.items():
                 x, y, ang = fk(bones, key["bones"], bone)
                 tip = (x + math.cos(ang) * ln, y + math.sin(ang) * ln)
-                # distância máxima alcançável a partir do ombro/quadril
-                up = bones[bone]["parent"]
-                ux, uy, _ = fk(bones, key["bones"], up)
-                want = ps[target]
-                full = math.hypot(want[0] - ux, want[1] - uy)
-                limit = (P.UPPER_ARM if "arm" in bone else P.THIGH) + ln
-                expected = max(0.0, full - limit)  # quanto falta por o membro ser curto
+                ux, uy, _ = fk(bones, key["bones"], bones[bone]["parent"])
+                want = key["targets"][target]
+                expected = max(0.0, math.hypot(want[0] - ux, want[1] - uy) - (ln + up_ln))
                 err = math.hypot(tip[0] - want[0], tip[1] - want[1]) - expected
                 if err > worst[0]:
-                    worst = (err, "%s/%s/%s" % (an, target, round(t, 2)))
+                    worst = (err, "%s/%s/%.2f" % (an, target, key["t"]))
     return worst
 
 

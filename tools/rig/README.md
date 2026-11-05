@@ -45,13 +45,58 @@ do rig (`WeaponSlot`), como no desenho original.
   de cada personagem. Os lutadores vêm de `scripts/characters.gd` (`chars.py`) e os inimigos
   de `scripts/stages.gd` (`looks.py`) — sem duplicar dados. Os chefes ganham capa, e os
   41 penteados, chapéus e capacetes do jogo foram portados para polígonos.
-- **16 animações nos lutadores** e as **11 que os inimigos usam** (`idle`, `walk`, `jab`, `kick`,
-  `slam`, `charge`, `special`, `throw`, `swing`, `hurt`, `down`). Lista completa: `idle`, `walk` (loops) e `jab`, `cross`, `upper`, `kick`, `swing`, `slam`,
-  `charge` (golpes: o tempo 0→1 da animação é a fase do golpe −1→1, preparação → acerto),
-  mais as poses `jump`, `jumpkick`, `special`, `throw`, `dive`, `hurt`, `down`.
-  As poses vêm de `poses.py`, portado do desenho original (`fighter.gd`).
+- **Animações de combate (`moves.py`):** poses-chave com a curva de suavização de cada trecho
+  (interpolação do Blender: EXPO, BACK, SINE, QUAD, CONSTANT...). O Blender interpola, resolve o
+  IK e o resultado é amostrado quadro a quadro. Lutadores têm 18 animações e inimigos 13.
 - O script descobre sozinho as convenções de eixo do Blender e escolhe o ângulo de polo de
   cada membro testando qual reproduz a pose de repouso (erro 0 px).
+
+## Animações de combate (`moves.py`)
+
+Princípios de animação aplicados em todas: **antecipação**, golpe acelerado até o **impacto**,
+**excesso** (follow-through), sustentação, **recuperação com assentamento**, **arcos** (balanço da
+arma, gancho), **contrapeso** (braços no chute), **atraso da cabeça** em relação ao tronco e **peso**
+(personagens pesados preparam mais cedo e mais fundo, e assentam com menos excesso).
+
+**Sincronia com a lógica do jogo.** Nos golpes, o tempo da animação (0→1) segue o progresso real
+do ataque, calculado em `fighter.gd` (`rig_anim()`):
+
+| Trecho do ataque no jogo | Tempo na animação | O que acontece |
+|---|---|---|
+| preparação (startup) | 0,00 → 0,30 | antecipação |
+| janela de acerto (active) | 0,30 → 0,42 | **impacto exatamente em 0,30** + excesso + sustentação |
+| recuperação (recovery) | 0,42 → 1,00 | volta à guarda e assenta |
+
+Assim o quadro de impacto sempre coincide com o primeiro quadro em que o golpe acerta, e a
+pausa de impacto (hitstop) congela a pose no ponto certo. Pulo, voadora, dano, queda e levantada
+também seguem o estado real (velocidade vertical, tempo de atordoamento etc.).
+
+**Animações:** `idle`, `walk` (ciclo com contato, descida, passagem e subida, braços em oposição),
+`jab`, `cross` (giro de quadril, calcanhar de trás sobe), `upper` (agacha e sobe), `kick` (recolhe,
+estende, recolhe, apoia), `swing` (arco por cima da cabeça), `slam`, `charge`, `throw`, `special`
+(giro), `dive`, `jump` (impulso, encolhe, aterrissa), `jumpkick`, `hurt`, `fall`, `down`, `getup`.
+
+**Personalidade (perfis):**
+
+| Quem | Idle e jeito de lutar |
+|---|---|
+| Mateus | ginga da capoeira (troca a base, braços cruzando o rosto), chute alto |
+| Valentina, Luca, Kofi | quique de boxeador; Kofi com a mão da frente mais à frente |
+| Jake, Dmitri, Amara | postura curvada de luta, transferindo o peso; golpes pesados |
+| Itzel | quique acrobático, chute alto |
+| Oksana | quique alegre do hopak, chute muito alto |
+| Amélie | postura alta e leve do savate, chute alto |
+| Kai | base baixa e firme do caratê, só a respiração |
+| Mei | mão aberta à frente, peso balançando (kung fu) |
+| Tama | base larga do haka, com pisada |
+| Kirra | ritmo do muay thai marcado com a perna, guarda alta |
+| Inimigos ★ | brigão desleixado, chute baixo |
+| Inimigos ★★ e ninjas | ágeis e agachados |
+| Inimigos ★★★ | respiração pesada, braços caídos, golpes lentos |
+| Sub-chefes | quique confiante |
+| Chefes | peito estufado, balanço lento e ameaçador |
+| Robôs (visor/robot) | movimentos mecânicos, em degraus |
+| ÉON | **flutua** com as pernas soltas |
 
 ## Efeitos animados (capas, halo, ÉON, cabelo e faixas)
 
