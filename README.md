@@ -267,6 +267,16 @@ investidas e golpes giratórios de sub-chefes e chefes (vermelho; roxo no ÉON) 
 **fitas de luz** presas às pontas reais dos ossos: pés nos chutes, mãos nos socos e investidas, mão e
 pé nos giros, e a ponta da arma quando há uma. No visual clássico ficam só as fitas.
 
+## Câmera lenta no golpe final
+
+O golpe que derruba um **chefe** (inclusive o ÉON) vira uma cena: congelamento do impacto com clarão
+branco, depois o tempo cai para 15% por cerca de 1,5 s, a câmera dá zoom (1,4×) e enquadra o chefe,
+entram faixas de cinema e o som e a música ficam graves e lentos (`AudioServer.playback_speed_scale`).
+Tudo volta suavemente ao normal. Nos **sub-chefes** é uma versão mais curta (30%, zoom 1,2×). Usa o
+`Engine.time_scale`, então personagens, partículas, rastros e animações desaceleram juntos; a
+sequência é cronometrada em tempo real e, no online, os convidados recebem o mesmo efeito. Não
+acontece no Versus.
+
 ## Diálogos com chefes
 
 Na história (e na fase secreta), chefes e sub-chefes **conversam com o lutador** quando entram em cena,

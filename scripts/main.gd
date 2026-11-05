@@ -106,6 +106,16 @@ var pending: Array = []
 var show_go := false
 var go_timer := 0.0
 var hitstop := 0.0
+
+# Câmera lenta do golpe final em chefes (tudo em tempo real: o Engine.time_scale desacelera o resto)
+const SLOWMO_BOSS := {"freeze": 0.16, "in": 0.14, "hold": 1.5, "out": 0.65, "low": 0.15, "zoom": 1.4, "audio": 0.62}
+const SLOWMO_SUB := {"freeze": 0.10, "in": 0.10, "hold": 0.7, "out": 0.45, "low": 0.3, "zoom": 1.2, "audio": 0.78}
+var slowmo_t := -999.0         # tempo real desde o início (negativo = congelamento do impacto)
+var slowmo_cfg: Dictionary = {}
+var slowmo_focus := Vector2.ZERO
+var slowmo_usec := 0
+var cine := 0.0                # 0..1: faixas de cinema / intensidade (lido pelo HUD)
+var ko_flash := 0.0            # clarão branco do impacto final
 var shake_amt := 0.0
 var combo_count := 0
 var combo_timer := 0.0
@@ -124,6 +134,7 @@ var bg
 
 
 func _ready() -> void:
+	_reset_slowmo()
 	randomize()
 	Controls.setup()
 	_load_settings()
@@ -649,6 +660,81 @@ func _update_camera(delta: float) -> void:
 	camera.position = Vector2(cam_x, 270.0) + off
 
 
+# ---------- Câmera lenta (golpe final em chefes) ----------
+func start_slowmo(focus: Vector2, boss: bool) -> void:
+	slowmo_cfg = SLOWMO_BOSS if boss else SLOWMO_SUB
+	slowmo_t = -float(slowmo_cfg.freeze)
+	slowmo_focus = focus
+	slowmo_usec = Time.get_ticks_usec()
+	ko_flash = 1.0
+
+
+func _reset_slowmo() -> void:
+	slowmo_t = -999.0
+	slowmo_cfg = {}
+	cine = 0.0
+	ko_flash = 0.0
+	Engine.time_scale = 1.0
+	AudioServer.playback_speed_scale = 1.0
+	if camera != null:
+		camera.zoom = Vector2.ONE
+		camera.offset = Vector2.ZERO
+
+
+func _process(_delta: float) -> void:
+	var now := Time.get_ticks_usec()
+	var real_dt := clampf((now - slowmo_usec) / 1000000.0, 0.0, 0.1)
+	slowmo_usec = now
+	ko_flash = maxf(0.0, ko_flash - real_dt * 3.0)
+	if net_client or slowmo_cfg.is_empty():
+		return
+	if paused:
+		return
+	slowmo_t += real_dt
+	var c := slowmo_cfg
+	var low: float = c.low
+	var scale := 1.0
+	var t := slowmo_t
+	if t < 0.0:
+		scale = 1.0  # congelamento do impacto (hitstop)
+	elif t < c.in:
+		scale = lerpf(1.0, low, ease(t / c.in, 0.4))
+	elif t < c.in + c.hold:
+		scale = lerpf(low, low * 1.4, (t - c.in) / c.hold)  # quase parado, voltando aos poucos
+	elif t < c.in + c.hold + c.out:
+		scale = lerpf(low * 1.4, 1.0, smoothstep(0.0, 1.0, (t - c.in - c.hold) / c.out))
+	else:
+		_reset_slowmo()
+		return
+	var a := clampf((1.0 - scale) / (1.0 - low), 0.0, 1.0) if t >= 0.0 else 0.0
+	if t < 0.0:
+		a = 0.0
+	Engine.time_scale = scale
+	AudioServer.playback_speed_scale = lerpf(1.0, c.audio, a)
+	cine = maxf(cine, a) if t < c.in + c.hold else a
+	var z := lerpf(1.0, c.zoom, a)
+	camera.zoom = Vector2(z, z)
+	# enquadra o chefe sem mostrar fora da tela atual
+	var view := Vector2(HALF_W, 270.0) / z
+	var center := Vector2(cam_x, 270.0)
+	var want := center.lerp(slowmo_focus, 0.85 * a) - center
+	camera.offset = Vector2(clampf(want.x, -(HALF_W - view.x), HALF_W - view.x), clampf(want.y, -(270.0 - view.y), 270.0 - view.y))
+
+
+## Estado da câmera lenta para os convidados online.
+func _slowmo_snap() -> Array:
+	return [Engine.time_scale, camera.zoom.x, camera.offset, cine, ko_flash, AudioServer.playback_speed_scale]
+
+
+func _apply_slowmo_snap(s: Array) -> void:
+	Engine.time_scale = s[0]
+	camera.zoom = Vector2(s[1], s[1])
+	camera.offset = s[2]
+	cine = s[3]
+	ko_flash = maxf(ko_flash, s[4])
+	AudioServer.playback_speed_scale = s[5]
+
+
 func _update_waves(delta: float) -> void:
 	if not locked:
 		if wave_idx < waves.size() and cam_x >= waves[wave_idx].x:
@@ -875,15 +961,17 @@ func on_enemy_killed(e) -> void:
 			else:
 				Ach.track(p, "subs")
 	sfx.play("ko")
+	if e.kind in ["boss", "subboss", "secret_boss"] and not versus:
+		start_slowmo(e.position + Vector2(0, -55.0 * e.body_scale - e.height), e.kind != "subboss")
 	var big := 1.6 if e.kind in ["boss", "subboss", "secret_boss"] else 1.0
 	spawn_fx("ko", e.position + Vector2(0, -50.0 * e.body_scale - e.height), e.position, -e.facing, Color(1, 0.75, 0.3) if big == 1.0 else Color(1, 0.4, 0.9), big)
 	if e.kind == "subboss":
-		hitstop = 0.25
+		hitstop = maxf(hitstop, SLOWMO_SUB.freeze)
 		shake(10.0)
 		hud.show_message("SUB-CHEFE DERROTADO!", 2.0)
 		_play_stage_music(false)
 	elif e.kind in ["boss", "secret_boss"]:
-		hitstop = 0.4
+		hitstop = maxf(hitstop, SLOWMO_BOSS.freeze)
 		shake(14.0)
 		hud.show_message("K.O.!", 2.5)
 		pending.clear()
@@ -1224,6 +1312,7 @@ func become_client() -> void:
 
 ## Saiu do online (conexão caiu ou anfitrião encerrou): volta ao título.
 func leave_online() -> void:
+	_reset_slowmo()
 	party = []
 	skip_title = false
 	get_tree().reload_current_scene.call_deferred()
@@ -1291,7 +1380,7 @@ func net_snapshot() -> Array:
 	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, shake_amt,
 		round_num, round_wins, round_winner, ending_page, game_mode, slot_s,
 		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents, surv_wave,
-		dialog_line, dialog_chars]
+		dialog_line, dialog_chars, _slowmo_snap()]
 
 
 func _apply_fighter(n, d: Array, i: int) -> int:
@@ -1348,6 +1437,8 @@ func net_apply(snap: Array) -> void:
 	if snap.size() > 25:
 		dialog_line = snap[24]
 		dialog_chars = snap[25]
+	if snap.size() > 26:
+		_apply_slowmo_snap(snap[26])
 	# Entidades
 	var seen := {}
 	for d in snap[22]:

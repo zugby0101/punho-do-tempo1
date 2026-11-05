@@ -126,6 +126,7 @@ func _draw_achievements() -> void:
 
 
 func _draw_main() -> void:
+	_draw_cinematic()
 	if game.mode in ["play", "stageclear", "gameover", "roundstart", "roundend", "match", "dialog"] and not game.players.is_empty():
 		_draw_game_hud()
 	if message_timer > 0.0 and game.mode == "play":
@@ -619,3 +620,20 @@ func _portrait(r: Rect2, p: Dictionary, flip: bool) -> void:
 				var a := PI + k * PI / 6.0
 				draw_circle(c + Vector2(cos(a), sin(a)) * 24.0, 10.0, hair)
 			draw_circle(c + Vector2(0, 22), 14.0, hair)
+
+
+# =================== Câmera lenta do golpe final ===================
+## Faixas de cinema, leve escurecimento das bordas e o clarão branco do impacto.
+func _draw_cinematic() -> void:
+	var c: float = game.cine
+	if c > 0.0:
+		var e := ease(c, 0.5)
+		var bar := 48.0 * e
+		draw_rect(Rect2(0, 0, W, bar), Color(0, 0, 0, 0.92))
+		draw_rect(Rect2(0, 540.0 - bar, W, bar), Color(0, 0, 0, 0.92))
+		for i in 6:  # vinheta simples nas laterais
+			var w := 90.0 - i * 15.0
+			draw_rect(Rect2(0, bar, w, 540.0 - 2.0 * bar), Color(0, 0, 0, 0.05 * e))
+			draw_rect(Rect2(W - w, bar, w, 540.0 - 2.0 * bar), Color(0, 0, 0, 0.05 * e))
+	if game.ko_flash > 0.0:
+		draw_rect(Rect2(0, 0, W, 540), Color(1, 1, 1, 0.75 * game.ko_flash * game.ko_flash))
