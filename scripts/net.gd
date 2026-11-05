@@ -6,20 +6,38 @@ extends Node
 ## - O CONVIDADO envia só os seus comandos e desenha o estado que recebe
 ##   (cerca de 30 vezes por segundo, compactado).
 ##
-## Pela internet, o anfitrião precisa liberar a porta UDP no roteador
-## (ou os jogadores usam uma VPN de jogos, como Tailscale/ZeroTier/Radmin).
+## Dois jeitos de conectar:
+##   "relay": pelo servidor intermediário (pasta relay-server/), com código de sala.
+##            Todos só fazem conexões de saída: ninguém precisa abrir portas.
+##   "enet":  conexão direta por IP (o anfitrião precisa liberar a porta UDP 7777).
 
 const Controls = preload("res://scripts/controls.gd")
 const PORT := 7777
 const MAX_CLIENTS := 3
+const CONFIG_PATH := "user://online.cfg"
+
+## Endereço padrão do servidor intermediário. Depois de publicar o relay-server,
+## coloque o endereço aqui (ex.: "wss://punho-relay.onrender.com") para que todos
+## que baixarem o jogo já usem o seu servidor. Também dá para configurar pelo menu.
+const DEFAULT_RELAY_URL := ""
 
 var game                     # main.gd atual (troca a cada fase)
 var role := ""               # "", "host" ou "client"
+var transport := ""          # "", "enet" ou "relay"
 var peer_sets := {}          # (anfitrião) id do convidado -> conjunto remoto "n1".."n3"
 var server_ip := ""
+var room_code := ""
+var relay_url := ""
+var last_ip := "127.0.0.1"
+var last_code := ""
 var status := ""             # mensagem para a interface
 var status_timer := 0.0
 var frame := 0
+
+# Relay (WebSocket)
+var ws: WebSocketPeer
+var ws_was_open := false
+var ws_pending := {}         # mensagem de controle a enviar quando abrir
 
 # Convidado: contadores de toques (para o anfitrião detectar "acabou de apertar")
 var press_counts: Array = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -32,6 +50,7 @@ func _ready() -> void:
 	multiplayer.connected_to_server.connect(_on_connected)
 	multiplayer.connection_failed.connect(_on_failed)
 	multiplayer.server_disconnected.connect(_on_server_lost)
+	_load_config()
 
 
 func is_host() -> bool:
@@ -51,11 +70,38 @@ func set_status(s: String, dur := 4.0) -> void:
 	status_timer = dur
 
 
-func _process(delta: float) -> void:
-	status_timer -= delta
+# ---------------- Configuração ----------------
+func _load_config() -> void:
+	var cfg := ConfigFile.new()
+	relay_url = DEFAULT_RELAY_URL
+	if cfg.load(CONFIG_PATH) == OK:
+		relay_url = cfg.get_value("online", "relay_url", relay_url)
+		last_ip = cfg.get_value("online", "last_ip", last_ip)
+		last_code = cfg.get_value("online", "last_code", last_code)
 
 
-# ---------------- Anfitrião ----------------
+func save_config() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("online", "relay_url", relay_url)
+	cfg.set_value("online", "last_ip", last_ip)
+	cfg.set_value("online", "last_code", last_code)
+	cfg.save(CONFIG_PATH)
+
+
+## Aceita "meuservidor.com", "ws://..." ou "wss://...".
+func set_relay_url(url: String) -> void:
+	var u := url.strip_edges()
+	if u != "" and not (u.begins_with("ws://") or u.begins_with("wss://")):
+		u = ("ws://" if u.begins_with("localhost") or u.begins_with("127.") or u.begins_with("192.168.") else "wss://") + u
+	relay_url = u
+	save_config()
+
+
+func has_relay() -> bool:
+	return relay_url != ""
+
+
+# ---------------- Conexão direta (ENet) ----------------
 func host() -> bool:
 	close()
 	var p := ENetMultiplayerPeer.new()
@@ -66,8 +112,28 @@ func host() -> bool:
 	p.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
 	multiplayer.multiplayer_peer = p
 	role = "host"
+	transport = "enet"
 	set_status("Partida aberta na porta %d" % PORT)
 	return true
+
+
+func join(ip: String) -> void:
+	close()
+	var p := ENetMultiplayerPeer.new()
+	var err := p.create_client(ip.strip_edges(), PORT)
+	if err != OK:
+		set_status("Endereço inválido: %s" % ip, 5.0)
+		return
+	p.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
+	multiplayer.multiplayer_peer = p
+	role = "client"
+	transport = "enet"
+	server_ip = ip.strip_edges()
+	last_ip = server_ip
+	save_config()
+	set_status("Conectando a %s..." % server_ip, 10.0)
+	if game != null:
+		game.become_client()
 
 
 func local_ip() -> String:
@@ -81,6 +147,124 @@ func connected_count() -> int:
 	return peer_sets.size()
 
 
+func _on_connected() -> void:
+	set_status("Conectado! Aperte SOCO para entrar na partida.")
+
+
+func _on_failed() -> void:
+	set_status("Não foi possível conectar a %s" % server_ip, 6.0)
+	_back_to_title()
+
+
+func _on_server_lost() -> void:
+	set_status("O anfitrião encerrou a partida.", 6.0)
+	_back_to_title()
+
+
+# ---------------- Servidor intermediário (relay) ----------------
+func relay_host() -> void:
+	close()
+	_relay_open({"op": "host"})
+	set_status("Criando sala no servidor...", 15.0)
+
+
+func relay_join(code: String) -> void:
+	close()
+	last_code = code.strip_edges().to_upper()
+	save_config()
+	_relay_open({"op": "join", "room": last_code})
+	role = "client"
+	transport = "relay"
+	set_status("Entrando na sala %s..." % last_code, 15.0)
+	if game != null:
+		game.become_client()
+
+
+func _relay_open(first_msg: Dictionary) -> void:
+	ws = WebSocketPeer.new()
+	ws.outbound_buffer_size = 4 * 1024 * 1024
+	ws.inbound_buffer_size = 4 * 1024 * 1024
+	ws_was_open = false
+	ws_pending = first_msg
+	transport = "relay"
+	var err := ws.connect_to_url(relay_url)
+	if err != OK:
+		set_status("Endereço do servidor inválido: %s" % relay_url, 6.0)
+		ws = null
+		_back_to_title()
+
+
+func _relay_poll() -> void:
+	if ws == null:
+		return
+	ws.poll()
+	var st := ws.get_ready_state()
+	if st == WebSocketPeer.STATE_OPEN:
+		if not ws_was_open:
+			ws_was_open = true
+			if not ws_pending.is_empty():
+				ws.send_text(JSON.stringify(ws_pending))
+				ws_pending = {}
+		while ws != null and ws.get_available_packet_count() > 0:
+			var pkt := ws.get_packet()
+			if ws.was_string_packet():
+				# pode encerrar a conexão (ws vira null) — por isso o laço confere ws
+				_relay_control(JSON.parse_string(pkt.get_string_from_utf8()))
+			else:
+				_relay_data(pkt)
+	elif st == WebSocketPeer.STATE_CLOSED:
+		var had := ws_was_open
+		ws = null
+		if role == "client" or role == "host" or not had:
+			set_status("Conexão com o servidor perdida." if had else "Não foi possível falar com o servidor (%s)." % relay_url, 6.0)
+			_back_to_title()
+
+
+func _relay_control(msg) -> void:
+	if not (msg is Dictionary):
+		return
+	match msg.get("op", ""):
+		"hosted":
+			role = "host"
+			room_code = msg.room
+			set_status("Sala %s criada! Passe o código para os amigos." % room_code, 8.0)
+			if game != null:
+				game.on_relay_hosted()
+		"joined":
+			room_code = msg.get("room", last_code)
+			set_status("Conectado à sala %s! Aperte SOCO para entrar." % room_code)
+		"peer_join":
+			_on_peer_connected(int(msg.id))
+		"peer_leave":
+			_on_peer_disconnected(int(msg.id))
+		"room_closed":
+			set_status("O anfitrião encerrou a sala.", 6.0)
+			_back_to_title()
+		"error":
+			set_status(String(msg.get("msg", "Erro no servidor.")), 6.0)
+			_back_to_title()
+
+
+func _relay_data(pkt: PackedByteArray) -> void:
+	if role == "host":
+		if pkt.size() < 3:
+			return
+		var sender := (pkt[0] << 8) | pkt[1]
+		var msg = bytes_to_var(pkt.slice(2))
+		if msg is Array and msg.size() == 2 and msg[0] == "in" and peer_sets.has(sender):
+			Controls.set_remote(peer_sets[sender], msg[1])
+	elif role == "client":
+		var msg = bytes_to_var(pkt)
+		if msg is Array and msg.size() == 3 and msg[0] == "snap":
+			_apply_snapshot(msg[1], msg[2])
+
+
+# ---------------- Comum aos dois meios ----------------
+func _process(delta: float) -> void:
+	status_timer -= delta
+	_relay_poll()
+
+
 func _on_peer_connected(id: int) -> void:
 	if not is_host():
 		return
@@ -89,7 +273,7 @@ func _on_peer_connected(id: int) -> void:
 		if not (n in used):
 			peer_sets[id] = n
 			Controls.remote[n] = Controls.new_remote()
-			set_status("Um jogador online entrou! (aperte SOCO para escolher o lutador)")
+			set_status("Um jogador online entrou! (ele aperta SOCO para escolher o lutador)")
 			return
 
 
@@ -103,7 +287,7 @@ func _on_peer_disconnected(id: int) -> void:
 		set_status("Um jogador online saiu da partida.")
 
 
-## Recebe os comandos de um convidado.
+## Recebe os comandos de um convidado (conexão direta).
 @rpc("any_peer", "unreliable_ordered")
 func client_input(data: Array) -> void:
 	if not is_host():
@@ -123,51 +307,18 @@ func host_tick() -> void:
 	var snap: Array = game.net_snapshot()
 	var raw := var_to_bytes(snap)
 	var packed := raw.compress(FileAccess.COMPRESSION_ZSTD)
-	snapshot.rpc(packed, raw.size())
-
-
-# ---------------- Convidado ----------------
-func join(ip: String) -> void:
-	close()
-	var p := ENetMultiplayerPeer.new()
-	var err := p.create_client(ip.strip_edges(), PORT)
-	if err != OK:
-		set_status("Endereço inválido: %s" % ip, 5.0)
-		return
-	p.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
-	multiplayer.multiplayer_peer = p
-	role = "client"
-	server_ip = ip.strip_edges()
-	set_status("Conectando a %s..." % server_ip, 10.0)
-	if game != null:
-		game.become_client()
-
-
-func _on_connected() -> void:
-	set_status("Conectado! Aperte SOCO para entrar na partida.")
-
-
-func _on_failed() -> void:
-	set_status("Não foi possível conectar a %s" % server_ip, 6.0)
-	_back_to_title()
-
-
-func _on_server_lost() -> void:
-	set_status("O anfitrião encerrou a partida.", 6.0)
-	_back_to_title()
-
-
-func _back_to_title() -> void:
-	close()
-	if game != null:
-		game.leave_online()
+	if transport == "relay":
+		if ws != null and ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+			var out := PackedByteArray([0, 0])  # destino 0 = todos os convidados
+			out.append_array(var_to_bytes(["snap", packed, raw.size()]))
+			ws.put_packet(out)
+	else:
+		snapshot.rpc(packed, raw.size())
 
 
 ## Convidado: envia os comandos locais (qualquer teclado/controle deste computador).
 func client_tick() -> void:
-	if not is_client() or multiplayer.multiplayer_peer == null:
-		return
-	if multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+	if not is_client():
 		return
 	var sets := Controls.all_sets()
 	var bits := 0
@@ -178,12 +329,21 @@ func client_tick() -> void:
 		if Controls.just(sets, a):
 			press_counts[i] += 1
 	var v := Controls.vector(sets)
-	client_input.rpc_id(1, [bits, press_counts.duplicate(), v.x, v.y])
+	var data := [bits, press_counts.duplicate(), v.x, v.y]
+	if transport == "relay":
+		if ws != null and ws.get_ready_state() == WebSocketPeer.STATE_OPEN and room_code != "":
+			ws.put_packet(var_to_bytes(["in", data]))
+	elif multiplayer.multiplayer_peer != null and multiplayer.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
+		client_input.rpc_id(1, data)
 
 
 @rpc("authority", "unreliable_ordered")
 func snapshot(packed: PackedByteArray, size: int) -> void:
-	if not is_client() or game == null:
+	_apply_snapshot(packed, size)
+
+
+func _apply_snapshot(packed: PackedByteArray, size: int) -> void:
+	if not is_client() or game == null or size <= 0 or size > 8 * 1024 * 1024:
 		return
 	var raw := packed.decompress(size, FileAccess.COMPRESSION_ZSTD)
 	var snap = bytes_to_var(raw)
@@ -191,11 +351,22 @@ func snapshot(packed: PackedByteArray, size: int) -> void:
 		game.net_apply(snap)
 
 
+func _back_to_title() -> void:
+	close()
+	if game != null:
+		game.leave_online()
+
+
 func close() -> void:
+	if ws != null:
+		ws.close()
+		ws = null
 	if multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 		multiplayer.multiplayer_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	role = ""
+	transport = ""
+	room_code = ""
 	peer_sets.clear()
 	Controls.remote.clear()
 	press_counts = [0, 0, 0, 0, 0, 0, 0, 0]

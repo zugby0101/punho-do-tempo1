@@ -68,17 +68,26 @@ func _draw() -> void:
 	_draw_net_status()
 	match game.mode:
 		"title": _draw_title()
+		"online_menu": _draw_online_menu()
 		"join_input":
 			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
-			_center(200, "ENTRAR EM PARTIDA ONLINE", 40, Color(0.5, 0.9, 1))
-			_center(260, "Digite o IP do anfitrião e aperte ENTER", 20, Color(1, 1, 1))
+			match game.input_purpose:
+				"code":
+					_center(200, "ENTRAR EM SALA", 40, Color(0.5, 0.9, 1))
+					_center(260, "Digite o código de 4 letras da sala e aperte ENTER", 20, Color(1, 1, 1))
+				"url":
+					_center(190, "SERVIDOR INTERMEDIÁRIO", 40, Color(0.5, 0.9, 1))
+					_center(240, "Endereço do relay (ex.: wss://punho-relay.onrender.com)", 18, Color(1, 1, 1))
+					_center(266, "Veja relay-server/README.md para publicar o seu servidor de graça.", 15, Color(0.75, 0.75, 0.85))
+				_:
+					_center(200, "ENTRAR DIRETO POR IP", 40, Color(0.5, 0.9, 1))
+					_center(260, "Digite o IP do anfitrião e aperte ENTER", 20, Color(1, 1, 1))
+					_center(430, "Mesma rede: use o IP local que aparece na tela do anfitrião.", 14, Color(0.75, 0.75, 0.85))
+					_center(452, "Pela internet: porta 7777 (UDP) liberada no roteador, ou uma VPN de jogos.", 14, Color(0.75, 0.75, 0.85))
 			_center(380, "ESC para voltar", 16, Color(0.8, 0.8, 0.9))
-			_center(430, "Mesma rede: use o IP local que aparece na tela do anfitrião.", 14, Color(0.75, 0.75, 0.85))
-			_center(452, "Pela internet: o anfitrião precisa liberar a porta 7777 (UDP) no roteador", 14, Color(0.75, 0.75, 0.85))
-			_center(472, "ou vocês podem usar uma VPN de jogos (Tailscale, ZeroTier, Radmin VPN).", 14, Color(0.75, 0.75, 0.85))
 		"connecting":
 			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
-			_center(250, "CONECTANDO...", 44, Color(0.5, 0.9, 1))
+			_center(250, "CRIANDO SALA..." if not game.net_client else "CONECTANDO...", 44, Color(0.5, 0.9, 1))
 			_center(300, Net.status if Net.status != "" else "Aguardando o anfitrião", 18, Color(1, 1, 1))
 			_center(350, "ESC para cancelar", 15, Color(0.8, 0.8, 0.9))
 		"select": _draw_select()
@@ -194,7 +203,7 @@ func _draw_title() -> void:
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
-	_center(415, "ONLINE:  O = criar partida (anfitrião)   •   I = entrar numa partida (IP)", 16, Color(0.5, 0.9, 1))
+	_center(415, "ONLINE: aperte O para criar ou entrar numa sala pela internet", 16, Color(0.5, 0.9, 1))
 	if vs:
 		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
 	else:
@@ -315,11 +324,34 @@ func _draw_net_status() -> void:
 	if not Net.online() or game.mode in ["connecting", "join_input"]:
 		return
 	var txt := ""
-	if Net.is_host():
+	if Net.is_host() and Net.transport == "relay":
+		txt = "ONLINE · SALA %s · passe o código para os amigos · convidados: %d" % [Net.room_code, Net.connected_count()]
+	elif Net.is_host():
 		txt = "ONLINE · anfitrião · IP %s · porta %d · convidados: %d" % [Net.local_ip(), Net.PORT, Net.connected_count()]
+	elif Net.transport == "relay":
+		txt = "ONLINE · sala %s" % Net.room_code
 	else:
 		txt = "ONLINE · conectado a %s" % Net.server_ip
 	var y := 512.0 if game.mode in ["play", "roundstart", "roundend"] else 290.0
 	if game.mode == "select":
 		y = 14.0
 	_text(Vector2(0, y), txt, 13, Color(0.5, 0.9, 1, 0.9), HORIZONTAL_ALIGNMENT_CENTER, W)
+
+
+func _draw_online_menu() -> void:
+	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
+	_center(80, "JOGAR ONLINE", 44, Color(0.5, 0.9, 1))
+	var mode_txt := "Modo: %s   •   %s: %s" % ["VERSUS" if game.game_mode == "versus" else "HISTÓRIA", "Arena" if game.game_mode == "versus" else "Fase", game.stage.name]
+	_center(112, mode_txt, 15, Color(0.8, 0.8, 0.9))
+	var opts: Array = game.ONLINE_OPTIONS
+	for i in opts.size():
+		var sel: bool = i == game.online_choice
+		var y := 170.0 + i * 58.0
+		if sel:
+			draw_rect(Rect2(170, y - 30, 620, 52), Color(0.3, 0.6, 1, 0.25))
+			draw_rect(Rect2(170, y - 30, 620, 52), Color(0.5, 0.9, 1), false, 2.0)
+		_center(y, ("► " if sel else "") + opts[i][0], 22, Color(1, 0.9, 0.3) if sel else Color(1, 1, 1))
+		_center(y + 17, opts[i][1], 13, Color(0.75, 0.75, 0.85))
+	var srv: String = Net.relay_url if Net.has_relay() else "nenhum servidor configurado (opção CONFIGURAR SERVIDOR)"
+	_center(470, "Servidor: " + srv, 13, Color(0.5, 0.9, 1) if Net.has_relay() else Color(1, 0.6, 0.5))
+	_center(505, "▲▼ escolher   •   SOCO/ENTER confirmar   •   ESC voltar", 15, Color(0.8, 0.8, 0.9))

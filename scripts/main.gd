@@ -33,7 +33,6 @@ static var stage_idx := 0
 static var party: Array = []
 static var skip_title := false
 static var game_mode := "story"  # "story" (história/co-op) ou "versus"
-static var last_ip := "127.0.0.1"
 
 const VERSUS_WINS := 2  # rounds para vencer a partida
 
@@ -55,6 +54,15 @@ var net_client := false   # este computador é convidado (só desenha o que rece
 var net_nodes := {}       # convidado: id do anfitrião -> nó local
 var net_events: Array = []  # anfitrião: sons/efeitos a repassar
 var ip_edit: LineEdit
+var input_purpose := "ip"  # ip, code, url
+var online_choice := 0
+const ONLINE_OPTIONS := [
+	["CRIAR SALA", "pelo servidor intermediário — ninguém precisa abrir portas"],
+	["ENTRAR EM SALA", "digite o código de 4 letras que o anfitrião recebeu"],
+	["HOSPEDAR DIRETO", "conexão por IP (precisa liberar a porta 7777 UDP)"],
+	["ENTRAR DIRETO POR IP", "na mesma rede, ou com a porta liberada / VPN"],
+	["CONFIGURAR SERVIDOR", "endereço do servidor intermediário (relay)"],
+]
 var hud_layer: CanvasLayer
 var paused := false
 var mode_time := 0.0
@@ -242,17 +250,22 @@ func _physics_process(delta: float) -> void:
 		"join_input":
 			if Input.is_physical_key_pressed(KEY_ESCAPE):
 				_close_ip_edit()
+				_set_mode("online_menu")
+			return
+		"online_menu":
+			_update_online_menu()
+			return
+		"connecting":
+			# anfitrião esperando o servidor criar a sala
+			if Input.is_physical_key_pressed(KEY_ESCAPE):
+				Net.close()
 				_set_mode("title")
 			return
 		"title":
-			if Input.is_action_just_pressed("net_host"):
-				if Net.host():
-					sfx.play("go", 0.0)
-					_set_mode("select")
-					_add_slot("k1")
-				return
-			if Input.is_action_just_pressed("net_join"):
-				_open_ip_edit()
+			if Input.is_action_just_pressed("net_host") or Input.is_action_just_pressed("net_join"):
+				online_choice = 0
+				_set_mode("online_menu")
+				sfx.play("go", 0.0)
 				return
 			if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
 				game_mode = "versus" if game_mode == "story" else "story"
@@ -889,13 +902,60 @@ func _versus_champion():
 
 
 # =================== Online ===================
-func _open_ip_edit() -> void:
+func _update_online_menu() -> void:
+	if Input.is_physical_key_pressed(KEY_ESCAPE) and mode_time > 0.2:
+		_set_mode("title")
+		return
+	if Input.is_action_just_pressed("move_down"):
+		online_choice = (online_choice + 1) % ONLINE_OPTIONS.size()
+		sfx.play("whoosh", 0.0)
+	elif Input.is_action_just_pressed("move_up"):
+		online_choice = posmod(online_choice - 1, ONLINE_OPTIONS.size())
+		sfx.play("whoosh", 0.0)
+	elif mode_time > 0.25 and (Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("start")):
+		sfx.play("go", 0.0)
+		match online_choice:
+			0:
+				if not Net.has_relay():
+					_open_ip_edit("url")
+				else:
+					Net.relay_host()
+					_set_mode("connecting")
+			1:
+				_open_ip_edit("code" if Net.has_relay() else "url")
+			2:
+				if Net.host():
+					_set_mode("select")
+					_add_slot("k1")
+			3:
+				_open_ip_edit("ip")
+			4:
+				_open_ip_edit("url")
+
+
+## Anfitrião pelo relay: o servidor criou a sala.
+func on_relay_hosted() -> void:
+	_set_mode("select")
+	_add_slot("k1")
+
+
+func _open_ip_edit(purpose := "ip") -> void:
+	input_purpose = purpose
 	_set_mode("join_input")
 	ip_edit = LineEdit.new()
-	ip_edit.text = last_ip
-	ip_edit.placeholder_text = "IP do anfitrião (ex.: 192.168.0.10)"
-	ip_edit.position = Vector2(280, 300)
-	ip_edit.size = Vector2(400, 44)
+	match purpose:
+		"ip":
+			ip_edit.text = Net.last_ip
+			ip_edit.placeholder_text = "IP do anfitrião (ex.: 192.168.0.10)"
+		"code":
+			ip_edit.text = Net.last_code
+			ip_edit.placeholder_text = "Código da sala (ex.: K7QX)"
+			ip_edit.max_length = 4
+		"url":
+			ip_edit.text = Net.relay_url
+			ip_edit.placeholder_text = "wss://seu-relay.onrender.com"
+	ip_edit.position = Vector2(230, 300)
+	ip_edit.size = Vector2(500, 44)
 	ip_edit.add_theme_font_size_override("font_size", 24)
 	ip_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hud_layer.add_child(ip_edit)
@@ -911,11 +971,19 @@ func _close_ip_edit() -> void:
 
 
 func _on_ip_submitted(text: String) -> void:
-	if text.strip_edges() == "":
+	var v := text.strip_edges()
+	if v == "" and input_purpose != "url":
 		return
-	last_ip = text.strip_edges()
 	_close_ip_edit()
-	Net.join(last_ip)
+	match input_purpose:
+		"ip":
+			Net.join(v)
+		"code":
+			Net.relay_join(v)
+		"url":
+			Net.set_relay_url(v)
+			Net.set_status("Servidor configurado: %s" % (Net.relay_url if Net.relay_url != "" else "(nenhum)"), 4.0)
+			_set_mode("online_menu")
 
 
 ## Este computador passa a ser convidado: apaga o mundo local e espera o anfitrião.
