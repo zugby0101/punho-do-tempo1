@@ -61,6 +61,71 @@ func _scores_block(y: float) -> void:
 
 
 func _draw() -> void:
+	_draw_main()
+	if game.mode != "achievements":
+		_draw_toasts()
+
+
+func _draw_toasts() -> void:
+	var i := 0
+	for tt in Ach.toasts:
+		var k := clampf((4.0 - tt[2]) * 4.0, 0.0, 1.0) * clampf(tt[2] * 3.0, 0.0, 1.0)
+		var x := W - 330.0 * k
+		var y := 96.0 + i * 62.0
+		var c: Color = tt[1]
+		draw_rect(Rect2(x, y, 320, 54), Color(0.05, 0.03, 0.1, 0.92))
+		draw_rect(Rect2(x, y, 320, 54), c, false, 2.0)
+		_trophy(Vector2(x + 28, y + 27), c, true)
+		_text(Vector2(x + 54, y + 22), "CONQUISTA DESBLOQUEADA!", 12, Color(0.8, 0.8, 0.9))
+		_text(Vector2(x + 54, y + 43), tt[0], 17, c)
+		i += 1
+
+
+## Ícone de troféu.
+func _trophy(c: Vector2, col: Color, on: bool) -> void:
+	var cc := col if on else Color(0.3, 0.3, 0.35)
+	draw_circle(c, 18.0, Color(cc.r, cc.g, cc.b, 0.18))
+	draw_colored_polygon(PackedVector2Array([c + Vector2(-10, -10), c + Vector2(10, -10), c + Vector2(7, 2), c + Vector2(-7, 2)]), cc)
+	draw_circle(c + Vector2(0, 0), 7.0, cc)
+	draw_rect(Rect2(c + Vector2(-2, 6), Vector2(4, 5)), cc)
+	draw_rect(Rect2(c + Vector2(-7, 10), Vector2(14, 3)), cc)
+	draw_arc(c + Vector2(-10, -5), 4.0, PI * 0.5, PI * 1.5, 6, cc, 2.0)
+	draw_arc(c + Vector2(10, -5), 4.0, -PI * 0.5, PI * 0.5, 6, cc, 2.0)
+	if not on:
+		draw_rect(Rect2(c + Vector2(-5, -3), Vector2(10, 8)), Color(0.15, 0.15, 0.18))
+
+
+func _draw_achievements() -> void:
+	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.92))
+	var total: int = Ach.LIST.size()
+	_center(48, "CONQUISTAS", 36, Color(1, 0.85, 0.3))
+	_center(76, "%d de %d desbloqueadas" % [Ach.unlocked_count(), total], 15, Color(0.8, 0.8, 0.9))
+	var per := 16
+	var pages := int(ceil(total / float(per)))
+	var start: int = game.ach_page * per
+	for k in range(start, mini(start + per, total)):
+		var a: Array = Ach.LIST[k]
+		var j := k - start
+		var x := 24.0 + (j % 2) * 468.0
+		var y := 96.0 + (j / 2) * 52.0
+		var on: bool = Ach.is_unlocked(a[0])
+		var col: Color = a[6]
+		draw_rect(Rect2(x, y, 456, 46), Color(col.r, col.g, col.b, 0.12) if on else Color(1, 1, 1, 0.04))
+		draw_rect(Rect2(x, y, 456, 46), col if on else Color(0.3, 0.3, 0.35), false, 1.5)
+		_trophy(Vector2(x + 24, y + 23), col, on)
+		_text(Vector2(x + 50, y + 20), a[1], 15, col if on else Color(0.75, 0.75, 0.8))
+		_text(Vector2(x + 50, y + 38), a[2], 12, Color(0.85, 0.85, 0.9) if on else Color(0.6, 0.6, 0.65))
+		if on:
+			_text(Vector2(x + 300, y + 20), "✔ " + String(Ach.unlocked[a[0]]), 11, Color(0.5, 1, 0.6), HORIZONTAL_ALIGNMENT_RIGHT, 150)
+		elif a[3] != "flag":
+			var goal := int(a[5])
+			var prog := mini(Ach.progress(a), goal)
+			_text(Vector2(x + 300, y + 20), "%d / %d" % [prog, goal], 12, Color(0.8, 0.8, 0.9), HORIZONTAL_ALIGNMENT_RIGHT, 150)
+			_bar(Vector2(x + 350, y + 30), 96, 5, float(prog) / goal, col)
+	_center(520, "Página %d/%d  •  ◄ ► trocar página  •  ESC voltar" % [game.ach_page + 1, pages], 14, Color(0.8, 0.8, 0.9))
+
+
+func _draw_main() -> void:
 	if game.mode in ["play", "stageclear", "gameover", "roundstart", "roundend", "match"] and not game.players.is_empty():
 		_draw_game_hud()
 	if message_timer > 0.0 and game.mode == "play":
@@ -70,6 +135,7 @@ func _draw() -> void:
 		"title": _draw_title()
 		"online_menu": _draw_online_menu()
 		"ranking": _draw_ranking()
+		"achievements": _draw_achievements()
 		"name_entry":
 			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
 			if not game.name_queue.is_empty():
@@ -215,7 +281,7 @@ func _draw_title() -> void:
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
-	_center(415, "ONLINE: O = criar ou entrar numa sala   •   R = ranking de pontuação", 16, Color(0.5, 0.9, 1))
+	_center(415, "ONLINE: O = criar/entrar numa sala  •  R = ranking  •  M = conquistas (%d/%d)" % [Ach.unlocked_count(), Ach.LIST.size()], 16, Color(0.5, 0.9, 1))
 	if vs:
 		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
 	else:

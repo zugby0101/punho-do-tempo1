@@ -95,8 +95,9 @@ static func setup() -> void:
 		for ev in _events("j", a, -1):
 			InputMap.action_add_event(g, ev)
 	# Teclas do modo online (no título)
-	for pair in [["net_host", KEY_O], ["net_join", KEY_I], ["ranking", KEY_R]]:  # O: menu online, R: ranking
-		InputMap.add_action(pair[0])
+	for pair in [["net_host", KEY_O], ["net_join", KEY_I], ["ranking", KEY_R], ["achievements", KEY_M], ["achievements", KEY_TAB]]:  # O: online, R: ranking, M/Tab: conquistas
+		if not InputMap.has_action(pair[0]):
+			InputMap.add_action(pair[0])
 		var kev := InputEventKey.new()
 		kev.physical_keycode = pair[1]
 		InputMap.action_add_event(pair[0], kev)

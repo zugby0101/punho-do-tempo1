@@ -26,7 +26,7 @@ O jogo começa quando todos estão prontos.
 | Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ |
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
-Enter confirma nos menus, Esc ou P pausa. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
+Enter confirma nos menus, Esc ou P pausa. No título: O = online, R = ranking, M = conquistas. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 No título, ◄ ► escolhe a fase inicial.
 
 Detalhes do co-op:
@@ -72,6 +72,22 @@ mude o endereço em *Configurar servidor* (deixar em branco volta ao padrão).
 Como funciona: o anfitrião roda a partida; os convidados enviam só os comandos e recebem
 o estado do jogo (~30 vezes por segundo, compactado, cerca de 20–25 KB/s por convidado).
 Os menus entre as fases podem ser confirmados por qualquer jogador.
+
+## Conquistas
+
+São **32 conquistas desbloqueáveis**, salvas no computador de cada jogador. Um aviso aparece
+na tela quando uma é desbloqueada. No título, **M** (ou **Tab**) mostra todas, com o progresso
+das que faltam.
+
+| Categoria | Exemplos |
+|---|---|
+| Jornada | concluir eras, passar pelas 12 eras, chegar ao final, derrotar CRONOS, zerar com os 14 lutadores |
+| Combate | 1, 100 e 1000 nocautes; combos de 10, 25 e 50 golpes; sub-chefes e chefes (incluindo os 12) |
+| Armas e golpes | pegar armas, coletar as 24 armas, acertar arremessos, 50 especiais, quebrar caixas, comer |
+| Desafios | concluir uma era sem perder vida, sem levar dano ou com a última vida; 100 mil e 500 mil pontos |
+| Multijogador | co-op com 2 e com 4 jogadores, vencer no Versus (e sem perder round), jogar online, entrar no Top 10 |
+
+Online, cada convidado desbloqueia as conquistas do próprio lutador no próprio computador.
 
 ## Ranking online
 
@@ -178,6 +194,7 @@ As trilhas são geradas numa thread, em menos de 1 segundo cada.
 scenes/main.tscn        cena principal (só carrega main.gd)
 scripts/main.gd         estados do jogo, câmera, ondas, progressão, co-op
 scripts/controls.gd     controles dos 4 jogadores (teclados, controles e jogadores online)
+scripts/ach.gd          conquistas (autoload "Ach"): lista, progresso e avisos
 scripts/net.gd          modo online (autoload "Net"): salas no relay, conexão direta, estado da partida
 relay-server/           servidor intermediário (Node.js) para jogar online sem abrir portas
 scripts/fighter.gd      base dos lutadores: física pseudo-3D, golpes, desenho

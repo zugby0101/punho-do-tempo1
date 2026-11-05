@@ -33,6 +33,8 @@ func _physics_process(delta: float) -> void:
 			var p: float = owner_player.power if is_instance_valid(owner_player) else 1.0
 			var atk := {"dmg": 16, "heavy": true, "knock": true}
 			e.take_hit(int(16 * p), dir, true)
+			if is_instance_valid(owner_player) and e.is_in_group("enemies"):
+				Ach.track(owner_player, "throws")
 			if is_instance_valid(owner_player):
 				game.on_hit(owner_player, e, atk)
 			_land(true)

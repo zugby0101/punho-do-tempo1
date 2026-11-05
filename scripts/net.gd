@@ -26,6 +26,7 @@ var role := ""               # "", "host" ou "client"
 var transport := ""          # "", "enet" ou "relay"
 var peer_sets := {}          # (anfitrião) id do convidado -> conjunto remoto "n1".."n3"
 var server_ip := ""
+var my_set := ""             # (convidado) qual conjunto remoto é o meu ("n1".."n3")
 var room_code := ""
 var relay_url := ""
 var last_ip := "127.0.0.1"
@@ -259,6 +260,8 @@ func _relay_data(pkt: PackedByteArray) -> void:
 		var msg = bytes_to_var(pkt)
 		if msg is Array and msg.size() == 3 and msg[0] == "snap":
 			_apply_snapshot(msg[1], msg[2])
+		elif msg is Array and msg.size() == 2 and msg[0] == "welcome":
+			my_set = String(msg[1])
 
 
 # ---------------- Comum aos dois meios ----------------
@@ -275,6 +278,7 @@ func _on_peer_connected(id: int) -> void:
 		if not (n in used):
 			peer_sets[id] = n
 			Controls.remote[n] = Controls.new_remote()
+			_send_welcome(id, n)
 			set_status("Um jogador online entrou! (ele aperta SOCO para escolher o lutador)")
 			return
 
@@ -287,6 +291,22 @@ func _on_peer_disconnected(id: int) -> void:
 		Controls.remote[n] = Controls.new_remote()  # fica parado
 		peer_sets.erase(id)
 		set_status("Um jogador online saiu da partida.")
+
+
+## Diz ao convidado qual conjunto de controle é o dele (para as conquistas).
+func _send_welcome(id: int, n: String) -> void:
+	if transport == "relay":
+		if ws != null and ws.get_ready_state() == WebSocketPeer.STATE_OPEN:
+			var out := PackedByteArray([(id >> 8) & 255, id & 255])
+			out.append_array(var_to_bytes(["welcome", n]))
+			ws.put_packet(out)
+	else:
+		welcome.rpc_id(id, n)
+
+
+@rpc("authority", "reliable")
+func welcome(n: String) -> void:
+	my_set = n
 
 
 ## Recebe os comandos de um convidado (conexão direta).
@@ -369,6 +389,7 @@ func close() -> void:
 	role = ""
 	transport = ""
 	room_code = ""
+	my_set = ""
 	peer_sets.clear()
 	Controls.remote.clear()
 	press_counts = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -442,6 +463,9 @@ func _on_ranking(ok: bool, code: int, data) -> void:
 func _on_submitted(ok: bool, code: int, data) -> void:
 	if ok and data is Dictionary:
 		last_ranks = data.get("results", [])
+		for r in last_ranks:
+			if r.get("ok", false) and int(r.get("rank", 999)) <= 10:
+				Ach.flag(null, "top10")
 		if not data.get("ok", false):
 			var msg := "Pontuação recusada."
 			if not last_ranks.is_empty():

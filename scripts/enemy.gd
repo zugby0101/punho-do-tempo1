@@ -6,6 +6,7 @@ var kind := "thug"
 var last_hitter = null  # jogador que deu o último golpe (recebe os pontos)
 var tier := 0  # 1 = fácil, 2 = difícil, 3 = muito difícil, 0 = chefe
 var block_flash := 0.0
+var ko_reported := false
 var blocked_last := false
 var aggressive := false
 var attack_cd := 1.0
@@ -197,6 +198,8 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 		game.hud.show_enemy(self)
 		return
 	super.take_hit(dmg, dir, knock, launch)
+	if hp <= 0:
+		_report_ko()
 
 
 func _draw() -> void:
@@ -252,4 +255,12 @@ func _on_hurt() -> void:
 
 func _die() -> void:
 	set_state("dead")
+	_report_ko()
+
+
+## Registra o nocaute no instante do golpe final (pontos, conquistas, chefe).
+func _report_ko() -> void:
+	if ko_reported:
+		return
+	ko_reported = true
 	game.on_enemy_killed(self)

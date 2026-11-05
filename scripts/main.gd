@@ -61,6 +61,7 @@ var ranking_return := "title"   # tela para onde voltar
 var score_sent := false
 var name_queue: Array = []       # jogadores que ainda vão digitar o nome
 var name_entries: Array = []
+var ach_page := 0
 static var last_names := {}      # pid -> último nome usado
 const ONLINE_OPTIONS := [
 	["CRIAR SALA", "pelo servidor intermediário — ninguém precisa abrir portas"],
@@ -176,12 +177,19 @@ func _make_player(pid: int, char_i: int, sets: Array):
 	return p
 
 
+func _flag_online() -> void:
+	if Net.online():
+		for p in players:
+			Ach.flag(p, "online")
+
+
 func _spawn_party() -> void:
 	for i in party.size():
 		var info: Dictionary = party[i]
 		var p = _make_player(i, info.char, info.sets)
 		p.lives = info.lives
 		p.score = info.score
+		p.start_lives = info.lives
 		p.position = Vector2(200.0 + i * 25.0, 375.0 + i * 40.0)
 		players.append(p)
 	player = players[0]
@@ -229,7 +237,7 @@ func _set_mode(m: String) -> void:
 
 
 func is_frozen() -> bool:
-	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry"] or paused or hitstop > 0.0
+	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry", "achievements"] or paused or hitstop > 0.0
 
 
 func cam_left() -> float:
@@ -263,6 +271,17 @@ func _physics_process(delta: float) -> void:
 				_set_mode(ranking_return)
 				mode_time = 2.0  # volta direto, sem esperar a animação
 			return
+		"achievements":
+			var pages := int(ceil(Ach.LIST.size() / 16.0))
+			if Input.is_action_just_pressed("move_right"):
+				ach_page = (ach_page + 1) % pages
+				sfx.play("whoosh", 0.0)
+			elif Input.is_action_just_pressed("move_left"):
+				ach_page = posmod(ach_page - 1, pages)
+				sfx.play("whoosh", 0.0)
+			elif mode_time > 0.4 and (Input.is_physical_key_pressed(KEY_ESCAPE) or _confirm() or Input.is_action_just_pressed("achievements")):
+				_set_mode("title")
+			return
 		"name_entry":
 			if Input.is_physical_key_pressed(KEY_ESCAPE):
 				_close_ip_edit()
@@ -281,6 +300,11 @@ func _physics_process(delta: float) -> void:
 		"title":
 			if Input.is_action_just_pressed("ranking"):
 				_open_ranking("title")
+				return
+			if Input.is_action_just_pressed("achievements"):
+				ach_page = 0
+				_set_mode("achievements")
+				sfx.play("go", 0.0)
 				return
 			if Input.is_action_just_pressed("net_host") or Input.is_action_just_pressed("net_join"):
 				online_choice = 0
@@ -309,6 +333,7 @@ func _physics_process(delta: float) -> void:
 			if mode_time > 3.5 or (mode_time > 0.6 and _confirm()):
 				_set_mode("play")
 				hud.show_message("LUTE!", 1.2)
+				_flag_online()
 			return
 		"stageclear":
 			if mode_time > 1.5 and _confirm():
@@ -334,6 +359,7 @@ func _physics_process(delta: float) -> void:
 			if mode_time > 1.8:
 				_set_mode("play")
 				hud.show_message("LUTEM!", 0.9)
+				_flag_online()
 				sfx.play("go", 0.0)
 			return
 		"match":
@@ -376,6 +402,7 @@ func _physics_process(delta: float) -> void:
 		if p.out and Controls.just(p.sets, "attack"):
 			p.lives = 3
 			p.score = 0
+			p.start_lives = 99  # continuou: não vale "Sobrevivente" nesta era
 			p.respawn()
 			hud.show_message("P%d VOLTOU!" % (p.pid + 1), 1.2)
 			sfx.play("go", 0.0)
@@ -591,6 +618,25 @@ func _stage_cleared() -> void:
 	for p in players:
 		if not p.out:
 			p.score += 2000 + p.lives * 1000
+			# Conquistas de fim de era
+			Ach.track(p, "stages")
+			Ach.collect(p, "eras", stage_idx)
+			Ach.collect(p, "chars", p.display_name)
+			Ach.best(p, "score", p.score)
+			if p.lives >= p.start_lives:
+				Ach.flag(p, "no_death")
+			if p.damage_taken == 0:
+				Ach.flag(p, "untouched")
+			if p.lives == 1:
+				Ach.flag(p, "last_life")
+			if players.size() >= 2:
+				Ach.flag(p, "coop2")
+			if players.size() >= 4:
+				Ach.flag(p, "coop4")
+			if stage_idx >= stages.size() - 1:
+				Ach.flag(p, "ending")
+			p.start_lives = p.lives
+			p.damage_taken = 0
 	music.stop()
 	sfx.play("start", 0.0)
 	if stage_idx >= stages.size() - 1:
@@ -681,6 +727,7 @@ func _check_pickups() -> void:
 			if absf(p.position.x - pl.position.x) < 30.0 and absf(p.position.y - pl.position.y) < 18.0:
 				pl.hp = mini(pl.max_hp, pl.hp + p.heal)
 				pl.score += 200
+				Ach.track(pl, "food")
 				sfx.play("pickup", 0.0)
 				p.queue_free()
 
@@ -699,13 +746,29 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 		attacker.score += int(atk.dmg) * 10
 		combo_count += 1
 		combo_timer = 1.2
+		Ach.best(attacker, "combo", combo_count)
+		if target.get_script() == CrateScript and target.hp <= 0:
+			Ach.track(attacker, "crates")
 		if "last_hitter" in target:
 			target.last_hitter = attacker
 
 
 func on_enemy_killed(e) -> void:
-	if e.last_hitter != null and is_instance_valid(e.last_hitter):
-		e.last_hitter.score += e.score_value
+	var killer = e.last_hitter if e.last_hitter != null and is_instance_valid(e.last_hitter) else null
+	if killer != null:
+		killer.score += e.score_value
+		Ach.track(killer, "kos")
+		Ach.best(killer, "score", killer.score)
+	# Chefes contam para todo o grupo
+	if e.kind in ["boss", "subboss"]:
+		for p in players:
+			if e.kind == "boss":
+				Ach.track(p, "bosses_n")
+				Ach.collect(p, "bosses", stage_idx)
+				if stage_idx == stages.size() - 1:
+					Ach.flag(p, "cronos")
+			else:
+				Ach.track(p, "subs")
 	sfx.play("ko")
 	if e.kind == "subboss":
 		hitstop = 0.25
@@ -890,6 +953,15 @@ func _update_versus(delta: float) -> void:
 	if mode == "roundend":
 		if mode_time > 2.8:
 			if round_winner >= 0 and round_wins[round_winner] >= VERSUS_WINS:
+				var champ = _versus_champion()
+				if champ != null:
+					Ach.flag(champ, "versus_win")
+					var others_won := 0
+					for p in players:
+						if p != champ:
+							others_won += round_wins[p.pid]
+					if others_won == 0:
+						Ach.flag(champ, "versus_perfect")
 				_set_mode("match")
 				music.play("title", 0)
 				sfx.play("start", 0.0)
@@ -1226,6 +1298,9 @@ func net_apply(snap: Array) -> void:
 			"s": sfx.play(ev[1])
 			"k": spawn_spark(Vector2(ev[1], ev[2]), ev[3], ev[4])
 			"p": popup(ev[1], Vector2(ev[2], ev[3]), ev[4])
+			"a":
+				if ev[1] == Net.my_set:
+					Ach.apply(ev[2], ev[3], ev[4])
 
 
 func _net_create(d: Array):

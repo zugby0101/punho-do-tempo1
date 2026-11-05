@@ -31,6 +31,8 @@ var sets: Array = ["k1"]  # conjuntos de controle que este jogador usa
 var lives := 3
 var score := 0
 var out := false          # sem vidas (pode continuar apertando soco)
+var start_lives := 3      # vidas no começo da era (conquista "Sobrevivente")
+var damage_taken := 0     # dano levado na era (conquista "Intocável")
 
 # Golpe especial do personagem
 var special_def: Dictionary = {}
@@ -86,6 +88,8 @@ func _update(delta: float) -> void:
 			if item != null:
 				# Pegar a arma do chão
 				equip_weapon(item.weapon)
+				Ach.track(self, "weapons")
+				Ach.collect(self, "weapon_types", String(item.weapon.name))
 				item.queue_free()
 				game.sfx.play("pickup", 0.0)
 				game.spawn_spark(position + Vector2(0, -20), Color(1, 1, 0.6), 0.6)
@@ -157,6 +161,7 @@ func _update(delta: float) -> void:
 # ---------- Golpes especiais ----------
 func _start_special() -> void:
 	var sp := special_def
+	Ach.track(self, "specials")
 	hp -= int(sp.cost)
 	set_state("special")
 	vel = Vector2.ZERO
@@ -352,6 +357,7 @@ func _on_land() -> void:
 
 
 func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
+	damage_taken += maxi(dmg, 0)
 	hits_taken += 1
 	hits_taken_timer = 1.2
 	if hits_taken >= 3:

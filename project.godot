@@ -23,3 +23,4 @@ environment/defaults/default_clear_color=Color(0.08, 0.06, 0.14, 1)
 [autoload]
 
 Net="*res://scripts/net.gd"
+Ach="*res://scripts/ach.gd"
