@@ -188,13 +188,15 @@ def check(rig):
 
 def main():
     DST.mkdir(exist_ok=True)
-    files = sorted(SRC.glob("*.json"))
+    (DST / "enemies").mkdir(exist_ok=True)
+    files = sorted(SRC.glob("*.json")) + sorted((SRC / "enemies").glob("*.json"))
     if not files:
         sys.exit("Nenhum rig em %s. Rode antes: blender --background --python tools/rig/blender_rig.py" % SRC)
     for fp in files:
         rig = json.loads(fp.read_text(encoding="utf-8"))
-        (DST / ("%s.tscn" % rig["slug"])).write_text(build_scene(rig), encoding="utf-8")
-        msg = "rigs/%s.tscn" % rig["slug"]
+        sub = "enemies/" if rig.get("group") == "enemies" else ""
+        (DST / ("%s%s.tscn" % (sub, rig["slug"]))).write_text(build_scene(rig), encoding="utf-8")
+        msg = "rigs/%s%s.tscn" % (sub, rig["slug"])
         if "--check" in sys.argv:
             err, where = check(rig)
             msg += "  (erro máx. da cinemática além do alcance do membro: %.2f px em %s)" % (err, where or "-")

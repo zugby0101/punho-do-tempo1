@@ -24,6 +24,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import chars as chars_mod  # noqa: E402
+import looks as looks_mod  # noqa: E402
 import poses as P  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -100,7 +101,15 @@ def capsule(a, b, w, n=6):
     return pts
 
 
-def hair_parts(style, head, hair, skin, f):
+def line(a, b, w):
+    return capsule(a, b, w, 3)
+
+
+def dots_ring(cx, cy, r, n, rad, col):
+    return [(circle(cx + math.cos(i * 2 * math.pi / n) * r, cy + math.sin(i * 2 * math.pi / n) * r, rad, 6), col) for i in range(n)]
+
+
+def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
     """Penteados/acessórios dos lutadores (versão em polígonos do _draw_hat do jogo).
     Retorna (peças atrás da cabeça, peças na frente). Cada peça: (polígono, cor)."""
     hx, hy = head
@@ -155,6 +164,128 @@ def hair_parts(style, head, hair, skin, f):
         red = (0.95, 0.1, 0.15, 1)
         front.append((capsule((hx - 9, hy - 4), (hx + 9, hy - 5), 3.5, 3), red))
         front.append((capsule((hx - 9, hy - 4), (hx - 18, hy + 2), 2.5, 3), red))
+    # ----- inimigos, sub-chefes e chefes (porte de _draw_hat em fighter.gd) -----
+    H = lambda dx, dy: (hx + dx, hy + dy)  # noqa: E731
+    dark = (0.05, 0.05, 0.05, 1)
+    if style == "mohawk":
+        for i in range(4):
+            front.append((line(H(-6 + i * 4, -8), H(-7 + i * 4, -17), 3.0), (0.2, 0.9, 0.3, 1)))
+    elif style == "cap":
+        c = (0.2, 0.2, 0.25, 1)
+        front.append((rect(hx - 10, hy - 11, 20, 7), c))
+        front.append((rect(hx + 6, hy - 6, 9, 3), c))
+    elif style == "bald":
+        front.append((rect(hx - 2, hy + 4, 9, 3), (0.3, 0.2, 0.1, 1)))
+    elif style == "wild":
+        for i in range(6):
+            a = math.pi + i * math.pi / 5
+            front.append((circle(hx + math.cos(a) * 9 - 2, hy + math.sin(a) * 9, 5.0, 10), hair))
+        front.append((circle(hx + 3, hy + 8, 6.0, 12), hair))  # barba
+    elif style == "horns":
+        bone = (0.92, 0.88, 0.75, 1)
+        front.append((line(H(-6, -7), H(-12, -20), 4.0), bone))
+        front.append((line(H(5, -8), H(9, -21), 4.0), bone))
+    elif style in ("helmet", "helmet2"):
+        steel = (0.62, 0.64, 0.68, 1) if style == "helmet" else (0.32, 0.36, 0.28, 1)
+        front.append((dome(hx, hy - 2, 11.5), steel))
+        front.append((rect(hx - 12, hy - 3, 24, 3), darken(steel, 0.2)))
+        if style == "helmet":
+            front.append((line(H(6, -2), H(6, 6), 2.5), steel))
+    elif style == "greathelm":
+        front.append((rect(hx - 11, hy - 12, 22, 22), (0.2, 0.2, 0.24, 1)))
+        front.append((rect(hx, hy - 3, 11, 3), (0.9, 0.2, 0.1, 1)))
+        front.append((line(H(-2, -12), H(-8, -24), 4.0), (0.8, 0.1, 0.1, 1)))
+    elif style == "hood":
+        hc = darken(shirt, 0.2)
+        front.append((dome(hx - 1, hy, 12.0, math.pi * 0.75, 2 * math.pi + 0.1), hc))
+        front.append((line(H(-10, 0), H(-12, 12), 5.0), hc))
+    elif style == "ninja":
+        nc = (0.1, 0.1, 0.12, 1)
+        front.append((circle(hx + 1, hy + 1, 10.5), nc))
+        front.append((rect(hx - 1, hy - 3, 10, 4), skin))
+        front.append((rect(hx + 4, hy - 2, 3, 2), dark))
+        front.append((line(H(-9, -4), H(-17, 0), 3.0), nc))
+    elif style == "kabuto":
+        kc = (0.45, 0.06, 0.08, 1)
+        gold = (1, 0.8, 0.2, 1)
+        front.append((dome(hx, hy - 2, 12.0), kc))
+        front.append((rect(hx - 14, hy - 3, 28, 4), darken(kc, 0.3)))
+        front.append((line(H(0, -10), H(-8, -24), 3.0), gold))
+        front.append((line(H(0, -10), H(10, -24), 3.0), gold))
+    elif style == "bandana":
+        bc = darken(shirt, 0.1) if max(shirt[:3]) < 0.8 else (0.8, 0.15, 0.15, 1)
+        front.append((dome(hx, hy - 1, 10.5), bc))
+        front.append((line(H(-9, -3), H(-15, 4), 3.0), bc))
+    elif style == "tricorn":
+        front.append(([H(-17, -5), H(17, -5), H(8, -20), H(-8, -20)], (0.08, 0.08, 0.1, 1)))
+        front.append((line(H(-17, -5), H(17, -5), 2.0), (0.9, 0.75, 0.2, 1)))
+        front.append((circle(hx, hy - 13, 3.0, 10), (0.95, 0.95, 0.95, 1)))
+    elif style == "flatcap":
+        fc = (0.35, 0.3, 0.26, 1)
+        front.append((dome(hx, hy - 3, 10.5), fc))
+        front.append((rect(hx + 4, hy - 5, 11, 3), darken(fc, 0.2)))
+    elif style == "tophat":
+        hc = (0.06, 0.06, 0.08, 1)
+        front.append((rect(hx - 8, hy - 30, 16, 22), hc))
+        front.append((rect(hx - 14, hy - 10, 28, 4), hc))
+        front.append((rect(hx - 8, hy - 14, 16, 3), (0.6, 0.1, 0.1, 1)))
+        front.append((circle(hx + 5, hy - 1, 4.0, 12), (0.9, 0.8, 0.3, 0.55)))  # monóculo
+    elif style == "brodie":
+        bc = (0.35, 0.38, 0.28, 1)
+        front.append((dome(hx, hy - 4, 9.5), bc))
+        front.append((rect(hx - 15, hy - 5, 30, 3), bc))
+    elif style == "spike":
+        sc = (0.15, 0.15, 0.16, 1)
+        front.append((dome(hx, hy - 2, 11.0), sc))
+        front.append((rect(hx - 11, hy - 3, 24, 3), sc))
+        front.append((line(H(0, -12), H(0, -22), 3.0), (0.75, 0.7, 0.4, 1)))
+    elif style == "officer":
+        oc = (0.22, 0.24, 0.25, 1)
+        front.append((rect(hx - 11, hy - 15, 24, 8), oc))
+        front.append((rect(hx - 9, hy - 8, 18, 3), darken(oc, 0.3)))
+        front.append((rect(hx + 5, hy - 6, 11, 3), dark))
+        front.append((circle(hx + 2, hy - 11, 2.5, 8), (0.9, 0.8, 0.3, 1)))
+    elif style == "beanie":
+        front.append((dome(hx, hy - 2, 11.0), (0.15, 0.15, 0.17, 1)))
+    elif style == "beret":
+        front.append(([H(-12, -6), H(10, -8), H(4, -15), H(-10, -13)], (0.7, 0.1, 0.15, 1)))
+    elif style == "shades":
+        front.append((rect(hx - 9, hy - 10, 18, 5), hair))
+        front.append((rect(hx, hy - 3, 10, 4), dark))
+    elif style == "ushanka":
+        fur = (0.45, 0.35, 0.25, 1)
+        front.append((rect(hx - 13, hy - 16, 26, 10), fur))
+        front.append((rect(hx - 12, hy - 6, 6, 12), fur))
+        front.append((circle(hx, hy - 11, 2.5, 8), (0.85, 0.2, 0.2, 1)))
+    elif style in ("visor", "robot"):
+        eye = (0.2, 1, 1, 1) if style == "visor" else (1, 0.15, 0.15, 1)
+        front.append((rect(hx - 11, hy - 12, 23, 23), darken(skin, 0.35)))
+        front.append((rect(hx - 9, hy - 10, 19, 19), skin))
+        front.append((rect(hx - 2, hy - 4, 13, 5), eye))
+        front.append((line(H(-4, -11), H(-6, -19), 2.0), darken(skin, 0.3)))
+        front.append((circle(hx - 6, hy - 20, 2.5, 8), eye))
+    elif style == "halo":
+        front += dots_ring(hx, hy - 16, 10.0, 14, 1.8, (0.5, 1, 1, 0.85))
+        front.append((rect(hx - 1, hy - 4, 11, 4), (0.2, 1, 1, 1)))
+    elif style == "goggles":
+        for i in range(3):
+            front.append((line(H(-5 + i * 5, -9), H(-6 + i * 5, -17), 3.0), (0.9, 0.3, 0.1, 1)))
+        front.append((rect(hx - 10, hy - 7, 21, 4), (0.3, 0.25, 0.2, 1)))
+        front.append((circle(hx + 7, hy - 5, 4.0, 12), (0.4, 0.9, 0.4, 1)))
+    elif style == "crown":
+        front.append(([H(-10, -8), H(10, -8), H(11, -20), H(5, -14), H(0, -22), H(-5, -14), H(-11, -20)], (1, 0.8, 0.15, 1)))
+        front.append((circle(hx, hy - 11, 2.0, 8), (0.9, 0.1, 0.3, 1)))
+    elif style == "eon":
+        gold = (1, 0.82, 0.3, 1)
+        y0 = -26.0
+        front.append(([H(-9, y0 - 10), H(9, y0 - 10), H(0, y0)], gold))
+        front.append(([H(-9, y0 + 10), H(9, y0 + 10), H(0, y0)], gold))
+        front += dots_ring(hx, hy + y0, 15.0, 16, 1.2, (1, 0.85, 0.4, 0.6))
+        front.append((rect(hx + 2, hy - 3, 4, 3), (0.4, 1, 1, 1)))
+        front.append((rect(hx + 7, hy - 3, 3, 3), (0.4, 1, 1, 1)))
+        for k in range(3):
+            a = k * 2 * math.pi / 3
+            front.append((circle(hx + math.cos(a) * 18, hy + y0 + math.sin(a) * 8, 2.0, 8), (0.7, 0.9, 1, 0.8)))
     if f and style not in ("luchamask", "headwrap"):
         front.append((rect(hx + 5, hy + 0.3, 2.5, 1.4), (0.05, 0.05, 0.05, 1)))  # cílios
     return back, front
@@ -399,11 +530,15 @@ def build_parts(c, j):
     add("torso", "spine", 3, shirt, [(hip[0] - 9, hip[1] + 2), (hip[0] + 9, hip[1] + 2), (sh[0] + sw, sh[1]), (sh[0] - sw, sh[1])])
     add("belt", "pelvis", 3, (0.12, 0.1, 0.08, 1), rect(hip[0] - 9, hip[1] - 1.5, 18, 3))
     # cabelo de trás, pescoço e cabeça
-    back, front = hair_parts(c["hat"], head, hair, skin, c["f"])
+    back, front = hair_parts(c["hat"], head, hair, skin, c["f"], shirt)
+    # capa (chefes) atrás de tudo
+    if c.get("cape", (0, 0, 0, 0))[3] > 0:
+        cp = c["cape"]
+        parts.insert(0, ("cape", "spine", -1, cp, [(sh[0] - 8, sh[1] - 2), (sh[0] + 6, sh[1] - 2), (hip[0] - 14, hip[1] + 22), (hip[0] - 30, hip[1] + 18)]))
     for i, (poly, col) in enumerate(back):
         add("hair_back_%d" % i, "head", 4, col, poly)
     add("neck", "head", 5, skin, capsule(sh, head, 6.0, 3))
-    add("head_hair", "head", 5, hair, circle(head[0], head[1], 10.0))
+    add("head_hair", "head", 5, skin if c["hat"] == "bald" else hair, circle(head[0], head[1], 10.0))
     add("face", "head", 5, skin, circle(head[0] + 2, head[1] + 2, 8.5))
     add("eye", "head", 5, (0.05, 0.05, 0.05, 1), rect(head[0] + 4, head[1] - 2, 3, 3))
     for i, (poly, col) in enumerate(front):
@@ -558,47 +693,56 @@ def parts_to_local(parts, rest):
 # ---------------------------------------------------------------------------
 
 
-def render_preview(rigs):
+def render_preview(rigs, path, cols):
+    """Prévia renderizada no Blender (Cycles), com os rigs em grade."""
     scn = bpy.context.scene
-    for arm, _c in rigs:
-        arm.animation_data.action = bpy.data.actions["%s_idle" % _c["name"]]
+    for arm, c in rigs:
+        arm.animation_data.action = bpy.data.actions["%s_idle" % c["slug"]]
     scn.frame_set(0)
+    rows = (len(rigs) + cols - 1) // cols
+    step_x, step_z = 1.4, 1.5
+    w = (min(cols, len(rigs)) - 1) * step_x + 1.6
+    h = (rows - 1) * step_z + 1.5
     cam_data = bpy.data.cameras.new("cam")
     cam_data.type = "ORTHO"
-    span = (len(rigs) - 1) * 1.4 + 1.6
-    cam_data.ortho_scale = span
+    cam_data.ortho_scale = max(w, h)
     cam = bpy.data.objects.new("cam", cam_data)
     scn.collection.objects.link(cam)
-    cam.location = ((len(rigs) - 1) * 1.4 / 2, -10, 0.55)
+    cam.location = ((min(cols, len(rigs)) - 1) * step_x / 2, -10, 0.6 - (rows - 1) * step_z / 2)
     cam.rotation_euler = (math.pi / 2, 0, 0)
     scn.camera = cam
     scn.render.engine = "CYCLES"
     scn.cycles.samples = 8
     scn.cycles.device = "CPU"
-    scn.render.resolution_x = 1680
-    scn.render.resolution_y = int(1680 * 1.3 / span)
-    scn.render.film_transparent = False
+    px_per_bu = 130
+    scn.render.resolution_x = int(w * px_per_bu)
+    scn.render.resolution_y = int(h * px_per_bu)
     world = bpy.data.worlds.new("w")
     world.use_nodes = True
-    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.08, 0.06, 0.14, 1)
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.02, 0.015, 0.04, 1)
     scn.world = world
     scn.view_settings.view_transform = "Standard"
-    scn.render.filepath = str(OUT / "preview.png")
+    scn.render.filepath = str(path)
     bpy.ops.render.render(write_still=True)
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "json").mkdir(exist_ok=True)
+# Animações por grupo: jogadores usam todas; inimigos só as que o jogo usa para eles.
+ENEMY_ANIMS = ["idle", "walk", "jab", "kick", "slam", "charge", "special", "throw", "swing", "hurt", "down"]
+
+
+def build_group(characters, blend_name, json_dir, preview_name, cols, anims):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scn = bpy.context.scene
     scn.render.fps = FPS
+    CONV.clear()
     j = fix_bend(rest_layout())
-    characters = chars_mod.load_characters()
+    json_dir.mkdir(parents=True, exist_ok=True)
     rigs = []
     for i, c in enumerate(characters):
-        name = c["name"]
-        arm, specs = build_armature(name, j, i * 1.4)
+        name = c["slug"]
+        ox, oz = (i % cols) * 1.4, -(i // cols) * 1.5
+        arm, specs = build_armature(name, j, ox)
+        arm.location.z = oz
         if not CONV:
             detect_conventions(arm)
             print("Convenções do Blender:", CONV)
@@ -613,29 +757,45 @@ def main():
         parts = build_parts(c, j)
         make_part_objects(arm, parts, name)
         rest = rest_frame(arm, specs)
-        anims = {}
-        max_err = 0.0
-        for anim in P.ANIMATIONS:
-            act, frames = make_action(arm, j, name, anim)
+        data_anims = {}
+        for anim in anims:
+            _act, frames = make_action(arm, j, name, anim)
             keys = []
             for t, f in frames:
                 scn.frame_set(f)
                 keys.append({"t": round(t, 5), "bones": export_frame(arm, specs)})
-            anims[anim] = {"length": round(P.anim_length(anim), 5), "loop": P.ANIMATIONS[anim]["kind"] == "loop", "keys": keys}
-            # erro do IK (mão da frente) na última amostra
-            hand = arm.pose.bones["arm_f_lo"].tail
-            tgt = arm.pose.bones["ctrl_hand_f"].head
-            max_err = max(max_err, (hand - tgt).length / PX)
+            data_anims[anim] = {"length": round(P.anim_length(anim), 5), "loop": P.ANIMATIONS[anim]["kind"] == "loop", "keys": keys}
         arm.animation_data.action = bpy.data.actions["%s_idle" % name]
-        data = {"name": name, "slug": chars_mod.slug(name), "size": c["size"], "bones": rest,
-                "parts": parts_to_local(parts, rest), "animations": anims, "fps": FPS}
-        (OUT / "json" / ("%s.json" % data["slug"])).write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+        data = {"name": c["name"], "slug": c["slug"], "size": c["size"], "group": c.get("group", "players"),
+                "bones": rest, "parts": parts_to_local(parts, rest), "animations": data_anims, "fps": FPS}
+        if "era" in c:
+            data["era"] = c["era"]
+            data["kind"] = c["kind"]
+        (json_dir / ("%s.json" % c["slug"])).write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         rigs.append((arm, c))
-        print("Rig %-10s ossos=%d peças=%d animações=%d  (folga do IK na mão: %.1f px)" % (name, len(rest), len(parts), len(anims), max_err))
-    bpy.ops.wm.save_as_mainfile(filepath=str(OUT / "punho_rigs.blend"))
+        print("Rig %-22s ossos=%d peças=%d animações=%d" % (c["slug"], len(rest), len(parts), len(data_anims)))
+    bpy.ops.wm.save_as_mainfile(filepath=str(OUT / blend_name))
     if "--no-render" not in sys.argv:
-        render_preview(rigs)
-        bpy.ops.wm.save_as_mainfile(filepath=str(OUT / "punho_rigs.blend"))
+        render_preview(rigs, OUT / preview_name, cols)
+        bpy.ops.wm.save_as_mainfile(filepath=str(OUT / blend_name))
+    blend1 = OUT / (blend_name + "1")
+    if blend1.exists():
+        blend1.unlink()
+
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    only = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--only=")]
+    group = only[0] if only else "all"
+    if group in ("all", "players"):
+        players = chars_mod.load_characters()
+        for c in players:
+            c["slug"] = chars_mod.slug(c["name"])
+            c["group"] = "players"
+        build_group(players, "punho_rigs.blend", OUT / "json", "preview.png", 14, list(P.ANIMATIONS))
+    if group in ("all", "enemies"):
+        build_group(looks_mod.enemy_rigs(), "punho_rigs_inimigos.blend", OUT / "json" / "enemies",
+                    "preview_inimigos.png", 5, ENEMY_ANIMS)
     print("OK:", OUT)
 
 

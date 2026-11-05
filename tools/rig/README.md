@@ -1,8 +1,10 @@
 # Rigs 2D dos lutadores (Blender + Godot 4 + Python)
 
-Os 14 lutadores jogáveis têm um **rig 2D de esqueleto** feito no Blender por script e
-convertido em cenas do Godot 4. No jogo, o rig substitui o desenho procedural dos
-jogadores (tecla **V** no título alterna entre "Rig 2D" e "Clássico").
+Todos os personagens têm um **rig 2D de esqueleto** feito no Blender por script e
+convertido em cenas do Godot 4: os **14 lutadores** e os **65 inimigos** — em cada uma das
+13 eras (12 + a fase secreta), os 3 tiers (★, ★★, ★★★), o sub-chefe e o chefe (incluindo o ÉON).
+No jogo, o rig substitui o desenho procedural (tecla **V** no título alterna entre
+"Rig 2D" e "Clássico").
 
 ## Como gerar
 
@@ -15,13 +17,21 @@ Isso gera:
 
 | Arquivo | O que é |
 |---|---|
-| `art/rigs/punho_rigs.blend` | os 14 rigs no Blender, editáveis (armatures, IK, malhas, Actions) |
-| `art/rigs/preview.png` | prévia renderizada no Blender (Cycles) |
-| `art/rigs/json/*.json` | ossos, peças e animações já resolvidas pelo Blender |
-| `rigs/*.tscn` | cenas do Godot: `Skeleton2D` + `Bone2D` + `Polygon2D` + `AnimationPlayer` |
+| `art/rigs/punho_rigs.blend` | os 14 lutadores no Blender, editáveis (armatures, IK, malhas, Actions) |
+| `art/rigs/punho_rigs_inimigos.blend` | os 65 inimigos, sub-chefes e chefes (uma linha por era) |
+| `art/rigs/preview.png`, `preview_inimigos.png` | prévias renderizadas no Blender (Cycles) |
+| `art/rigs/json/` | dados intermediários (ossos, peças, animações resolvidas) — não vão para o git |
+| `rigs/*.tscn` | lutadores: `Skeleton2D` + `Bone2D` + `Polygon2D` + `AnimationPlayer` |
+| `rigs/enemies/<era>_<tipo>.tscn` | inimigos, ex.: `crusade_boss.tscn`, `void_secret_boss.tscn` |
+
+Para gerar só um grupo: `python tools/rig/build.py --only=players` ou `--only=enemies`.
+O pipeline completo (79 rigs + prévias) leva cerca de 2 minutos.
 
 Para ver todos os rigs animando no Godot: abra `scenes/rig_viewer.tscn` e aperte **F6**
-(◄ ► trocam a animação, Espaço pausa).
+(◄ ► trocam a animação, ▲ ▼ trocam a página — lutadores ou os inimigos de cada era —, Espaço pausa).
+
+No jogo, o brilho na mão que avisa o golpe de um inimigo é desenhado no encaixe da mão
+do rig (`WeaponSlot`), como no desenho original.
 
 ## Como o rig é montado (`blender_rig.py`)
 
@@ -31,9 +41,12 @@ Para ver todos os rigs animando no Godot: abra `scenes/rig_viewer.tscn` e aperte
 - **Controles do animador:** alvos de IK para mãos e pés (`ctrl_hand_*`, `ctrl_foot_*`) e
   alvos de polo para cotovelos e joelhos (`pole_*`). As animações animam só os controles,
   o quadril e a inclinação do tronco — o IK do Blender resolve braços e pernas.
-- **Peças:** malhas planas coloridas presas aos ossos, com as cores e o penteado de cada
-  personagem (lidos de `scripts/characters.gd` por `chars.py`, sem duplicar dados).
-- **16 animações:** `idle`, `walk` (loops) e `jab`, `cross`, `upper`, `kick`, `swing`, `slam`,
+- **Peças:** malhas planas coloridas presas aos ossos, com as cores, o penteado e o chapéu
+  de cada personagem. Os lutadores vêm de `scripts/characters.gd` (`chars.py`) e os inimigos
+  de `scripts/stages.gd` (`looks.py`) — sem duplicar dados. Os chefes ganham capa, e os
+  41 penteados, chapéus e capacetes do jogo foram portados para polígonos.
+- **16 animações nos lutadores** e as **11 que os inimigos usam** (`idle`, `walk`, `jab`, `kick`,
+  `slam`, `charge`, `special`, `throw`, `swing`, `hurt`, `down`). Lista completa: `idle`, `walk` (loops) e `jab`, `cross`, `upper`, `kick`, `swing`, `slam`,
   `charge` (golpes: o tempo 0→1 da animação é a fase do golpe −1→1, preparação → acerto),
   mais as poses `jump`, `jumpkick`, `special`, `throw`, `dive`, `hurt`, `down`.
   As poses vêm de `poses.py`, portado do desenho original (`fighter.gd`).

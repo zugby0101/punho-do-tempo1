@@ -150,6 +150,9 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 		wi = stage_idx % 2
 	if randf() < chance:
 		equip_weapon(era_weapons[wi])
+	# Rig 2D da era e do tipo (gerado por tools/rig a partir do Blender)
+	if stage.has("style"):
+		attach_rig("res://rigs/enemies/%s_%s.tscn" % [stage.style, kind])
 
 
 func _update(delta: float) -> void:

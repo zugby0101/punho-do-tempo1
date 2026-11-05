@@ -210,7 +210,8 @@ As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
 ## Rigs 2D (Blender + Godot)
 
-Os 14 lutadores jogáveis são animados por um **rig 2D de esqueleto** gerado no Blender por
+Todos os personagens — os 14 lutadores e os 65 inimigos, sub-chefes e chefes das 13 eras —
+são animados por um **rig 2D de esqueleto** gerado no Blender por
 script Python (armature com IK para mãos e pés, 16 animações) e convertido em cenas do Godot
 (`Skeleton2D` + `Polygon2D` com skinning + `AnimationPlayer`). No título, **V** alterna entre o
 rig e o visual clássico. Como gerar e editar: [`tools/rig/README.md`](tools/rig/README.md).

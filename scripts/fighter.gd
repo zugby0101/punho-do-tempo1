@@ -371,6 +371,7 @@ func _sync_rig(off: Vector2, rot: float, scl: Vector2, pose: String, phase: floa
 	var slot = rig.get_node_or_null("Parts/WeaponSlot")
 	if slot != null:
 		slot.set_weapon(weapon, flash > 0.0)
+		slot.set_glow(is_in_group("enemies") and state == "attack" and phase < 0.0)
 
 
 func attach_rig(path: String) -> void:
