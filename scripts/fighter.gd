@@ -1,4 +1,6 @@
 extends Node2D
+
+const Weapons = preload("res://scripts/weapons.gd")
 ## Base de todos os lutadores (jogador e inimigos).
 ## Usa um sistema pseudo-3D clássico de beat 'em up:
 ##   position.x = posição horizontal, position.y = profundidade (chão),
@@ -36,6 +38,7 @@ var shoes := Color(0.1, 0.1, 0.1)
 var hat := "none"  # ver _draw_hat()
 var cape := Color(0, 0, 0, 0)
 var feminine := false
+var weapon: Dictionary = {}  # arma na mão (vazia = desarmado)
 var power := 1.0
 
 
@@ -139,6 +142,32 @@ func _clamp_position() -> void:
 	position.x = clampf(position.x, 20.0, game.STAGE_LEN - 20.0)
 
 
+# ---------- Armas ----------
+func equip_weapon(w: Dictionary) -> void:
+	weapon = Weapons.equip(w)
+	_on_weapon_changed()
+
+
+func drop_weapon(dir: int) -> void:
+	var w := weapon
+	weapon = {}
+	game.spawn_weapon_item(w, position, -dir, maxf(height, 20.0))
+	_on_weapon_changed()
+
+
+func _break_weapon() -> void:
+	game.spawn_spark(position + Vector2(facing * 40.0, -60.0 * body_scale), Color(0.9, 0.9, 1.0), 0.9)
+	game.sfx.play("break")
+	if game.hud != null and is_in_group("players"):
+		game.hud.show_message("%s QUEBROU!" % weapon.name, 1.0)
+	weapon = {}
+	_on_weapon_changed()
+
+
+func _on_weapon_changed() -> void:
+	pass
+
+
 # ---------- Combate ----------
 func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 	hp = maxi(0, hp - dmg)
@@ -148,6 +177,8 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 	hit_list.clear()
 	if hp <= 0 or knock or height > 0.0:
 		set_state("knockdown")
+		if not weapon.is_empty():
+			drop_weapon(dir)
 		bounced = false
 		vz = 460.0 * launch
 		height = maxf(height, 0.1)
@@ -205,6 +236,10 @@ func _check_hits(targets: Array) -> bool:
 			tg.take_hit(int(round(float(attack.dmg) * power)), dir, bool(attack.knock))
 			if tg.get("blocked_last"):
 				continue  # golpe bloqueado
+			if attack.get("weapon", false) and not weapon.is_empty() and is_in_group("players"):
+				weapon.uses = int(weapon.uses) - 1
+				if weapon.uses <= 0:
+					_break_weapon()
 			game.on_hit(self, tg, attack)
 			hit_any = true
 	return hit_any
@@ -276,6 +311,21 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 
+func _weapon_angle(pose: String, p: float) -> float:
+	match pose:
+		"swing":
+			if p < 0.0:
+				return lerpf(-1.2, -2.5, -p)
+			if p >= 1.0:
+				return 0.35
+			return lerpf(-0.9, 0.35, p)
+		"hurt": return -2.1
+		"down": return -0.2
+		"throw": return -0.4
+		"jumpkick", "kick": return -1.6
+	return -1.05
+
+
 func _limb(a: Vector2, b: Vector2, bend: Vector2, col: Color, w: float) -> void:
 	var mid := (a + b) * 0.5 + bend
 	draw_line(a, mid, col, w)
@@ -314,6 +364,20 @@ func _draw_body(pose: String, p: float) -> void:
 			if p < 0.0:
 				hf = Vector2(14, -48)
 			lean = 5.0 * p
+		"swing":
+			if p < 0.0:
+				hf = Vector2(-6, -84)
+				hb = Vector2(-2, -70)
+				lean = -5.0
+			else:
+				hf = Vector2(lerpf(0.0, 30.0, p), lerpf(-76.0, -60.0, p))
+				hb = Vector2(lerpf(-2.0, 22.0, p), -62)
+				lean = 7.0 * p
+				bf.x -= 5.0 * p
+		"throw":
+			hf = Vector2(34, -72)
+			hb = Vector2(-12, -64)
+			lean = 8.0
 		"kick":
 			var k := maxf(p, 0.0)
 			ff = Vector2(9.0 + k * 44.0, -k * 44.0)
@@ -412,8 +476,10 @@ func _draw_body(pose: String, p: float) -> void:
 	draw_circle(head + Vector2(2, 2), 8.5, skin_c)
 	draw_rect(Rect2(head + Vector2(4, -2), Vector2(3, 3)), _c(Color(0.05, 0.05, 0.05)))
 	_draw_hat(head)
-	# Braço da frente
+	# Braço da frente (com a arma, se tiver)
 	_limb(shoulder + Vector2(3, 2), hf, Vector2(-1, 7), skin_c, 6.5)
+	if not weapon.is_empty():
+		Weapons.draw(self, weapon, hf, _weapon_angle(pose, p), flash > 0.0)
 	draw_circle(hf, 5.5, skin_c)
 	# Telegrafa o golpe dos inimigos (brilho na mão)
 	if state == "attack" and p < 0.0 and is_in_group("enemies"):

@@ -14,6 +14,7 @@ var lane_offset := 0.0
 var hover_dist := 170.0
 var score_value := 100
 var attacks: Array = []
+var base_attacks: Array = []  # golpes sem arma
 var special_attack: Dictionary = {}
 
 
@@ -114,6 +115,26 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 		special_attack.dmg = int(round(special_attack.dmg * dmg_mult))
 	move_speed *= 1.0 + stage_idx * 0.02
 	hp = max_hp
+	base_attacks = attacks
+	# Alguns inimigos entram armados (e deixam a arma cair ao serem derrubados)
+	var era_weapons := Weapons.for_stage(stage_idx)
+	var chance := 0.0
+	var wi := 0
+	match tier:
+		1:
+			chance = 0.2
+			wi = 1
+		2:
+			chance = 0.6
+			wi = 0
+		3:
+			chance = 0.5
+			wi = 1
+	if kind == "subboss":
+		chance = 1.0
+		wi = stage_idx % 2
+	if randf() < chance:
+		equip_weapon(era_weapons[wi])
 
 
 func _update(delta: float) -> void:
@@ -192,6 +213,22 @@ func tier_label() -> String:
 		2: return "★★ DIFÍCIL"
 		3: return "★★★ MUITO DIFÍCIL"
 	return "SUB-CHEFE" if kind == "subboss" else "CHEFE"
+
+
+## Armado: golpes com mais alcance e dano; desarmado: golpes originais.
+func _on_weapon_changed() -> void:
+	if weapon.is_empty():
+		attacks = base_attacks
+		return
+	var armed: Array = []
+	for a in base_attacks:
+		var b: Dictionary = a.duplicate()
+		b.reach = float(b.reach) + 22.0
+		b.dmg = int(b.dmg) + 3
+		if b.pose in ["jab", "kick", "cross"]:
+			b.pose = "swing"
+		armed.append(b)
+	attacks = armed
 
 
 func is_boss() -> bool:

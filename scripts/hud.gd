@@ -103,6 +103,9 @@ func _draw_game_hud() -> void:
 		_bar(Vector2(x, 36), pw - 60.0, 12, float(pl.hp) / pl.max_hp, Color(1, 0.85, 0.15))
 		_text(Vector2(x + pw - 50.0, 48), "x%d" % pl.lives, 16, Color(1, 1, 1))
 		_text(Vector2(x, 70), "%07d" % pl.score, 15, Color(1, 1, 1))
+		if not pl.weapon.is_empty():
+			var wtxt: String = "%s ×%d" % [pl.weapon.name, int(pl.weapon.uses)]
+			_text(Vector2(x + 78, 70), wtxt, 12 if n > 1 else 14, Color(0.6, 0.95, 1))
 	_text(Vector2(0, 530), "FASE %d · %s · %s" % [game.stage_idx + 1, game.stage.name, game.stage.year], 14, Color(1, 1, 1, 0.8), HORIZONTAL_ALIGNMENT_CENTER, W)
 	# Inimigo atual (na parte de baixo da tela)
 	if enemy_timer > 0.0 and is_instance_valid(enemy_ref) and game.mode == "play":
@@ -132,7 +135,7 @@ func _draw_title() -> void:
 		"P1: WASD + J soco, K pulo, L especial      P2: Setas + , soco  . pulo  / especial",
 		"P3: TFGH + Z soco, X pulo, C especial      P4: Numpad 8456 + 7 soco, 9 pulo, + especial",
 		"Controles: X soco, A pulo, Y/B especial (cada controle é um jogador)",
-		"Cima + Soco: gancho   |   Pulo + Soco: voadora   |   Pausa: Esc / P",
+		"Cima + Soco: gancho  |  Pulo + Soco: voadora  |  Soco sobre arma: pegar  |  Especial armado: arremessar",
 	]
 	for i in lines.size():
 		_center(200 + i * 26, lines[i], 15, Color(1, 1, 1))
@@ -210,13 +213,15 @@ func _draw_select() -> void:
 func _draw_intro() -> void:
 	var st: Dictionary = game.stage
 	var k := clampf(game.mode_time * 3.0, 0.0, 1.0)
-	draw_rect(Rect2(0, 120, W, 300), Color(0, 0, 0, 0.7 * k))
+	draw_rect(Rect2(0, 120, W, 320), Color(0, 0, 0, 0.7 * k))
 	_center(180, "FASE %d de %d" % [game.stage_idx + 1, game.stages.size()], 26, Color(0.6, 0.9, 1, k))
 	_center(245, st.name, 54, Color(1, 0.85, 0.3, k))
 	_center(285, st.year, 26, Color(1, 1, 1, k))
 	_center(330, String(st.intro).replace("{p}", game.party_names()), 18, Color(1, 1, 1, k))
 	_center(375, "Sub-chefe: %s   •   Chefe: %s" % [st.subboss.name, st.boss.name], 16, Color(1, 0.55, 0.55, k))
 	_center(400, "Inimigos: ★ %s   ★★ %s   ★★★ %s" % [st.thug.name, st.knife.name, st.brute.name], 15, Color(0.8, 0.9, 0.8, k))
+	var ws: Array = game.Weapons.for_stage(game.stage_idx)
+	_center(422, "Armas da era: %s e %s" % [ws[0].name, ws[1].name], 15, Color(0.6, 0.95, 1, k))
 
 
 func _draw_ending() -> void:

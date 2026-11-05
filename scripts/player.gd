@@ -13,7 +13,10 @@ const ATK_UPPER := {"pose": "upper", "dmg": 10, "reach": 56, "startup": 0.06, "a
 const ATK_JUMPKICK := {"pose": "jumpkick", "dmg": 13, "reach": 66, "startup": 0.03, "active": 0.6, "recovery": 0.0, "knock": true, "heavy": true}
 const ATK_SPECIAL := {"pose": "special", "dmg": 14, "reach": 100, "startup": 0.06, "active": 0.3, "recovery": 0.18, "knock": true, "radial": true, "depth": 42.0, "heavy": true}
 
-var combo := [ATK_JAB, ATK_JAB2, ATK_CROSS, ATK_KICK]
+const ATK_THROW := {"pose": "throw", "dmg": 0, "reach": -99, "startup": 0.05, "active": 0.05, "recovery": 0.2, "knock": false}
+const BASE_COMBO := [ATK_JAB, ATK_JAB2, ATK_CROSS, ATK_KICK]
+
+var combo: Array = BASE_COMBO
 var combo_step := 0
 var combo_timer := 0.0
 var buffered := false
@@ -76,7 +79,23 @@ func _update(delta: float) -> void:
 				facing = 1 if input.x > 0.0 else -1
 			state = "walk" if input.length() > 0.1 else "idle"
 
-			if Controls.just(sets, "special") and hp > SPECIAL_COST:
+			var atk_pressed := Controls.just(sets, "attack")
+			var item = game.weapon_near(self) if weapon.is_empty() and atk_pressed else null
+			if item != null:
+				# Pegar a arma do chão
+				equip_weapon(item.weapon)
+				item.queue_free()
+				game.sfx.play("pickup", 0.0)
+				game.spawn_spark(position + Vector2(0, -20), Color(1, 1, 0.6), 0.6)
+			elif Controls.just(sets, "special") and not weapon.is_empty():
+				# Arremessar a arma
+				game.throw_weapon(self, weapon)
+				weapon = {}
+				_on_weapon_changed()
+				vel = Vector2.ZERO
+				start_attack(ATK_THROW)
+				game.sfx.play("whoosh")
+			elif Controls.just(sets, "special") and hp > SPECIAL_COST:
 				hp -= SPECIAL_COST
 				invuln = 0.45
 				vel = Vector2.ZERO
@@ -90,7 +109,7 @@ func _update(delta: float) -> void:
 				attack = {}
 				air_attacked = false
 				game.sfx.play("jump")
-			elif Controls.just(sets, "attack"):
+			elif atk_pressed:
 				if combo_timer <= 0.0:
 					combo_step = 0
 				# Para cima + soco = gancho
@@ -127,6 +146,11 @@ func _update(delta: float) -> void:
 					combo_step = 0
 				attack = {}
 				set_state("idle")
+
+
+func _on_weapon_changed() -> void:
+	combo = Weapons.player_combo(weapon) if not weapon.is_empty() else BASE_COMBO
+	combo_step = 0
 
 
 func _do_attack(a: Dictionary) -> void:

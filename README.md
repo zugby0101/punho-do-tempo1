@@ -51,6 +51,29 @@ Cada fase tem cenário próprio com parallax, inimigos com o visual da época,
 - ★★ Difícil: rápido, dois golpes, às vezes **bloqueia**
 - ★★★ Muito difícil: grandão com **super armadura** (golpes leves não o interrompem)
 
+**Armas que os inimigos deixam cair** (2 por era, uma lâmina e uma contundente):
+
+| Era | Lâmina | Contundente |
+|---|---|---|
+| Idade da Pedra | Lança de pedra | Clava |
+| Cruzadas | Espada | Maça |
+| Japão Feudal | Katana | Bastão bō |
+| Grandes Navegações | Sabre | Remo |
+| Revolução Industrial | Faca | Chave inglesa |
+| 1ª Guerra | Baioneta | Pá de trincheira |
+| 2ª Guerra | Faca de combate | Pé de cabra |
+| Guerra Fria | Adaga | Cassetete |
+| Tempo Atual | Canivete | Taco de beisebol |
+| Futuro (deu certo) | Lâmina de plasma | Bastão de pulso |
+| Futuro (deu errado) | Machete | Cano de ferro |
+| Futuro (muito errado) | Foice | Marreta de osso |
+
+- Alguns inimigos entram armados (golpes com mais alcance e dano) e **deixam a arma cair** quando são derrubados. Uma caixa por fase também esconde uma arma.
+- **Soco em cima da arma** para pegar. Lâminas fazem combo rápido de 3 golpes; armas contundentes são lentas e derrubam.
+- Cada arma tem **durabilidade** (lâmina: 12 acertos, contundente: 8), mostrada no painel do jogador, e quebra ao acabar.
+- **Especial com arma na mão: arremessa** a arma, que derruba o primeiro inimigo no caminho e cai no chão para ser pega de novo.
+- Quem é derrubado (jogador ou inimigo) **solta a arma**. Armas no chão somem depois de alguns segundos.
+
 **14 personagens jogáveis** (um homem e uma mulher de cada região), cada um com
 vida/velocidade/força próprias e **final exclusivo**:
 
@@ -106,6 +129,8 @@ scripts/background.gd   os 12 cenários procedurais
 scripts/hud.gd          interface e telas
 scripts/music.gd        trilha sonora gerada por algoritmo
 scripts/sfx.gd          efeitos sonoros sintetizados
+scripts/weapons.gd      armas de cada era: dados, golpes e desenho
+scripts/weapon_item.gd, thrown.gd   arma no chão e arma arremessada
 scripts/crate.gd, pickup.gd, spark.gd   caixas, comida, efeitos de impacto
 ```
 

@@ -14,6 +14,9 @@ const MusicScript = preload("res://scripts/music.gd")
 const Stages = preload("res://scripts/stages.gd")
 const Characters = preload("res://scripts/characters.gd")
 const Controls = preload("res://scripts/controls.gd")
+const Weapons = preload("res://scripts/weapons.gd")
+const WeaponItemScript = preload("res://scripts/weapon_item.gd")
+const ThrownScript = preload("res://scripts/thrown.gd")
 
 const DEPTH_MIN := 360.0
 const DEPTH_MAX := 520.0
@@ -32,7 +35,7 @@ var stages: Array
 var characters: Array
 var stage: Dictionary
 var waves: Array
-var crate_spots := [[480.0, 400.0, "apple"], [1180.0, 470.0, "chicken"], [1980.0, 390.0, "apple"], [2780.0, 480.0, "chicken"], [3620.0, 420.0, "chicken"]]
+var crate_spots := [[480.0, 400.0, "apple"], [900.0, 470.0, "weapon"], [1180.0, 470.0, "chicken"], [1980.0, 390.0, "apple"], [2780.0, 480.0, "chicken"], [3620.0, 420.0, "chicken"]]
 
 var mode := "title"  # title, select, intro, play, stageclear, gameover, ending
 var paused := false
@@ -120,6 +123,7 @@ func _make_player(pid: int, char_i: int, sets: Array):
 	p.game = self
 	p.pid = pid
 	p.sets = sets
+	p.add_to_group("players")
 	p.apply_character(characters[char_i])
 	entities.add_child(p)
 	return p
@@ -629,9 +633,43 @@ func spawn_spark(pos: Vector2, col: Color, size: float = 1.0) -> void:
 
 
 func spawn_pickup(kind: String, pos: Vector2) -> void:
+	if kind == "weapon":
+		spawn_weapon_item(Weapons.equip(Weapons.for_stage(stage_idx)[1]), pos, 1, 10.0)
+		return
 	var p = PickupScript.new()
 	p.kind = kind
 	p.heal = 40 if kind == "chicken" else 15
 	p.position = pos
 	p.add_to_group("pickups")
 	entities.add_child(p)
+
+
+# ---------- Armas ----------
+func spawn_weapon_item(w: Dictionary, pos: Vector2, dir: int, h: float = 0.0) -> void:
+	var it = WeaponItemScript.new()
+	it.game = self
+	it.weapon = w
+	it.position = pos
+	it.add_to_group("weapons")
+	entities.add_child(it)
+	it.toss(float(dir))
+	it.height = maxf(h, 1.0)
+
+
+func weapon_near(p):
+	for it in get_tree().get_nodes_in_group("weapons"):
+		if it.is_queued_for_deletion() or not it.can_pick():
+			continue
+		if absf(it.position.x - p.position.x) < 38.0 and absf(it.position.y - p.position.y) < 20.0:
+			return it
+	return null
+
+
+func throw_weapon(p, w: Dictionary) -> void:
+	var th = ThrownScript.new()
+	th.game = self
+	th.owner_player = p
+	th.weapon = w
+	th.dir = p.facing
+	th.position = p.position + Vector2(p.facing * 20.0, 0)
+	entities.add_child(th)
