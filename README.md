@@ -51,6 +51,33 @@ vida/velocidade/força próprias e **final exclusivo**:
 | África | Kofi (Gana) | Amara (Nigéria) |
 | Oceania | Tama (Nova Zelândia) | Kirra (Austrália) |
 
+## Música e sons
+
+Toda a trilha sonora e os efeitos sonoros são **compostos e sintetizados pelo próprio jogo**
+(`scripts/music.gd` e `scripts/sfx.gd`). Não há nenhuma gravação, sample ou composição de
+terceiros, então não existe nenhuma questão de direitos autorais.
+
+Cada fase tem sua própria música, com tempo, escala e instrumentos da época:
+
+| Fase | Clima musical |
+|---|---|
+| Título | tema heroico em tom maior |
+| Idade da Pedra | flauta, tambores tribais e chocalho, escala pentatônica |
+| Cruzadas | palheta e tambor de moldura, escala do Oriente Médio |
+| Japão Feudal | dedilhado tipo koto e taikô, escala japonesa *in* |
+| Grandes Navegações | acordeão e baixo "oom-pah", estilo cantiga de marinheiro |
+| Revolução Industrial | percussão metálica de fábrica, ritmo mecânico |
+| 1ª Guerra | metais e caixa de marcha militar |
+| 2ª Guerra | marcha em tom menor com cordas sustentadas |
+| Guerra Fria | baixo caminhante e linha de espionagem |
+| Tempo Atual | synthwave com arpejos |
+| Futuro (deu certo) | sinos e arpejos brilhantes, escala lídia |
+| Futuro (deu errado) | industrial agressivo, escala frígia |
+| Futuro (muito errado) | bateria dupla e dissonância, escala lócria |
+
+Quando aparece o sub-chefe ou o chefe, a música muda para uma versão mais rápida e intensa.
+As trilhas são geradas numa thread, em menos de 1 segundo cada.
+
 ## Estrutura
 
 ```
@@ -63,7 +90,8 @@ scripts/stages.gd       dados das 12 eras + geração das ondas
 scripts/characters.gd   os 14 personagens e seus finais
 scripts/background.gd   os 12 cenários procedurais
 scripts/hud.gd          interface e telas
-scripts/sfx.gd          sons sintetizados
+scripts/music.gd        trilha sonora gerada por algoritmo
+scripts/sfx.gd          efeitos sonoros sintetizados
 scripts/crate.gd, pickup.gd, spark.gd   caixas, comida, efeitos de impacto
 ```
 

@@ -9,6 +9,7 @@ const SparkScript = preload("res://scripts/spark.gd")
 const SfxScript = preload("res://scripts/sfx.gd")
 const BgScript = preload("res://scripts/background.gd")
 const HudScript = preload("res://scripts/hud.gd")
+const MusicScript = preload("res://scripts/music.gd")
 const Stages = preload("res://scripts/stages.gd")
 const Characters = preload("res://scripts/characters.gd")
 
@@ -53,6 +54,7 @@ var effects: Node2D
 var camera: Camera2D
 var hud
 var sfx
+var music
 var bg
 
 
@@ -68,6 +70,8 @@ func _ready() -> void:
 
 	sfx = SfxScript.new()
 	add_child(sfx)
+	music = MusicScript.new()
+	add_child(music)
 	bg = BgScript.new()
 	bg.game = self
 	bg.stage = stage
@@ -104,8 +108,12 @@ func _ready() -> void:
 	_update_camera(0.0)
 	if skip_title:
 		_set_mode("intro")
+		_play_stage_music(false)
 	else:
 		_set_mode("title")
+		music.play("title", 0)
+	music.prefetch(stage.style, stage_idx, false)
+	music.prefetch(stage.style, stage_idx, true)
 
 
 func _setup_inputs() -> void:
@@ -199,6 +207,7 @@ func _physics_process(delta: float) -> void:
 				sfx.play("whoosh", 0.0)
 			if _confirm() and mode_time > 0.3:
 				sfx.play("start", 0.0)
+				_play_stage_music(false)
 				player.apply_character(characters[char_idx])
 				player.position = Vector2(220, 430)
 				player.facing = 1
@@ -266,6 +275,10 @@ func _preview_character() -> void:
 	player.facing = -1
 
 
+func _play_stage_music(intense: bool) -> void:
+	music.play(stage.style, stage_idx, intense)
+
+
 func _change_stage(d: int) -> void:
 	stage_idx = posmod(stage_idx + d, stages.size())
 	stage = stages[stage_idx]
@@ -315,9 +328,11 @@ func _update_waves(delta: float) -> void:
 
 func _stage_cleared() -> void:
 	score += 2000 + lives * 1000
+	music.stop()
 	sfx.play("start", 0.0)
 	if stage_idx >= stages.size() - 1:
 		_set_mode("ending")
+		music.play("title", 0)
 		# Personagem em destaque na tela final
 		player.apply_character(characters[char_idx])
 		player.body_scale *= 2.0
@@ -337,6 +352,8 @@ func _spawn_enemy(kind: String, side: int) -> void:
 	e.position = Vector2(cam_x + side * (HALF_W + 60.0), randf_range(DEPTH_MIN + 10.0, DEPTH_MAX - 10.0))
 	e.facing = -side
 	entities.add_child(e)
+	if e.is_boss():
+		_play_stage_music(true)
 	if kind == "boss":
 		hud.show_message("CHEFE: " + e.display_name, 2.5)
 		hud.show_enemy(e)
@@ -403,6 +420,7 @@ func on_enemy_killed(e) -> void:
 		hitstop = 0.25
 		shake(10.0)
 		hud.show_message("SUB-CHEFE DERROTADO!", 2.0)
+		_play_stage_music(false)
 	elif e.kind == "boss":
 		hitstop = 0.4
 		shake(14.0)
@@ -425,6 +443,8 @@ func player_died() -> void:
 		player.set_state("dead")
 		player.state_time = -999.0  # mantém o corpo na tela
 		_set_mode("gameover")
+		music.stop()
+		sfx.play("ko", 0.0)
 
 
 func shake(amount: float) -> void:
