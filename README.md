@@ -259,7 +259,13 @@ funciona no renderizador Compatibility e na web):
 | nocaute | explosão grande (maior e rosa nos chefes) com poeira no chão |
 
 Golpes pesados e lutadores grandes geram efeitos maiores; no co-op as faíscas têm a cor do jogador.
-No online, o host manda os efeitos para todos. **P** no título liga/desliga as partículas.
+No online, o host manda os efeitos para todos. **P** no título liga/desliga as partículas e os rastros.
+
+**Rastro de movimento nos especiais** (`scripts/trail.gd`): durante os 14 golpes especiais — e nas
+investidas e golpes giratórios de sub-chefes e chefes (vermelho; roxo no ÉON) — o lutador deixa
+**imagens residuais** (cópias do rig na pose de instantes atrás, translúcidas na cor do especial) e
+**fitas de luz** presas às pontas reais dos ossos: pés nos chutes, mãos nos socos e investidas, mão e
+pé nos giros, e a ponta da arma quando há uma. No visual clássico ficam só as fitas.
 
 ## Diálogos com chefes
 
@@ -312,6 +318,7 @@ scripts/music.gd        trilha sonora gerada por algoritmo
 scripts/sfx.gd          efeitos sonoros sintetizados e reprodução das vozes
 scripts/dialogs.gd      falas dos chefes, sub-chefes e respostas de cada lutador
 scripts/fx.gd           partículas dos golpes (fx_ring.gd: anel de choque)
+scripts/trail.gd        rastro de movimento dos especiais (imagens residuais + fitas de luz)
 audio/voices/           vozes e gritos (gerados por tools/audio/voices.py)
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante

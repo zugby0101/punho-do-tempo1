@@ -350,3 +350,14 @@ func _report_ko() -> void:
 		return
 	ko_reported = true
 	game.on_enemy_killed(self)
+
+
+## Rastro nos especiais de chefes e sub-chefes: investida (dash) e golpe giratório (radial).
+func trail_color() -> Color:
+	if state != "attack" or attack.is_empty() or not kind in ["subboss", "boss", "secret_boss"]:
+		return Color(0, 0, 0, 0)
+	if not (attack.has("dash") or attack.get("radial", false)):
+		return Color(0, 0, 0, 0)
+	if kind == "secret_boss":
+		return Color(0.75, 0.5, 1)
+	return Color(1, 0.35, 0.6) if kind == "subboss" else Color(1, 0.4, 0.2)

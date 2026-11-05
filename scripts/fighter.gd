@@ -49,6 +49,12 @@ var net_rig_u := 0.0
 # Rig 2D (Skeleton2D gerado do Blender). Quando existe e está ativo, substitui o desenho procedural.
 var rig: Node2D = null
 var rig_ap: AnimationPlayer = null
+var rig_scene_path := ""
+var rig_pose: Array = []   # [animação, tempo] da pose atual (para as imagens residuais do rastro)
+# Rastro de movimento dos especiais (trail.gd)
+const TrailScript = preload("res://scripts/trail.gd")
+var trail = null
+var net_trail := Color(0, 0, 0, 0)
 # AnimationTree do rig (máquina de estados + BlendSpaces); sem ele, cai no seek direto do AnimationPlayer
 static var use_anim_tree := true
 var rig_tree: AnimationTree = null
@@ -437,17 +443,18 @@ func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, pha
 	if not rig_ap.has_animation(an):
 		an = "idle"
 		u = -1.0
-	if _drive_tree(an, u):
-		_sync_weapon(phase)
-		return
-	if rig_tree != null:
-		rig_tree.active = false
 	var anim := rig_ap.get_animation(an)
 	var tpos := 0.0
 	if anim.loop_mode != Animation.LOOP_NONE or u < 0.0:
 		tpos = fmod(anim_t, anim.length)
 	else:
 		tpos = clampf(u, 0.0, 1.0) * anim.length
+	rig_pose = [an, tpos]
+	if _drive_tree(an, u):
+		_sync_weapon(phase)
+		return
+	if rig_tree != null:
+		rig_tree.active = false
 	if rig_ap.assigned_animation != an:
 		rig_ap.play(an)
 		rig_ap.pause()
@@ -469,7 +476,10 @@ func attach_rig(path: String) -> void:
 		rig_ap = null
 	if not ResourceLoader.exists(path):
 		return
+	rig_scene_path = path
 	rig = load(path).instantiate()
+	if trail != null:
+		trail.reset_ghosts()  # troca de personagem: fantasmas do rig novo
 	rig.visible = false
 	add_child(rig)
 	rig_ap = rig.get_node("AnimationPlayer")
@@ -519,6 +529,64 @@ func _drive_tree(an: String, u: float) -> bool:
 		rig_tree.set(base + "seek/seek_request", clampf(u, 0.0, 1.0))
 		rig_tree.advance(0.0)
 	return true
+
+
+func _enter_tree() -> void:
+	if trail == null:
+		call_deferred("_make_trail")
+
+
+func _make_trail() -> void:
+	if trail != null or not is_inside_tree():
+		return
+	trail = TrailScript.new()
+	trail.f = self
+	add_child(trail)
+	move_child(trail, 0)  # antes do rig: fica atrás do lutador
+
+
+## Cor do rastro de movimento (alfa 0 = sem rastro). Jogador e inimigo definem quando há rastro.
+func trail_color() -> Color:
+	return Color(0, 0, 0, 0)
+
+
+func current_trail() -> Color:
+	return net_trail if game != null and game.net_client else trail_color()
+
+
+## Pontas que deixam fitas de luz (coordenadas do mundo): conforme o golpe, mãos, pés ou a arma.
+func trail_tips() -> Array:
+	var an: String = rig_pose[0] if not rig_pose.is_empty() else "special"
+	var pick: Array
+	match an:
+		"kick", "jumpkick":
+			pick = ["leg_f_lo", "leg_b_lo"]
+		"jab", "cross", "upper", "charge", "throw":
+			pick = ["arm_f_lo", "arm_b_lo"]
+		_:
+			pick = ["arm_f_lo", "leg_f_lo"]
+	var out: Array = []
+	if rig != null and rig.visible:
+		var sk := rig.get_node("Skeleton2D")
+		for bn in pick:
+			var b: Bone2D = sk.find_child(bn, true, false)
+			if b != null:
+				out.append(b.global_transform * Vector2(b.get_length(), 0))
+		if not weapon.is_empty():
+			var wb: Bone2D = sk.find_child("weapon", true, false)
+			if wb != null:
+				out.append(wb.global_transform * Vector2(float(weapon.get("len", 40.0)), 0))
+	else:
+		# visual clássico: pontas aproximadas
+		var df := draw_facing()
+		var s := body_scale
+		var hand := global_position + Vector2(df * 30.0 * s, -64.0 * s - height)
+		var foot := global_position + Vector2(df * 26.0 * s, -12.0 * s - height)
+		match an:
+			"kick", "jumpkick": out = [foot, foot + Vector2(-df * 14.0 * s, -18.0 * s)]
+			"jab", "cross", "upper", "charge", "throw": out = [hand, hand + Vector2(-df * 10.0 * s, 10.0 * s)]
+			_: out = [hand, foot]
+	return out
 
 
 static func rig_slug(n: String) -> String:

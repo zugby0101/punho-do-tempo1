@@ -384,6 +384,12 @@ func _on_dead_done() -> void:
 	pass  # o corpo do jogador nunca é removido
 
 
+func trail_color() -> Color:
+	if state == "special" and not special_def.is_empty():
+		return special_def.color
+	return Color(0, 0, 0, 0)
+
+
 func color() -> Color:
 	return PLAYER_COLORS[pid]
 
