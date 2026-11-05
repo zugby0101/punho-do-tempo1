@@ -53,7 +53,7 @@ do rig (`WeaponSlot`), como no desenho original.
 - O script descobre sozinho as convenções de eixo do Blender e escolhe o ângulo de polo de
   cada membro testando qual reproduz a pose de repouso (erro 0 px).
 
-## Efeitos animados (capas, halo e ÉON)
+## Efeitos animados (capas, halo, ÉON, cabelo e faixas)
 
 Alguns acessórios têm **ossos de efeito** e uma Action própria (`<rig>_fx`, um loop de ~4,2 s),
 que no `.blend` toca por cima do corpo numa faixa de NLA e no Godot vira um segundo
@@ -65,6 +65,12 @@ golpes e tombos, seguindo o tronco ou a cabeça:
 | Capas dos chefes | `cape_1` → `cape_2` (corrente presa ao tronco) | a barra ondula ~8 px; o topo fica preso nos ombros (pesos por vértice) |
 | Halo da IA Aurora | `halo` | o anel de luz gira (pontos em rastro de cometa para o giro aparecer) |
 | ÉON, o Eterno | `hourglass`, `eon_ring`, `orb_0..2` | a ampulheta flutua 2 px, o anel gira e as 3 esferas orbitam em elipse 18×8 |
+| Rabo de cavalo (Valentina) | `tail` | balança ~6 px para os lados, com pivô na nuca |
+| Faixa do Kai | `band_tail` | a ponta da faixa tremula ~5 px |
+| Faixa dos ninjas (Ninja, Hanzo, Eco Veloz) | `ninja_tail` | a ponta da faixa tremula ~5 px |
+
+As frequências são múltiplas de 1,5 rad/s para que todos os efeitos fechem o loop juntos,
+sem salto quando ele recomeça.
 
 ## Como vira cena do Godot (`rig_to_godot.py`)
 

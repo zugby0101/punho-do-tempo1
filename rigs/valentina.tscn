@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=21 format=3]
 
 [ext_resource type="Script" path="res://scripts/rig_weapon.gd" id="1_weapon"]
 
@@ -2948,6 +2948,23 @@ tracks/14/keys = {
 "values": [-1.9577]
 }
 
+[sub_resource type="Animation" id="Animation_fx"]
+resource_name = "fx"
+length = 4.18879
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Skeleton2D/root/pelvis/spine/head/tail:rotation")
+tracks/0/interp = 3
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.06545, 0.1309, 0.19635, 0.2618, 0.32725, 0.3927, 0.45815, 0.5236, 0.58905, 0.6545, 0.71995, 0.7854, 0.85085, 0.9163, 0.98175, 1.0472, 1.11265, 1.1781, 1.24355, 1.309, 1.37445, 1.4399, 1.50535, 1.5708, 1.63625, 1.7017, 1.76715, 1.8326, 1.89805, 1.9635, 2.02895, 2.0944, 2.15984, 2.22529, 2.29074, 2.35619, 2.42164, 2.48709, 2.55254, 2.61799, 2.68344, 2.74889, 2.81434, 2.87979, 2.94524, 3.01069, 3.07614, 3.14159, 3.20704, 3.27249, 3.33794, 3.40339, 3.46884, 3.53429, 3.59974, 3.66519, 3.73064, 3.79609, 3.86154, 3.92699, 3.99244, 4.05789, 4.12334, 4.18879),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.986, -3.05671, -3.11072, -3.13528, -3.12458, -3.08116, -3.01526, -2.94245, -2.87993, -2.84245, -2.83888, -2.87004, -2.92859, -3.0007, -3.06933, -3.11829, -3.136, -3.11829, -3.06933, -3.0007, -2.92859, -2.87004, -2.83888, -2.84245, -2.87993, -2.94245, -3.01526, -3.08116, -3.12458, -3.13528, -3.11072, -3.05671, -2.986, -2.91529, -2.86128, -2.83672, -2.84741, -2.89084, -2.95673, -3.02954, -3.09207, -3.12954, -3.13312, -3.10195, -3.0434, -2.9713, -2.90266, -2.85371, -2.836, -2.85371, -2.90266, -2.9713, -3.0434, -3.10195, -3.13312, -3.12954, -3.09207, -3.02954, -2.95673, -2.89084, -2.84741, -2.83672, -2.86128, -2.91529, -2.986]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_rig"]
 _data = {
 "idle": SubResource("Animation_idle"),
@@ -2966,6 +2983,11 @@ _data = {
 "dive": SubResource("Animation_dive"),
 "hurt": SubResource("Animation_hurt"),
 "down": SubResource("Animation_down")
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]
+_data = {
+"fx": SubResource("Animation_fx")
 }
 
 [node name="Rig_valentina" type="Node2D"]
@@ -3093,6 +3115,14 @@ auto_calculate_length_and_angle = false
 length = 8
 bone_angle = 0.0
 
+[node name="tail" type="Bone2D" parent="Skeleton2D/root/pelvis/spine/head"]
+position = Vector2(17.65, -8.629)
+rotation = -2.986
+rest = Transform2D(-0.98792, -0.15497, 0.15497, -0.98792, 17.65, -8.629)
+auto_calculate_length_and_angle = false
+length = 20.248
+bone_angle = 0.0
+
 [node name="WeaponRemote" type="RemoteTransform2D" parent="Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo/weapon"]
 remote_path = NodePath("../../../../../../../../Parts/WeaponSlot")
 
@@ -3168,7 +3198,7 @@ bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1)]
 color = Color(0.35, 0.2, 0.1, 1)
 skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(-9.185, -66.963, -10.081, -65.694, -11.491, -65.044, -13.037, -65.185, -14.306, -66.081, -14.956, -67.491, -14.815, -69.037, -7.815, -88.037, -6.919, -89.306, -5.509, -89.956, -3.963, -89.815, -2.694, -88.919, -2.044, -87.509, -2.185, -85.963)
-bones = [NodePath("root/pelvis/spine/head"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
+bones = [NodePath("root/pelvis/spine/head/tail"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
 
 [node name="neck" type="Polygon2D" parent="Parts"]
 color = Color(0.93, 0.75, 0.6, 1)
@@ -3237,3 +3267,9 @@ bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 
 libraries = {
 "": SubResource("AnimationLibrary_rig")
 }
+
+[node name="FXPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_fx")
+}
+autoplay = "fx"
