@@ -265,6 +265,12 @@ sincronizado com o acerto, excesso e personalidade por estilo de luta) e convert
 (`Skeleton2D` + `Polygon2D` com skinning + `AnimationPlayer`). No título, **V** alterna entre o
 rig e o visual clássico. Como gerar e editar: [`tools/rig/README.md`](tools/rig/README.md).
 
+Cada rig tem também um **`AnimationTree`** com máquina de estados e **BlendSpaces**:
+`locomotion` (BlendSpace1D parado↔andando, sincronizado), `strike` (BlendSpace2D com os golpes
+organizados por força × altura), `air` (pulo↔voadora), `damage` (dor↔queda) e `floor`
+(caído↔levantando). Trocas de estado ganham **crossfade**; golpes, pulo e dano seguem a fase exata da
+jogabilidade (a pose de impacto continua caindo no quadro do acerto).
+
 ## Estrutura
 
 ```

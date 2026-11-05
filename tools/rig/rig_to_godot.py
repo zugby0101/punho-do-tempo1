@@ -8,7 +8,8 @@ Cada cena tem:
     Skeleton2D -> Bone2D (root, pelvis, spine, head, braços, pernas, pés, arma)
     Parts      -> Polygon2D na ordem de desenho, com skinning no Skeleton2D (peso 1 no osso da peça)
                -> WeaponSlot (Node2D, recebe o transform do osso "weapon" via RemoteTransform2D)
-    AnimationPlayer com as 16 animações (rotação de todos os ossos + posição do quadril)
+    AnimationPlayer com as animações (rotação de todos os ossos + posição do quadril)
+    AnimationTree   máquina de estados (locomotion/strike/air/damage/floor) com BlendSpace1D/2D
 """
 import json
 import math
@@ -64,6 +65,39 @@ def unwrap(values):
     return out
 
 
+def joint_space(rots, rest):
+    """Põe a trilha de rotação no espaço da articulação: janela (repouso - π, repouso + π].
+    O AnimationTree mistura rotações como números (crossfade e BlendSpaces); com todas as animações
+    de um osso na mesma janela, a mistura passa pelo caminho natural da articulação.
+    Trilha contínua que cabe na janela: só desloca por voltas inteiras. Se não cabe (passa por trás
+    da articulação), cada amostra vai para a janela."""
+    best = min(range(-3, 4), key=lambda k: max(abs(r - 2 * math.pi * k - rest) for r in rots))
+    shifted = [r - 2 * math.pi * best for r in rots]
+    if max(abs(r - rest) for r in shifted) <= math.pi:
+        return shifted
+    return [rest + (r - rest + math.pi) % (2 * math.pi) - math.pi for r in rots]
+
+
+JUMPS = [0]
+
+
+def snap_jumps(times, full, tk, vals):
+    """Onde a trilha (no espaço da articulação) salta mais de meia volta entre duas amostras, a
+    interpolação linear varreria o membro por dentro do corpo: vira um corte instantâneo."""
+    jumps = [(times[i], times[i + 1], full[i], full[i + 1]) for i in range(len(full) - 1)
+             if abs(full[i + 1] - full[i]) > math.pi]
+    if not jumps:
+        return tk, vals
+    JUMPS[0] += len(jumps)
+    pts = dict(zip(tk, vals))
+    for t0, t1, v0, v1 in jumps:
+        pts[t0] = v0
+        pts[t1 - 1e-4] = v0
+        pts[t1] = v1
+    ks = sorted(pts)
+    return ks, [pts[k] for k in ks]
+
+
 def reduce_keys(times, values, tol):
     """Redução de keyframes (Douglas-Peucker no tempo): mantém só as chaves necessárias para
     reproduzir a curva amostrada dentro da tolerância. Valores: float ou [x, y]."""
@@ -93,6 +127,102 @@ def reduce_keys(times, values, tol):
     return sorted(keep)
 
 
+# ---------------- AnimationTree ----------------
+# Golpes no BlendSpace2D "strike": x = força (leve -1 .. pesado 1), y = altura (baixo -1 .. alto 1).
+STRIKE_POINTS = {
+    "jab": (-1.0, 0.35), "cross": (-0.45, 0.35), "throw": (-1.0, -0.45), "upper": (0.0, 1.0),
+    "kick": (0.0, -0.55), "swing": (0.5, 0.6), "charge": (0.55, -0.15), "special": (1.0, 0.0),
+    "slam": (1.0, 1.0), "dive": (1.0, -1.0),
+}
+# Estados da máquina: (BlendSpace1D (ponto 0, ponto 1) ou None, usa TimeSeek, crossfade ao entrar)
+TREE_STATES = {
+    "locomotion": (("idle", "walk"), False, 0.12),
+    "strike": (None, True, 0.04),
+    "air": (("jump", "jumpkick"), True, 0.08),
+    "damage": (("hurt", "fall"), True, 0.03),
+    "floor": (("down", "getup"), True, 0.10),
+}
+
+
+def anim_tree(anim_names):
+    """Sub-recursos e nó do AnimationTree: máquina de estados com BlendSpaces 1D/2D.
+    Golpes, pulo, dano e chão são "escovados" pela jogabilidade (TimeScale 0 + TimeSeek com a fase 0..1);
+    a locomoção roda sozinha (idle <-> walk sincronizados, velocidade pelo TimeScale)."""
+    have = set(anim_names)
+    subs = []
+    states = []
+
+    def anim_node(an):
+        nid = "TreeAnim_%s" % an
+        if not any(i == nid for i, _ in subs):
+            subs.append((nid, '[sub_resource type="AnimationNodeAnimation" id="%s"]\nanimation = &"%s"' % (nid, an)))
+        return nid
+
+    for st, (pair, seek, _xf) in TREE_STATES.items():
+        if st == "strike":
+            pts = [(an, xy) for an, xy in STRIKE_POINTS.items() if an in have]
+            if len(pts) < 3:
+                continue
+            bid = "TreeBlend_strike"
+            lines = ['[sub_resource type="AnimationNodeBlendSpace2D" id="%s"]' % bid]
+            for i, (an, xy) in enumerate(pts):
+                lines += ['blend_point_%d/node = SubResource("%s")' % (i, anim_node(an)), "blend_point_%d/pos = %s" % (i, vec(xy))]
+            lines += ['x_label = "forca"', 'y_label = "altura"', "blend_mode = 1"]
+        else:
+            if not all(a in have for a in pair):
+                continue
+            bid = "TreeBlend_%s" % st
+            lines = ['[sub_resource type="AnimationNodeBlendSpace1D" id="%s"]' % bid]
+            for i, an in enumerate(pair):
+                lines += ['blend_point_%d/node = SubResource("%s")' % (i, anim_node(an)), "blend_point_%d/pos = %d.0" % (i, i)]
+            lines += ["min_space = 0.0", 'value_label = "%s"' % pair[1], "sync = %s" % ("false" if seek else "true")]
+        subs.append((bid, "\n".join(lines)))
+        scale_id = "TreeScale_%s" % st
+        subs.append((scale_id, '[sub_resource type="AnimationNodeTimeScale" id="%s"]' % scale_id))
+        bt = ['[sub_resource type="AnimationNodeBlendTree" id="TreeState_%s"]' % st,
+              'nodes/blend/node = SubResource("%s")' % bid, "nodes/blend/position = Vector2(0, 100)",
+              'nodes/%s/node = SubResource("%s")' % ("freeze" if seek else "speed", scale_id),
+              "nodes/%s/position = Vector2(220, 100)" % ("freeze" if seek else "speed")]
+        if seek:
+            seek_id = "TreeSeek_%s" % st
+            subs.append((seek_id, '[sub_resource type="AnimationNodeTimeSeek" id="%s"]' % seek_id))
+            bt += ['nodes/seek/node = SubResource("%s")' % seek_id, "nodes/seek/position = Vector2(440, 100)",
+                   "nodes/output/position = Vector2(660, 100)",
+                   'node_connections = [&"output", 0, &"seek", &"seek", 0, &"freeze", &"freeze", 0, &"blend"]']
+        else:
+            bt += ["nodes/output/position = Vector2(440, 100)",
+                   'node_connections = [&"output", 0, &"speed", &"speed", 0, &"blend"]']
+        subs.append(("TreeState_%s" % st, "\n".join(bt)))
+        states.append(st)
+
+    trans = []
+    for a in states:
+        for b in states:
+            if a != b:
+                tid = "TreeTrans_%s_%s" % (a, b)
+                subs.append((tid, '[sub_resource type="AnimationNodeStateMachineTransition" id="%s"]\nxfade_time = %s'
+                             % (tid, f(TREE_STATES[b][2]))))
+                trans.append('"%s", "%s", SubResource("%s")' % (a, b, tid))
+    subs.append(("TreeTrans_start", '[sub_resource type="AnimationNodeStateMachineTransition" id="TreeTrans_start"]\nadvance_mode = 2'))
+    trans.append('"Start", "locomotion", SubResource("TreeTrans_start")')
+    sm = ['[sub_resource type="AnimationNodeStateMachine" id="TreeRoot"]']
+    for i, st in enumerate(states):
+        sm += ['states/%s/node = SubResource("TreeState_%s")' % (st, st),
+               "states/%s/position = Vector2(%d, %d)" % (st, 320 + 200 * math.cos(i * 2 * math.pi / len(states)),
+                                                        200 + 120 * math.sin(i * 2 * math.pi / len(states)))]
+    sm += ["states/Start/position = Vector2(60, 200)", "transitions = [%s]" % ", ".join(trans)]
+    subs.append(("TreeRoot", "\n".join(sm)))
+
+    node = ['[node name="AnimationTree" type="AnimationTree" parent="."]',
+            "callback_mode_process = 2",  # manual: o lutador avança a árvore no mesmo passo do jogo
+            'tree_root = SubResource("TreeRoot")', 'anim_player = NodePath("../AnimationPlayer")',
+            "active = false",
+            'metadata/states = PackedStringArray(%s)' % ", ".join('"%s"' % x for x in states),
+            "metadata/strike_points = {%s}" % ", ".join('"%s": %s' % (an, vec(xy)) for an, xy in STRIKE_POINTS.items() if an in have),
+            ""]
+    return subs, node
+
+
 ROT_TOL = 0.004   # rad (~0,2°)
 POS_TOL = 0.06    # px
 
@@ -117,13 +247,18 @@ def build_scene(rig):
             if bn == "root" or bn not in a["keys"][0]["bones"]:
                 continue
             rots = unwrap([k["bones"][bn]["rot"] for k in a["keys"]])
-            tracks = [("rotation", rots, 3)]
+            rots = joint_space(rots, bones[bn]["rot"])
+            # 1 = Linear (não "angle": a mistura angular do Godot 4.3 erra fora da janela de ±π). Com as
+            # trilhas centradas no repouso, crossfade e BlendSpaces interpolam no espaço da articulação.
+            tracks = [("rotation", rots, 1)]
             if bn in POS_TRACK_BONES:
                 tracks.append(("position", [k["bones"][bn]["pos"] for k in a["keys"]], 1))
             for prop, vals, interp in tracks:
                 idx = reduce_keys(times, vals, ROT_TOL if prop == "rotation" else POS_TOL)
                 tk = [times[i] for i in idx]
                 vals = [vals[i] for i in idx]
+                if prop == "rotation":
+                    tk, vals = snap_jumps(times, rots, tk, vals)
                 lines += [
                     'tracks/%d/type = "value"' % ti,
                     "tracks/%d/imported = false" % ti,
@@ -148,6 +283,8 @@ def build_scene(rig):
         subs.append(("AnimationLibrary_fx", "\n".join(['[sub_resource type="AnimationLibrary" id="AnimationLibrary_fx"]', "_data = {",
                      ",\n".join('"%s": SubResource("%s")' % (an, aid) for an, aid in fx_ids), "}"])))
 
+    tree_subs, tree_node = anim_tree([an for an, _ in anim_ids])
+    subs += tree_subs
     out = ['[gd_scene load_steps=%d format=3]' % (len(subs) + 2), "",
            '[ext_resource type="Script" path="res://scripts/rig_weapon.gd" id="1_weapon"]', ""]
     for _id, txt in subs:
@@ -189,6 +326,7 @@ def build_scene(rig):
         out += ['[node name="WeaponSlot" type="Node2D" parent="Parts"]', 'script = ExtResource("1_weapon")', ""]
     out += ['[node name="AnimationPlayer" type="AnimationPlayer" parent="."]', "libraries = {",
             '"": SubResource("AnimationLibrary_rig")', "}", ""]
+    out += tree_node
     if fx_ids:
         # efeitos (capa, halo, ampulheta): tocam sozinhos em loop, por cima da pose do corpo
         out += ['[node name="FXPlayer" type="AnimationPlayer" parent="."]', "libraries = {",
@@ -250,6 +388,7 @@ def main():
             err, where = check(rig)
             msg += "  (erro máx. da cinemática além do alcance do membro: %.2f px em %s)" % (err, where or "-")
         print(msg)
+    print("cortes instantâneos (giros de mais de meia volta entre amostras): %d" % JUMPS[0])
 
 
 if __name__ == "__main__":

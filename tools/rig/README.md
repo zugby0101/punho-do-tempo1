@@ -21,7 +21,7 @@ Isso gera:
 | `art/rigs/punho_rigs_inimigos.blend` | os 65 inimigos, sub-chefes e chefes (uma linha por era) |
 | `art/rigs/preview.png`, `preview_inimigos.png` | prévias renderizadas no Blender (Cycles) |
 | `art/rigs/json/` | dados intermediários (ossos, peças, animações resolvidas) — não vão para o git |
-| `rigs/*.tscn` | lutadores: `Skeleton2D` + `Bone2D` + `Polygon2D` + `AnimationPlayer` |
+| `rigs/*.tscn` | lutadores: `Skeleton2D` + `Bone2D` + `Polygon2D` + `AnimationPlayer` + `AnimationTree` |
 | `rigs/enemies/<era>_<tipo>.tscn` | inimigos, ex.: `crusade_boss.tscn`, `void_secret_boss.tscn` |
 
 Para gerar só um grupo: `python tools/rig/build.py --only=players` ou `--only=enemies`.
@@ -135,3 +135,33 @@ sem salto quando ele recomeça.
 Abra `art/rigs/punho_rigs.blend`, selecione a armature de um personagem e mova os controles
 de IK (`ctrl_*`) nas Actions `<NOME>_<animação>`. Para que a mudança vá para o jogo
 de forma reprodutível, altere a pose em `poses.py` e rode `build.py` de novo.
+
+
+## AnimationTree e BlendSpaces
+
+`rig_to_godot.py` gera em cada cena um `AnimationTree` (raiz `AnimationNodeStateMachine`, processo
+manual: o lutador chama `advance()` no mesmo passo do jogo):
+
+| Estado | Nó | Pontos | Parâmetros |
+|---|---|---|---|
+| `locomotion` | BlendSpace1D (sync) → TimeScale | idle 0, walk 1 | `locomotion/blend/blend_position`, `locomotion/speed/scale` |
+| `strike` | BlendSpace2D (discreto) → TimeScale 0 → TimeSeek | golpes em força (x) × altura (y) | `strike/blend/blend_position`, `strike/seek/seek_request` |
+| `air` | BlendSpace1D → TimeScale 0 → TimeSeek | jump 0, jumpkick 1 | `air/blend/...`, `air/seek/...` |
+| `damage` | BlendSpace1D → TimeScale 0 → TimeSeek | hurt 0, fall 1 | `damage/blend/...`, `damage/seek/...` |
+| `floor` | BlendSpace1D → TimeScale 0 → TimeSeek | down 0, getup 1 | `floor/blend/...`, `floor/seek/...` |
+
+Transições entre todos os estados, com crossfade pelo destino (golpe 0,04 s, dano 0,03 s, pulo
+0,08 s, chão 0,10 s, locomoção 0,12 s). Inimigos só têm os estados das animações que possuem (sem
+`air`). Os pontos do BlendSpace2D ficam em `metadata/strike_points` e a lista de estados em
+`metadata/states` do nó. O jogo (`fighter.gd`, `_drive_tree`) escolhe o estado e a posição no
+BlendSpace e passa a fase do golpe (0..1) ao `TimeSeek`; sem a árvore, volta ao `seek` do AnimationPlayer.
+
+**Rotações no espaço da articulação.** O AnimationTree mistura rotações como números, então cada
+trilha é colocada na janela (repouso − π, repouso + π] do osso (`joint_space`). Trilhas que passam
+por trás da articulação viram cortes instantâneos (`snap_jumps`) em vez de varrer o membro por
+dentro do corpo. As trilhas usam interpolação **Linear**: a "Linear Angle" do Godot 4.3 mistura
+errado fora de ±π.
+
+Verificações feitas: a pose do AnimationTree é idêntica à do AnimationPlayer em 4.853 poses dos 79
+rigs; nos 44.520 quadros de crossfade testados (todos os pares de estados), nenhum osso gira mais que
+~1 rad por quadro de 10 ms.

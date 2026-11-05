@@ -49,6 +49,19 @@ var net_rig_u := 0.0
 # Rig 2D (Skeleton2D gerado do Blender). Quando existe e está ativo, substitui o desenho procedural.
 var rig: Node2D = null
 var rig_ap: AnimationPlayer = null
+# AnimationTree do rig (máquina de estados + BlendSpaces); sem ele, cai no seek direto do AnimationPlayer
+static var use_anim_tree := true
+var rig_tree: AnimationTree = null
+var rig_pb: AnimationNodeStateMachinePlayback = null
+var tree_states: PackedStringArray = []
+var strike_points: Dictionary = {}
+var tree_blend := {"locomotion": 0.0, "air": 0.0, "damage": 0.0, "floor": 0.0}
+var tree_usec := 0
+const TREE_STATE_OF := {
+	"idle": "locomotion", "walk": "locomotion", "jump": "air", "jumpkick": "air",
+	"hurt": "damage", "fall": "damage", "down": "floor", "getup": "floor",
+}
+const TREE_BLEND_TARGET := {"walk": 1.0, "jumpkick": 1.0, "fall": 1.0, "getup": 1.0}
 var power := 1.0
 
 
@@ -423,6 +436,11 @@ func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, pha
 	if not rig_ap.has_animation(an):
 		an = "idle"
 		u = -1.0
+	if _drive_tree(an, u):
+		_sync_weapon(phase)
+		return
+	if rig_tree != null:
+		rig_tree.active = false
 	var anim := rig_ap.get_animation(an)
 	var tpos := 0.0
 	if anim.loop_mode != Animation.LOOP_NONE or u < 0.0:
@@ -433,6 +451,10 @@ func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, pha
 		rig_ap.play(an)
 		rig_ap.pause()
 	rig_ap.seek(tpos, true)
+	_sync_weapon(phase)
+
+
+func _sync_weapon(phase: float) -> void:
 	var slot = rig.get_node_or_null("Parts/WeaponSlot")
 	if slot != null:
 		slot.set_weapon(weapon, flash > 0.0)
@@ -450,6 +472,52 @@ func attach_rig(path: String) -> void:
 	rig.visible = false
 	add_child(rig)
 	rig_ap = rig.get_node("AnimationPlayer")
+	rig_tree = rig.get_node_or_null("AnimationTree")
+	if rig_tree != null:
+		rig_pb = rig_tree.get("parameters/playback")
+		tree_states = rig_tree.get_meta("states", PackedStringArray())
+		strike_points = rig_tree.get_meta("strike_points", {})
+
+
+## Dirige o AnimationTree: escolhe o estado da máquina, a posição nos BlendSpaces e a fase.
+## Locomoção mistura idle/andar suavemente; golpes, pulo, dano e chão seguem a fase 0..1 da jogabilidade.
+## As trocas de estado ganham crossfade (definido por transição na cena do rig).
+func _drive_tree(an: String, u: float) -> bool:
+	if rig_tree == null or not use_anim_tree:
+		return false
+	var st: String = "strike" if strike_points.has(an) else TREE_STATE_OF.get(an, "")
+	if st == "" or not st in tree_states:
+		return false
+	var now := Time.get_ticks_usec()
+	var dt := clampf((now - tree_usec) / 1000000.0, 0.0, 0.1)
+	tree_usec = now
+	if not rig_tree.active:
+		rig_tree.active = true
+		rig_pb.start(st, true)
+		dt = 0.0
+	var base := "parameters/%s/" % st
+	if st == "strike":
+		rig_tree.set(base + "blend/blend_position", strike_points[an])
+	else:
+		var target: float = TREE_BLEND_TARGET.get(an, 0.0)
+		var rate := 5.0 if st == "locomotion" else 12.0
+		tree_blend[st] = move_toward(tree_blend[st], target, dt * rate)
+		if rig_pb.get_current_node() != st:
+			tree_blend[st] = target  # ao entrar no estado, já começa na pose certa
+		rig_tree.set(base + "blend/blend_position", tree_blend[st])
+	if st == "locomotion":
+		rig_tree.set(base + "speed/scale", 1.0)
+	else:
+		rig_tree.set(base + "seek/seek_request", clampf(u, 0.0, 1.0))
+	var entering := rig_pb.get_current_node() != st or dt == 0.0
+	if rig_pb.get_current_node() != st:
+		rig_pb.travel(st)
+	rig_tree.advance(dt)
+	if entering and st != "locomotion":
+		# ao entrar no estado a máquina reinicia o nó: reaplica a fase no mesmo quadro
+		rig_tree.set(base + "seek/seek_request", clampf(u, 0.0, 1.0))
+		rig_tree.advance(0.0)
+	return true
 
 
 static func rig_slug(n: String) -> String:
