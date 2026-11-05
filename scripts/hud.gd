@@ -69,6 +69,16 @@ func _draw() -> void:
 	match game.mode:
 		"title": _draw_title()
 		"online_menu": _draw_online_menu()
+		"ranking": _draw_ranking()
+		"name_entry":
+			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
+			if not game.name_queue.is_empty():
+				var p = game.name_queue[0]
+				_center(170, "RANKING ONLINE", 40, Color(1, 0.85, 0.3))
+				var who: String = ("P%d " % (p.pid + 1)) if game.players.size() > 1 else ""
+				_center(225, "%s%s — %d pontos" % [who, p.display_name, p.score], 24, PLAYER_COLORS[p.pid] if game.players.size() > 1 else Color(1, 1, 1))
+				_center(270, "Digite seu nome e aperte ENTER", 18, Color(1, 1, 1))
+			_center(380, "ESC para cancelar", 15, Color(0.8, 0.8, 0.9))
 		"join_input":
 			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
 			match game.input_purpose:
@@ -106,6 +116,8 @@ func _draw() -> void:
 			_center(200, "FIM DE JOGO", 72, Color(1, 0.2, 0.2))
 			_scores_block(260)
 			_center(420, "ENTER ou SOCO para continuar nesta era", 22, Color(1, 0.9, 0.3))
+			if not game.score_sent and not game.versus:
+				_center(455, "R: enviar a pontuação ao RANKING ONLINE", 18, Color(0.5, 0.9, 1))
 		"ending": _draw_ending()
 		"roundstart":
 			var k := clampf(game.mode_time * 4.0, 0.0, 1.0)
@@ -203,7 +215,7 @@ func _draw_title() -> void:
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
-	_center(415, "ONLINE: aperte O para criar ou entrar numa sala pela internet", 16, Color(0.5, 0.9, 1))
+	_center(415, "ONLINE: O = criar ou entrar numa sala   •   R = ranking de pontuação", 16, Color(0.5, 0.9, 1))
 	if vs:
 		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
 	else:
@@ -308,6 +320,8 @@ func _draw_ending() -> void:
 	for i in mini(shown, ending.size()):
 		_text(Vector2(40, 215 + i * 34), ending[i], 18, Color(1, 1, 1))
 	_text(Vector2(40, 380), "PONTUAÇÃO: %d" % p.score, 28, Color(0.4, 1, 0.5))
+	if not game.score_sent:
+		_text(Vector2(40, 420), "R: enviar ao RANKING ONLINE", 18, Color(0.5, 0.9, 1))
 	if game.mode_time > 2.0 and int(t * 2.0) % 2 == 0:
 		var more: bool = game.ending_page < game.players.size() - 1
 		_center(500, "ENTER: próximo final" if more else "ENTER para voltar ao título", 22, Color(1, 0.9, 0.3))
@@ -355,3 +369,40 @@ func _draw_online_menu() -> void:
 	var srv: String = Net.relay_url if Net.has_relay() else "nenhum servidor configurado (opção CONFIGURAR SERVIDOR)"
 	_center(470, "Servidor: " + srv, 13, Color(0.5, 0.9, 1) if Net.has_relay() else Color(1, 0.6, 0.5))
 	_center(505, "▲▼ escolher   •   SOCO/ENTER confirmar   •   ESC voltar", 15, Color(0.8, 0.8, 0.9))
+
+
+func _draw_ranking() -> void:
+	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.9))
+	_center(60, "RANKING ONLINE — MODO HISTÓRIA", 36, Color(1, 0.85, 0.3))
+	var st: String = Net.ranking_status
+	if st == "carregando":
+		_center(270, "Carregando..." + ".".repeat(int(t * 3.0) % 3), 24, Color(1, 1, 1))
+		_center(305, "(se o servidor estava dormindo, pode levar até 1 minuto)", 14, Color(0.75, 0.75, 0.85))
+	elif st != "ok":
+		_center(270, st, 18, Color(1, 0.6, 0.5))
+	else:
+		# minhas posições do último envio
+		var mine: Array = []
+		for r in Net.last_ranks:
+			if r.get("ok", false):
+				mine.append("%s ficou em %dº" % [r.name, int(r.rank)])
+		if not mine.is_empty():
+			_center(92, " • ".join(mine), 16, Color(0.4, 1, 0.5))
+		var cols := [60.0, 120.0, 330.0, 480.0, 640.0, 760.0]
+		var heads := ["#", "NOME", "LUTADOR", "PONTOS", "ERA", "JOG."]
+		for k in heads.size():
+			_text(Vector2(cols[k], 128), heads[k], 15, Color(0.6, 0.9, 1))
+		if Net.ranking.is_empty():
+			_center(270, "Ainda não há pontuações. Seja o primeiro!", 20, Color(1, 1, 1))
+		for i in mini(Net.ranking.size(), 10):
+			var e: Dictionary = Net.ranking[i]
+			var y := 162.0 + i * 30.0
+			var col := Color(1, 0.85, 0.3) if i == 0 else (Color(0.85, 0.85, 0.9) if i < 3 else Color(1, 1, 1))
+			_text(Vector2(cols[0], y), "%d" % (i + 1), 18, col)
+			_text(Vector2(cols[1], y), String(e.get("name", "?")), 18, col)
+			_text(Vector2(cols[2], y), String(e.get("char", "")), 16, col)
+			_text(Vector2(cols[3], y), "%d" % int(e.get("score", 0)), 18, col)
+			var era := "FINAL ★" if e.get("done", false) else "Fase %d" % int(e.get("stage", 1))
+			_text(Vector2(cols[4], y), era, 16, Color(0.4, 1, 0.5) if e.get("done", false) else col)
+			_text(Vector2(cols[5], y), "%dP" % int(e.get("players", 1)), 16, col)
+	_center(510, "ESC, ENTER ou SOCO para voltar", 15, Color(0.8, 0.8, 0.9))

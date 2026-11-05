@@ -73,6 +73,16 @@ Como funciona: o anfitrião roda a partida; os convidados enviam só os comandos
 o estado do jogo (~30 vezes por segundo, compactado, cerca de 20–25 KB/s por convidado).
 Os menus entre as fases podem ser confirmados por qualquer jogador.
 
+## Ranking online
+
+No fim de jogo ou no final da história, aperte **R** para enviar a pontuação: cada jogador
+digita o nome (no co-op, cada um entra com a própria pontuação). No título, **R** mostra o
+**Top 10** com nome, lutador, pontos, até onde chegou e quantos jogadores eram.
+
+O ranking fica no mesmo servidor do modo online. Para que ele não seja zerado quando o servidor
+gratuito reinicia, configure o Upstash Redis (gratuito) — veja
+[`relay-server/README.md`](relay-server/README.md#ranking-online).
+
 ## Conteúdo
 
 **12 fases, uma por período da história:**

@@ -9,7 +9,31 @@ o servidor não processa nada do jogo, então é bem leve.
 
 - Salas com código de 4 letras (até 4 jogadores por sala)
 - Uso de banda: cerca de 20–25 KB/s por convidado (medido em teste)
+- Ranking online de pontuação (ver abaixo)
 - Só depende do pacote [`ws`](https://www.npmjs.com/package/ws)
+
+## Ranking online
+
+O mesmo servidor guarda o **ranking de pontuação** do modo História
+(`GET /scores` lista o Top 10, `POST /scores` envia novas pontuações).
+
+**Importante no Render gratuito:** o disco é apagado sempre que o servidor reinicia ou "dorme",
+então o ranking seria zerado de tempos em tempos. Para guardar de forma permanente, use o
+**Upstash Redis** (gratuito):
+
+1. Crie uma conta em https://upstash.com e um banco **Redis** (plano Free; qualquer região).
+2. Na página do banco, na seção **REST API**, copie `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`.
+3. No Render, abra o serviço **punho-do-tempo-relay → Environment** e adicione as duas variáveis
+   com esses valores. O serviço reinicia sozinho.
+4. Confira no log do Render: deve aparecer `(ranking: upstash)`.
+
+Sem essas variáveis o ranking fica no arquivo `data/scores.json` (bom para rodar no próprio
+computador ou numa VPS).
+
+Segurança: os envios são assinados (HMAC) com uma chave compartilhada com o jogo
+(`SCORE_KEY`, igual em `scores.js` e `scripts/net.gd`), validados e limitados por IP.
+Isso barra trapaças casuais, mas como a chave fica dentro do jogo, alguém determinado
+ainda consegue forjar uma pontuação. Se trocar a chave, troque nos dois lugares.
 
 ## Publicar de graça no Render (recomendado)
 

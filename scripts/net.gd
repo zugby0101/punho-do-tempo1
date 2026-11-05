@@ -372,3 +372,84 @@ func close() -> void:
 	peer_sets.clear()
 	Controls.remote.clear()
 	press_counts = [0, 0, 0, 0, 0, 0, 0, 0]
+
+
+# ================= Ranking online =================
+## Mesma chave do servidor (SCORE_KEY). Dificulta envios falsos casuais.
+const SCORE_KEY := "punho-do-tempo-ranking-v1"
+
+var ranking: Array = []        # última lista recebida
+var ranking_status := ""       # "carregando", "ok" ou mensagem de erro
+var last_ranks: Array = []     # posições obtidas no último envio
+
+
+## Endereço HTTP do servidor (o mesmo do relay: wss:// vira https://).
+func scores_url() -> String:
+	var u := relay_url if relay_url != "" else DEFAULT_RELAY_URL
+	u = u.replace("wss://", "https://").replace("ws://", "http://")
+	return u.trim_suffix("/") + "/scores"
+
+
+func _sign(e: Dictionary) -> String:
+	var msg := "%s|%s|%d|%d|%d|%d|%d" % [e.name, e.char, e.score, e.stage, e.players, 1 if e.done else 0, e.ts]
+	var ctx := HMACContext.new()
+	ctx.start(HashingContext.HASH_SHA256, SCORE_KEY.to_utf8_buffer())
+	ctx.update(msg.to_utf8_buffer())
+	return ctx.finish().hex_encode()
+
+
+func fetch_ranking() -> void:
+	ranking_status = "carregando"
+	_http(scores_url() + "?limit=10", HTTPClient.METHOD_GET, "", _on_ranking)
+
+
+## entries: [{name, char, score, stage, players, done}]
+func submit_scores(entries: Array) -> void:
+	ranking_status = "carregando"
+	last_ranks = []
+	var ts := int(Time.get_unix_time_from_system())
+	var out: Array = []
+	for e in entries:
+		var x: Dictionary = e.duplicate()
+		x.ts = ts
+		x.sig = _sign(x)
+		out.append(x)
+	_http(scores_url(), HTTPClient.METHOD_POST, JSON.stringify({"entries": out}), _on_submitted)
+
+
+func _http(url: String, method: int, body: String, cb: Callable) -> void:
+	var req := HTTPRequest.new()
+	req.timeout = 75.0  # o servidor gratuito pode levar ~1 min para acordar
+	add_child(req)
+	req.request_completed.connect(func(result, code, _h, data):
+		req.queue_free()
+		var parsed = JSON.parse_string(data.get_string_from_utf8()) if data.size() > 0 else null
+		cb.call(result == HTTPRequest.RESULT_SUCCESS, code, parsed))
+	var err := req.request(url, ["Content-Type: application/json"], method, body)
+	if err != OK:
+		req.queue_free()
+		ranking_status = "Não foi possível acessar o ranking (erro %d)." % err
+
+
+func _on_ranking(ok: bool, code: int, data) -> void:
+	if ok and code == 200 and data is Dictionary:
+		ranking = data.get("scores", [])
+		ranking_status = "ok"
+	else:
+		ranking_status = "Ranking indisponível agora (servidor fora do ar ou acordando). Tente de novo em 1 minuto."
+
+
+func _on_submitted(ok: bool, code: int, data) -> void:
+	if ok and data is Dictionary:
+		last_ranks = data.get("results", [])
+		if not data.get("ok", false):
+			var msg := "Pontuação recusada."
+			if not last_ranks.is_empty():
+				msg = String(last_ranks[0].get("error", msg))
+			elif data.has("error"):
+				msg = String(data.error)
+			ranking_status = msg
+			return
+		fetch_ranking()
+	else:
+		ranking_status = "Não foi possível enviar (servidor fora do ar ou acordando). Tente de novo em 1 minuto."

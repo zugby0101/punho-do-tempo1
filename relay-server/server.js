@@ -17,6 +17,7 @@
 "use strict";
 const http = require("http");
 const { WebSocketServer } = require("ws");
+const scores = require("./scores");
 
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const MAX_GUESTS = 3;                 // anfitrião + 3 = 4 jogadores
@@ -55,7 +56,9 @@ function log(msg) {
   console.log(new Date().toISOString(), msg);
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
+  // Ranking online (GET/POST /scores)
+  if (await scores.handle(req, res)) return;
   // Página simples para checagem de saúde (útil para hospedagens como Render)
   res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
   res.end(`Punho do Tempo relay OK - salas abertas: ${rooms.size}\n`);
@@ -156,6 +159,6 @@ if (process.env.STATS === "1") {
   }, 10000).unref();
 }
 
-server.listen(PORT, () => log(`Relay do Punho do Tempo ouvindo na porta ${PORT}`));
+server.listen(PORT, () => log(`Relay do Punho do Tempo ouvindo na porta ${PORT} (ranking: ${scores.storage})`));
 
 module.exports = { server, wss, rooms };

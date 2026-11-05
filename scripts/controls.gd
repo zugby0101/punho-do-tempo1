@@ -95,7 +95,7 @@ static func setup() -> void:
 		for ev in _events("j", a, -1):
 			InputMap.action_add_event(g, ev)
 	# Teclas do modo online (no título)
-	for pair in [["net_host", KEY_O], ["net_join", KEY_I]]:  # O abre o menu online
+	for pair in [["net_host", KEY_O], ["net_join", KEY_I], ["ranking", KEY_R]]:  # O: menu online, R: ranking
 		InputMap.add_action(pair[0])
 		var kev := InputEventKey.new()
 		kev.physical_keycode = pair[1]

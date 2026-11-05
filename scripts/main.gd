@@ -56,6 +56,12 @@ var net_events: Array = []  # anfitrião: sons/efeitos a repassar
 var ip_edit: LineEdit
 var input_purpose := "ip"  # ip, code, url
 var online_choice := 0
+# Ranking online
+var ranking_return := "title"   # tela para onde voltar
+var score_sent := false
+var name_queue: Array = []       # jogadores que ainda vão digitar o nome
+var name_entries: Array = []
+static var last_names := {}      # pid -> último nome usado
 const ONLINE_OPTIONS := [
 	["CRIAR SALA", "pelo servidor intermediário — ninguém precisa abrir portas"],
 	["ENTRAR EM SALA", "digite o código de 4 letras que o anfitrião recebeu"],
@@ -223,7 +229,7 @@ func _set_mode(m: String) -> void:
 
 
 func is_frozen() -> bool:
-	return mode in ["title", "select", "intro", "ending", "roundstart", "match"] or paused or hitstop > 0.0
+	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry"] or paused or hitstop > 0.0
 
 
 func cam_left() -> float:
@@ -252,6 +258,17 @@ func _physics_process(delta: float) -> void:
 				_close_ip_edit()
 				_set_mode("online_menu")
 			return
+		"ranking":
+			if mode_time > 0.4 and (Input.is_physical_key_pressed(KEY_ESCAPE) or _confirm() or Input.is_action_just_pressed("ranking")):
+				_set_mode(ranking_return)
+				mode_time = 2.0  # volta direto, sem esperar a animação
+			return
+		"name_entry":
+			if Input.is_physical_key_pressed(KEY_ESCAPE):
+				_close_ip_edit()
+				_set_mode(ranking_return)
+				mode_time = 2.0
+			return
 		"online_menu":
 			_update_online_menu()
 			return
@@ -262,6 +279,9 @@ func _physics_process(delta: float) -> void:
 				_set_mode("title")
 			return
 		"title":
+			if Input.is_action_just_pressed("ranking"):
+				_open_ranking("title")
+				return
 			if Input.is_action_just_pressed("net_host") or Input.is_action_just_pressed("net_join"):
 				online_choice = 0
 				_set_mode("online_menu")
@@ -298,6 +318,9 @@ func _physics_process(delta: float) -> void:
 				get_tree().reload_current_scene()
 			return
 		"gameover":
+			if Input.is_action_just_pressed("ranking") and not score_sent and not versus:
+				_start_score_entry("gameover")
+				return
 			if mode_time > 1.0 and _confirm():
 				# Continua na mesma fase, com vidas cheias
 				_save_party()
@@ -325,6 +348,9 @@ func _physics_process(delta: float) -> void:
 				get_tree().reload_current_scene()
 			return
 		"ending":
+			if Input.is_action_just_pressed("ranking") and not score_sent:
+				_start_score_entry("ending")
+				return
 			if mode_time > 2.0 and _confirm():
 				ending_page += 1
 				if ending_page >= players.size():
@@ -972,6 +998,9 @@ func _close_ip_edit() -> void:
 
 func _on_ip_submitted(text: String) -> void:
 	var v := text.strip_edges()
+	if input_purpose == "name":
+		_on_name_submitted(v)
+		return
 	if v == "" and input_purpose != "url":
 		return
 	_close_ip_edit()
@@ -1232,3 +1261,61 @@ func _net_create(d: Array):
 	if n != null:
 		entities.add_child(n)
 	return n
+
+
+# =================== Ranking online ===================
+func _open_ranking(back_to: String) -> void:
+	ranking_return = back_to
+	Net.fetch_ranking()
+	_set_mode("ranking")
+	sfx.play("go", 0.0)
+
+
+## Fim de partida: cada jogador com pontos digita o nome; depois envia tudo.
+func _start_score_entry(back_to: String) -> void:
+	ranking_return = back_to
+	name_queue = []
+	name_entries = []
+	for p in players:
+		if p.score > 0:
+			name_queue.append(p)
+	if name_queue.is_empty():
+		hud.show_message("Nenhuma pontuação para enviar.", 2.0)
+		return
+	_ask_next_name()
+
+
+func _ask_next_name() -> void:
+	if name_queue.is_empty():
+		_close_ip_edit()
+		score_sent = true
+		Net.submit_scores(name_entries)
+		_set_mode("ranking")
+		return
+	var p = name_queue[0]
+	_set_mode("name_entry")
+	_close_ip_edit()
+	input_purpose = "name"
+	ip_edit = LineEdit.new()
+	ip_edit.text = last_names.get(p.pid, p.display_name)
+	ip_edit.max_length = 12
+	ip_edit.placeholder_text = "Seu nome (até 12 letras)"
+	ip_edit.position = Vector2(280, 300)
+	ip_edit.size = Vector2(400, 44)
+	ip_edit.add_theme_font_size_override("font_size", 24)
+	ip_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hud_layer.add_child(ip_edit)
+	ip_edit.grab_focus()
+	ip_edit.select_all()
+	ip_edit.text_submitted.connect(_on_ip_submitted)
+
+
+func _on_name_submitted(v: String) -> void:
+	if v == "" or name_queue.is_empty():
+		return
+	var p = name_queue.pop_front()
+	last_names[p.pid] = v
+	name_entries.append({"name": v, "char": p.display_name, "score": int(p.score), "stage": stage_idx + 1,
+		"players": players.size(), "done": ranking_return == "ending"})
+	sfx.play("pickup", 0.0)
+	_ask_next_name()

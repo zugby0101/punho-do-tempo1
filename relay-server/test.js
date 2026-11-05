@@ -1,6 +1,7 @@
 // Teste automático do relay: cria sala, entra, troca mensagens e encerra.
 "use strict";
 process.env.PORT = process.env.PORT || "18080";
+process.env.SCORES_FILE = require("path").join(require("os").tmpdir(), `punho-scores-test-${process.pid}.json`);
 const assert = require("assert");
 const WebSocket = require("ws");
 const { server, wss } = require("./server");
@@ -50,6 +51,20 @@ const nextBin = (ws) => new Promise((r) => ws.once("message", (d) => r(d)));
   const closed = nextText(guest);
   host.close();
   assert.equal((await closed).op, "room_closed");
+
+  // ---------- ranking ----------
+  const { sign } = require("./scores");
+  const base = `http://127.0.0.1:${process.env.PORT}`;
+  const ts = Math.floor(Date.now() / 1000);
+  const mk = (name, score) => { const e = { name, char: "KAI", score, stage: 5, players: 1, done: false, ts }; return { ...e, sig: sign(e) }; };
+  let r = await (await fetch(`${base}/scores`, { method: "POST", body: JSON.stringify({ entries: [mk("Ana", 5000), mk("Bia", 9000)] }) })).json();
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.results.map((x) => x.rank), [1, 1]);
+  const bad = mk("Eve", 100); bad.score = 999999;
+  r = await (await fetch(`${base}/scores`, { method: "POST", body: JSON.stringify(bad) })).json();
+  assert.equal(r.ok, false); // assinatura não confere após alterar a pontuação
+  r = await (await fetch(`${base}/scores?limit=5`)).json();
+  assert.deepEqual(r.scores.map((x) => [x.name, x.score]), [["BIA", 9000], ["ANA", 5000]]);
 
   console.log("OK: todos os testes do relay passaram");
   g2.close();
