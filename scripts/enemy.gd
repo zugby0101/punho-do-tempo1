@@ -189,7 +189,7 @@ func _update(delta: float) -> void:
 			if not special_attack.is_empty() and special_cd <= 0.0 and dx > 200.0 and dy < 25.0:
 				special_cd = randf_range(4.0, 6.0)
 				start_attack(special_attack)
-				game.sfx.play("roar")
+				game.sfx.play("roar", 0.08, game.sfx.body_pitch(body_scale))
 			elif aggressive and attack_cd <= 0.0 and dx < 70.0 * body_scale and dy < 18.0 and target.height < 40.0:
 				start_attack(attacks[randi() % attacks.size()])
 				attack_cd = randf_range(0.4, 0.9) if is_boss() else randf_range(0.7, 1.5)
@@ -208,7 +208,7 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 		block_flash = 0.2
 		blocked_last = true
 		vel = Vector2(dir * 90.0, 0)
-		game.sfx.play("thud")
+		game.sfx.play("block", 0.1)
 		game.spawn_spark(position + Vector2(-dir * 14.0, -60.0), Color(0.4, 0.8, 1.0), 0.8)
 		return
 	if tier == 3 and not knock and hp - dmg > 0:
@@ -287,7 +287,7 @@ func _eon_ai(delta: float, target, dx: float) -> bool:
 			orb.hostile = true
 			orb.height = 55.0
 			orb.position.y = clampf(position.y + off, game.DEPTH_MIN, game.DEPTH_MAX)
-		game.sfx.play("special")
+		game.sfx.play("orb", 0.05)
 		vel = Vector2.ZERO
 		start_attack({"pose": "throw", "dmg": 0, "reach": -99, "startup": 0.05, "active": 0.05, "recovery": 0.35, "knock": false})
 		return true
@@ -297,7 +297,7 @@ func _eon_ai(delta: float, target, dx: float) -> bool:
 func _eon_time_warp() -> void:
 	game.hitstop = 0.6
 	game.shake(14.0)
-	game.sfx.play("roar")
+	game.sfx.play("warp", 0.0)
 	game.popup("ÉON DOBRA O TEMPO!", position + Vector2(0, -170.0), Color(1, 0.85, 0.4))
 	for k in 8:
 		var a := k * TAU / 8.0

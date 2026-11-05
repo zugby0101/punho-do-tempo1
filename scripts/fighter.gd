@@ -220,7 +220,7 @@ func _process_attack(delta: float, targets: Array) -> bool:
 	if t >= act_start and not lunged:
 		lunged = true
 		vel.x = facing * float(a.get("lunge", 0.0))
-		game.sfx.play("whoosh")
+		game.sfx.play(game.sfx.swing_for(attack, weapon), 0.06, game.sfx.body_pitch(body_scale))
 	elif a.has("dash") and t >= act_start and t < act_end:
 		vel.x = facing * float(a.dash)
 	else:
@@ -251,12 +251,12 @@ func _check_hits(targets: Array) -> bool:
 			tg.take_hit(int(round(float(attack.dmg) * power)), dir, bool(attack.knock))
 			if tg.get("blocked_last"):
 				continue  # golpe bloqueado
+			game.on_hit(self, tg, attack)
+			hit_any = true
 			if attack.get("weapon", false) and not weapon.is_empty() and is_in_group("players"):
 				weapon.uses = int(weapon.uses) - 1
 				if weapon.uses <= 0:
 					_break_weapon()
-			game.on_hit(self, tg, attack)
-			hit_any = true
 	return hit_any
 
 

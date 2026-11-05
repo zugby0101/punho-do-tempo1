@@ -153,9 +153,9 @@ func _ready() -> void:
 		Net.close()
 	if Net.is_host() and not skip_title:
 		Net.close()  # voltou ao título: encerra a partida online
-	sfx.hook = func(n):
+	sfx.hook = func(n, pitch):
 		if Net.is_host() and not Net.peer_sets.is_empty():
-			net_events.append(["s", n])
+			net_events.append(["s", n, pitch])
 	for c in crate_spots:
 		if versus or survival:
 			break
@@ -798,7 +798,9 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 	var pos: Vector2 = target.position + Vector2(-attacker.facing * 6.0, -58.0 * s - target.height)
 	var by_player: bool = attacker in players
 	spawn_spark(pos, attacker.color() if by_player and players.size() > 1 else (Color(1, 0.95, 0.5) if by_player else Color(1, 0.4, 0.3)), 1.3 if heavy else 1.0)
-	sfx.play("heavy" if heavy else "hit")
+	var wpn: Dictionary = attacker.weapon if "weapon" in attacker else {}
+	var bs: float = attacker.body_scale if "body_scale" in attacker else 1.0
+	sfx.play(sfx.impact_for(atk, wpn), 0.07, sfx.body_pitch(bs))
 	if by_player:
 		attacker.score += int(atk.dmg) * 10
 		combo_count += 1
@@ -1363,7 +1365,7 @@ func net_apply(snap: Array) -> void:
 	# Sons e efeitos
 	for ev in snap[21]:
 		match ev[0]:
-			"s": sfx.play(ev[1])
+			"s": sfx.play_exact(ev[1], float(ev[2]) if ev.size() > 2 else 1.0)
 			"k": spawn_spark(Vector2(ev[1], ev[2]), ev[3], ev[4])
 			"p": popup(ev[1], Vector2(ev[2], ev[3]), ev[4])
 			"a":

@@ -206,6 +206,18 @@ Cada fase tem sua própria música, com tempo, escala e instrumentos da época:
 | Futuro (muito errado) | bateria dupla e dissonância, escala lócria |
 
 Quando aparece o sub-chefe ou o chefe, a música muda para uma versão mais rápida e intensa.
+
+**Efeitos sonoros por golpe** (`scripts/sfx.gd`, também sintetizados pelo jogo):
+
+| Grupo | Sons |
+|---|---|
+| Golpe no ar | jab (assobio curto), cruzado, gancho (sobe de tom), chute (grave), lâmina (cortante), arma pesada, pancada (desce de tom), investida, arremesso, giro |
+| Impacto | jab (estalo), cruzado e chute (baque grave), gancho, pancada no chão (estrondo), trombada, lâmina ("shing" metálico), arma de madeira ("tonc"), arma de metal ("clang"), energia (zap), arma arremessada, bloqueio |
+| Especial de cada lutador | Mateus: berimbau · Valentina: sino do ringue · Jake: urro · Itzel: apito da lucha libre · Dmitri: moinho · Oksana: pandeiro · Luca: tornado · Amélie: chicotadas · Kai: energia carregando e disparando · Mei: pio da fênix · Kofi: trovão · Amara: terremoto · Tama: tambor e brado · Kirra: flauta do muay thai |
+| ÉON e outros | orbes temporais, dobra do tempo, onda sísmica |
+
+O tom acompanha o porte: grandalhões e chefes soam mais graves. Online, o convidado ouve
+exatamente o mesmo som e tom do anfitrião.
 As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
 ## Rigs 2D (Blender + Godot)

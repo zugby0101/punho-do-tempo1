@@ -101,7 +101,7 @@ func _update(delta: float) -> void:
 				_on_weapon_changed()
 				vel = Vector2.ZERO
 				start_attack(ATK_THROW)
-				game.sfx.play("whoosh")
+				game.sfx.play("w_throw", 0.06, game.sfx.body_pitch(body_scale))
 			elif Controls.just(sets, "special") and not special_def.is_empty() and hp > int(special_def.cost):
 				_start_special()
 			elif Controls.just(sets, "special") and special_def.is_empty() and hp > SPECIAL_COST:
@@ -136,7 +136,7 @@ func _update(delta: float) -> void:
 				attack = ATK_JUMPKICK
 				hit_list.clear()
 				air_t = 0.0
-				game.sfx.play("whoosh")
+				game.sfx.play("w_kick", 0.06, game.sfx.body_pitch(body_scale))
 			if not attack.is_empty():
 				air_t += delta
 				if air_t >= float(attack.startup) and air_t < float(attack.startup) + float(attack.active):
@@ -197,7 +197,7 @@ func _start_special() -> void:
 		"quake":
 			attack.pose = "slam"
 			attack.phase = -1.0
-	game.sfx.play("special")
+	game.sfx.play("sp_" + rig_slug(display_name), 0.02)
 	game.popup(sp.name + "!", position + Vector2(0, -130.0 * body_scale), sp.color)
 
 
@@ -237,7 +237,7 @@ func _process_special(delta: float) -> void:
 				if _multi_tick(float(sp.interval)):
 					attack.pose = sp.pose_a if sp_tick % 2 == 0 else sp.pose_b
 					vel.x = facing * float(sp.lunge)
-					game.sfx.play("whoosh")
+					game.sfx.play(game.sfx.swing_for(attack, {}), 0.1, game.sfx.body_pitch(body_scale))
 				vel.x = move_toward(vel.x, 0.0, 600.0 * delta)
 				attack.phase = 1.0 if fmod(t, float(sp.interval)) < float(sp.interval) * 0.6 else 0.3
 				_check_hits(targets)
@@ -312,7 +312,7 @@ func _process_special(delta: float) -> void:
 				game.spawn_energy(self, "wave", 1, sp)
 				game.spawn_energy(self, "wave", -1, sp)
 				game.shake(8.0)
-				game.sfx.play("thud", 0.0)
+				game.sfx.play("quake", 0.03)
 			if t >= 0.65:
 				_end_special()
 
@@ -343,7 +343,7 @@ func _on_land() -> void:
 			hit_list.clear()
 			_check_hits(_targets())
 			game.shake(10.0)
-			game.sfx.play("thud", 0.0)
+			game.sfx.play("i_slam", 0.03, game.sfx.body_pitch(body_scale))
 			for k in 6:
 				var a := k * TAU / 6.0
 				game.spawn_spark(position + Vector2(cos(a) * 60.0, sin(a) * 18.0 - 10.0), special_def.color, 0.9)
