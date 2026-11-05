@@ -43,6 +43,9 @@ var weapon: Dictionary = {}  # arma na mão (vazia = desarmado)
 var net_pose := ""
 var net_phase := 0.0
 var net_df := 1
+# Rig 2D (Skeleton2D gerado do Blender). Quando existe e está ativo, substitui o desenho procedural.
+var rig: Node2D = null
+var rig_ap: AnimationPlayer = null
 var power := 1.0
 
 
@@ -299,6 +302,9 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 24.0 * s * shs, Color(0, 0, 0, 0.38))
 	draw_set_transform(Vector2.ZERO)
 
+	var use_rig: bool = rig != null and game != null and game.rigs_enabled()
+	if rig != null:
+		rig.visible = false
 	if invuln > 0.0 and not (state in ["attack", "special"]) and int(invuln * 20.0) % 2 == 0:
 		return
 	if state == "dead" and int(state_time * 16.0) % 2 == 0:
@@ -320,6 +326,9 @@ func _draw() -> void:
 	var df := net_df if net else draw_facing()
 	if state == "special" and pose == "dive":
 		rot = PI * 0.45
+	if use_rig:
+		_sync_rig(off, rot * df, Vector2(df * s, s), pose, net_phase if net else _attack_phase())
+		return
 	draw_set_transform(off, rot * df, Vector2(df * s, s))
 	_draw_body(pose, net_phase if net else _attack_phase())
 	draw_set_transform(Vector2.ZERO)
@@ -338,6 +347,51 @@ func _weapon_angle(pose: String, p: float) -> float:
 		"throw": return -0.4
 		"jumpkick", "kick": return -1.6
 	return -1.05
+
+
+## Coloca o rig 2D na mesma pose que o desenho procedural teria.
+## Idle/andar tocam pelo relógio do lutador; golpes usam a fase (-1..1 -> 0..1 na animação).
+func _sync_rig(off: Vector2, rot: float, scl: Vector2, pose: String, phase: float) -> void:
+	rig.visible = true
+	rig.position = off
+	rig.rotation = rot
+	rig.scale = scl
+	rig.modulate = Color(5, 5, 5) if flash > 0.0 else Color(1, 1, 1)
+	var an := pose if rig_ap.has_animation(pose) else "idle"
+	var anim := rig_ap.get_animation(an)
+	var tpos := 0.0
+	if anim.loop_mode != Animation.LOOP_NONE:
+		tpos = fmod(anim_t, anim.length)
+	elif anim.length > 0.5:
+		tpos = clampf((phase + 1.0) * 0.5, 0.0, anim.length)
+	if rig_ap.assigned_animation != an:
+		rig_ap.play(an)
+		rig_ap.pause()
+	rig_ap.seek(tpos, true)
+	var slot = rig.get_node_or_null("Parts/WeaponSlot")
+	if slot != null:
+		slot.set_weapon(weapon, flash > 0.0)
+
+
+func attach_rig(path: String) -> void:
+	if rig != null:
+		rig.queue_free()
+		rig = null
+		rig_ap = null
+	if not ResourceLoader.exists(path):
+		return
+	rig = load(path).instantiate()
+	rig.visible = false
+	add_child(rig)
+	rig_ap = rig.get_node("AnimationPlayer")
+
+
+static func rig_slug(n: String) -> String:
+	var s := n.to_lower()
+	for pair in [["á", "a"], ["à", "a"], ["â", "a"], ["ã", "a"], ["é", "e"], ["ê", "e"], ["í", "i"],
+			["ó", "o"], ["ô", "o"], ["õ", "o"], ["ú", "u"], ["ç", "c"]]:
+		s = s.replace(pair[0], pair[1])
+	return s
 
 
 ## Direção em que o corpo é desenhado (golpes giratórios alternam).

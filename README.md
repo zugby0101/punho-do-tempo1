@@ -208,6 +208,13 @@ Cada fase tem sua própria música, com tempo, escala e instrumentos da época:
 Quando aparece o sub-chefe ou o chefe, a música muda para uma versão mais rápida e intensa.
 As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
+## Rigs 2D (Blender + Godot)
+
+Os 14 lutadores jogáveis são animados por um **rig 2D de esqueleto** gerado no Blender por
+script Python (armature com IK para mãos e pés, 16 animações) e convertido em cenas do Godot
+(`Skeleton2D` + `Polygon2D` com skinning + `AnimationPlayer`). No título, **V** alterna entre o
+rig e o visual clássico. Como gerar e editar: [`tools/rig/README.md`](tools/rig/README.md).
+
 ## Estrutura
 
 ```
@@ -230,6 +237,10 @@ scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante
 scripts/weapon_item.gd, thrown.gd   arma no chão e arma arremessada
 scripts/crate.gd, pickup.gd, spark.gd   caixas, comida, efeitos de impacto
+scripts/rig_weapon.gd, rig_viewer.gd     encaixe da arma no rig e visualizador dos rigs
+rigs/                   cenas dos rigs 2D (geradas por tools/rig)
+art/rigs/               arquivo do Blender, prévia e dados exportados dos rigs
+tools/rig/              pipeline Python: Blender (bpy) -> JSON -> cenas do Godot
 ```
 
 Para ajustar o jogo: as eras, os nomes e as cores ficam em `stages.gd`; os

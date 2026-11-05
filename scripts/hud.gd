@@ -303,6 +303,7 @@ func _draw_title() -> void:
 			ftxt += " — FASE SECRETA DESBLOQUEADA (13ª na lista de fases)"
 		_center(395, ftxt, 14, Color(1, 0.85, 0.4))
 	_center(415, "ONLINE: O = criar/entrar numa sala  •  R = ranking  •  M = conquistas (%d/%d)" % [Ach.unlocked_count(), Ach.LIST.size()], 16, Color(0.5, 0.9, 1))
+	_center(507, "V: visual dos lutadores — %s" % ("[ RIG 2D ]  clássico" if game.rig_mode else "rig 2D  [ CLÁSSICO ]"), 13, Color(0.75, 0.75, 0.85))
 	if gm == "survival":
 		_center(485, "Sobrevivência: ondas infinitas que ficam cada vez mais difíceis. Até onde você chega?", 15, Color(0.8, 0.8, 0.9))
 	elif vs:

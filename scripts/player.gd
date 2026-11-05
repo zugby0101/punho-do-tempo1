@@ -62,6 +62,7 @@ func apply_character(c: Dictionary) -> void:
 	hp = max_hp
 	move_speed = Vector2(230, 140) * float(c.speed)
 	special_def = c.get("special", {})
+	attach_rig("res://rigs/%s.tscn" % rig_slug(c.name))
 	queue_redraw()
 
 

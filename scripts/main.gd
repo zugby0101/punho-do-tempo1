@@ -73,7 +73,10 @@ var score_sent := false
 var name_queue: Array = []       # jogadores que ainda vão digitar o nome
 var name_entries: Array = []
 var ach_page := 0
+var _v_held := false
 static var last_names := {}      # pid -> último nome usado
+static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
+static var settings_loaded := false
 const ONLINE_OPTIONS := [
 	["CRIAR SALA", "pelo servidor intermediário — ninguém precisa abrir portas"],
 	["ENTRAR EM SALA", "digite o código de 4 letras que o anfitrião recebeu"],
@@ -111,6 +114,7 @@ var bg
 func _ready() -> void:
 	randomize()
 	Controls.setup()
+	_load_settings()
 	stages = Stages.list() + [Stages.secret()]
 	characters = Characters.list()
 	stage = stages[stage_idx]
@@ -319,6 +323,13 @@ func _physics_process(delta: float) -> void:
 			if Input.is_action_just_pressed("ranking"):
 				_open_ranking("title")
 				return
+			if Input.is_physical_key_pressed(KEY_V) and not _v_held:
+				_v_held = true
+				rig_mode = not rig_mode
+				_save_settings()
+				sfx.play("whoosh", 0.0)
+			elif not Input.is_physical_key_pressed(KEY_V):
+				_v_held = false
 			if Input.is_action_just_pressed("achievements"):
 				ach_page = 0
 				_set_mode("achievements")
@@ -1604,3 +1615,24 @@ func secret_unlocked() -> bool:
 
 func has_fragment(idx: int) -> bool:
 	return idx in Ach.stats.get("fragments", [])
+
+
+# =================== Configurações ===================
+func rigs_enabled() -> bool:
+	return rig_mode
+
+
+func _load_settings() -> void:
+	if settings_loaded:
+		return
+	settings_loaded = true
+	var cfg := ConfigFile.new()
+	if cfg.load("user://settings.cfg") == OK:
+		rig_mode = cfg.get_value("visual", "rig_mode", true)
+
+
+func _save_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load("user://settings.cfg")
+	cfg.set_value("visual", "rig_mode", rig_mode)
+	cfg.save("user://settings.cfg")
