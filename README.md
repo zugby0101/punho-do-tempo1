@@ -46,6 +46,29 @@ No título, use **▲ ▼ para escolher o modo** (História ou Versus) e **◄ �
 - Quem fica de pé por último vence o round; quem vencer **2 rounds** é o campeão.
 - No fim: ENTER ou SOCO para revanche com os mesmos lutadores, ESC para voltar ao título.
 
+## Modo Online (pela internet ou rede local)
+
+Funciona com o modo História (co-op) e com o Versus, para até 4 jogadores no total.
+Dá para misturar jogadores no mesmo computador com jogadores online.
+
+**Quem vai hospedar (anfitrião):**
+1. No título, escolha o modo (▲ ▼) e a fase/arena (◄ ►).
+2. Aperte **O**. A tela mostra o seu IP local e a porta (7777).
+3. Espere os convidados entrarem e confirme o seu lutador com SOCO.
+
+**Quem vai entrar (convidado):**
+1. No título, aperte **I**, digite o IP do anfitrião e aperte **ENTER**.
+2. Na seleção, aperte SOCO para entrar e escolher o lutador. Qualquer teclado ou controle do seu computador funciona.
+
+**Conectar pela internet:** na mesma rede (Wi-Fi/cabo), o IP local basta. Pela internet:
+- o anfitrião libera a porta **7777 UDP** no roteador (redirecionamento de porta) e passa o **IP público** para os amigos; **ou**
+- todos instalam uma VPN de jogos gratuita, como **Tailscale**, **ZeroTier** ou **Radmin VPN**, e usam o IP que ela mostra.
+
+Como funciona: o anfitrião roda a partida e os convidados enviam só os comandos
+e recebem o estado do jogo (~30 vezes por segundo, compactado). Por isso a conexão do
+anfitrião é a mais importante, e os convidados podem sentir um pequeno atraso dependendo da distância.
+Os menus entre as fases são confirmados por qualquer jogador.
+
 ## Conteúdo
 
 **12 fases, uma por período da história:**
@@ -140,7 +163,8 @@ As trilhas são geradas numa thread, em menos de 1 segundo cada.
 ```
 scenes/main.tscn        cena principal (só carrega main.gd)
 scripts/main.gd         estados do jogo, câmera, ondas, progressão, co-op
-scripts/controls.gd     controles dos 4 jogadores (teclados e controles)
+scripts/controls.gd     controles dos 4 jogadores (teclados, controles e jogadores online)
+scripts/net.gd          modo online (autoload "Net"): conexão, comandos e estado da partida
 scripts/fighter.gd      base dos lutadores: física pseudo-3D, golpes, desenho
 scripts/player.gd       jogador: combo, pulo, voadora, especial
 scripts/enemy.gd        IA, tiers, sub-chefes e chefes

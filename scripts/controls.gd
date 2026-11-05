@@ -34,8 +34,46 @@ const GLOBAL := {
 }
 
 
+# Jogadores online (só no anfitrião): "n1".."n3" -> estado dos comandos recebidos
+static var remote := {}
+
+
 static func all_sets() -> Array:
 	return KEYBOARD_SETS + JOY_SETS
+
+
+## Conjuntos que podem entrar na partida (locais + online).
+static func join_sets() -> Array:
+	return all_sets() + remote.keys()
+
+
+static func new_remote() -> Dictionary:
+	return {"bits": 0, "counts": [0, 0, 0, 0, 0, 0, 0, 0], "last": [0, 0, 0, 0, 0, 0, 0, 0], "just": 0, "vec": Vector2.ZERO}
+
+
+static func set_remote(set_name: String, data: Array) -> void:
+	if not remote.has(set_name) or data.size() < 4:
+		return
+	var r: Dictionary = remote[set_name]
+	r.bits = int(data[0])
+	r.counts = data[1]
+	r.vec = Vector2(float(data[2]), float(data[3])).limit_length(1.0)
+
+
+## Chamado uma vez por quadro no anfitrião: detecta toques novos dos convidados.
+static func net_update() -> void:
+	for n in remote:
+		var r: Dictionary = remote[n]
+		var j := 0
+		for i in ACTIONS.size():
+			if int(r.counts[i]) > int(r.last[i]):
+				j |= 1 << i
+		r.just = j
+		r.last = r.counts.duplicate()
+
+
+static func any_remote_just(actions: Array) -> bool:
+	return who_pressed(actions, remote.keys()) != "" if not remote.is_empty() else false
 
 
 static func setup() -> void:
@@ -56,6 +94,12 @@ static func setup() -> void:
 				InputMap.action_add_event(g, ev)
 		for ev in _events("j", a, -1):
 			InputMap.action_add_event(g, ev)
+	# Teclas do modo online (no título)
+	for pair in [["net_host", KEY_O], ["net_join", KEY_I]]:
+		InputMap.add_action(pair[0])
+		var kev := InputEventKey.new()
+		kev.physical_keycode = pair[1]
+		InputMap.action_add_event(pair[0], kev)
 	InputMap.add_action("pause")
 	for k in [KEY_ESCAPE, KEY_P]:
 		var ev := InputEventKey.new()
@@ -91,14 +135,20 @@ static func _events(set_name: String, a: String, device: int) -> Array:
 
 static func pressed(sets: Array, a: String) -> bool:
 	for s in sets:
-		if Input.is_action_pressed(s + "_" + a):
+		if remote.has(s):
+			if remote[s].bits & (1 << ACTIONS.find(a)):
+				return true
+		elif Input.is_action_pressed(s + "_" + a):
 			return true
 	return false
 
 
 static func just(sets: Array, a: String) -> bool:
 	for s in sets:
-		if Input.is_action_just_pressed(s + "_" + a):
+		if remote.has(s):
+			if remote[s].just & (1 << ACTIONS.find(a)):
+				return true
+		elif Input.is_action_just_pressed(s + "_" + a):
 			return true
 	return false
 
@@ -106,7 +156,15 @@ static func just(sets: Array, a: String) -> bool:
 static func strength(sets: Array, a: String) -> float:
 	var v := 0.0
 	for s in sets:
-		v = maxf(v, Input.get_action_strength(s + "_" + a))
+		if remote.has(s):
+			var vec: Vector2 = remote[s].vec
+			match a:
+				"left": v = maxf(v, -vec.x)
+				"right": v = maxf(v, vec.x)
+				"up": v = maxf(v, -vec.y)
+				"down": v = maxf(v, vec.y)
+		else:
+			v = maxf(v, Input.get_action_strength(s + "_" + a))
 	return v
 
 
@@ -120,7 +178,7 @@ static func who_pressed(actions: Array, among: Array = []) -> String:
 	var pool := among if not among.is_empty() else all_sets()
 	for s in pool:
 		for a in actions:
-			if Input.is_action_just_pressed(s + "_" + a):
+			if just([s], a):
 				return s
 	return ""
 
@@ -132,4 +190,6 @@ static func describe(set_name: String) -> String:
 		"k2": return "Teclado: Setas + , . /"
 		"k3": return "Teclado: TFGH + Z X C"
 		"k4": return "Teclado: Numpad 8456 + 7 9 +"
+	if set_name[0] == "n":
+		return "Jogador online"
 	return "Controle %d" % (int(set_name[1]) + 1)

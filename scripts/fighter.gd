@@ -39,6 +39,10 @@ var hat := "none"  # ver _draw_hat()
 var cape := Color(0, 0, 0, 0)
 var feminine := false
 var weapon: Dictionary = {}  # arma na mão (vazia = desarmado)
+# Online: no convidado, a pose vem pronta do anfitrião
+var net_pose := ""
+var net_phase := 0.0
+var net_df := 1
 var power := 1.0
 
 
@@ -57,6 +61,12 @@ func is_alive() -> bool:
 
 func _physics_process(delta: float) -> void:
 	if game == null:
+		return
+	if game.net_client:
+		# Convidado: só anima entre um pacote e outro
+		anim_t += delta
+		state_time += delta
+		queue_redraw()
 		return
 	if game.is_frozen():
 		if game.mode in ["title", "select", "ending"]:
@@ -305,13 +315,13 @@ func _draw() -> void:
 		"getup":
 			rot = -PI * 0.5 * (1.0 - state_time / 0.4)
 			off.y -= 6.0 * s * (1.0 - state_time / 0.4)
-	var df := facing
-	if state in ["attack", "special"] and (attack.get("pose", "") == "special" or attack.get("spin", false)):
-		df = facing if int(state_time * 18.0) % 2 == 0 else -facing
-	if state == "special" and attack.get("pose", "") == "dive":
+	var net: bool = game != null and game.net_client
+	var pose := net_pose if net else _current_pose()
+	var df := net_df if net else draw_facing()
+	if state == "special" and pose == "dive":
 		rot = PI * 0.45
 	draw_set_transform(off, rot * df, Vector2(df * s, s))
-	_draw_body(_current_pose(), _attack_phase())
+	_draw_body(pose, net_phase if net else _attack_phase())
 	draw_set_transform(Vector2.ZERO)
 
 
@@ -328,6 +338,13 @@ func _weapon_angle(pose: String, p: float) -> float:
 		"throw": return -0.4
 		"jumpkick", "kick": return -1.6
 	return -1.05
+
+
+## Direção em que o corpo é desenhado (golpes giratórios alternam).
+func draw_facing() -> int:
+	if state in ["attack", "special"] and (attack.get("pose", "") == "special" or attack.get("spin", false)):
+		return facing if int(state_time * 18.0) % 2 == 0 else -facing
+	return facing
 
 
 func _limb(a: Vector2, b: Vector2, bend: Vector2, col: Color, w: float) -> void:

@@ -15,6 +15,10 @@ const RANGE := 560.0
 
 
 func _physics_process(delta: float) -> void:
+	if game != null and game.net_client:
+		t += delta
+		queue_redraw()
+		return
 	if game == null or game.is_frozen():
 		return
 	t += delta

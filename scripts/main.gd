@@ -33,6 +33,7 @@ static var stage_idx := 0
 static var party: Array = []
 static var skip_title := false
 static var game_mode := "story"  # "story" (história/co-op) ou "versus"
+static var last_ip := "127.0.0.1"
 
 const VERSUS_WINS := 2  # rounds para vencer a partida
 
@@ -48,6 +49,13 @@ var round_num := 1
 var round_wins: Array = [0, 0, 0, 0]
 var round_winner := -1   # -1 = empate
 var drop_timer := 0.0
+
+# Online
+var net_client := false   # este computador é convidado (só desenha o que recebe)
+var net_nodes := {}       # convidado: id do anfitrião -> nó local
+var net_events: Array = []  # anfitrião: sons/efeitos a repassar
+var ip_edit: LineEdit
+var hud_layer: CanvasLayer
 var paused := false
 var mode_time := 0.0
 var cam_x := HALF_W
@@ -102,12 +110,21 @@ func _ready() -> void:
 	camera.make_current()
 	var layer := CanvasLayer.new()
 	add_child(layer)
+	hud_layer = layer
 	hud = HudScript.new()
 	hud.game = self
 	layer.add_child(hud)
 	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 	versus = game_mode == "versus"
+	Net.game = self
+	if Net.is_client():
+		Net.close()
+	if Net.is_host() and not skip_title:
+		Net.close()  # voltou ao título: encerra a partida online
+	sfx.hook = func(n):
+		if Net.is_host() and not Net.peer_sets.is_empty():
+			net_events.append(["s", n])
 	for c in crate_spots:
 		if versus:
 			break
@@ -210,13 +227,33 @@ func cam_right() -> float:
 
 
 func _confirm() -> bool:
-	return Input.is_action_just_pressed("start") or Input.is_action_just_pressed("attack")
+	return Input.is_action_just_pressed("start") or Input.is_action_just_pressed("attack") or Controls.any_remote_just(["attack", "start"])
 
 
 func _physics_process(delta: float) -> void:
+	if net_client:
+		_client_tick(delta)
+		return
+	if Net.is_host():
+		Controls.net_update()
+		Net.host_tick()
 	mode_time += delta
 	match mode:
+		"join_input":
+			if Input.is_physical_key_pressed(KEY_ESCAPE):
+				_close_ip_edit()
+				_set_mode("title")
+			return
 		"title":
+			if Input.is_action_just_pressed("net_host"):
+				if Net.host():
+					sfx.play("go", 0.0)
+					_set_mode("select")
+					_add_slot("k1")
+				return
+			if Input.is_action_just_pressed("net_join"):
+				_open_ip_edit()
+				return
 			if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
 				game_mode = "versus" if game_mode == "story" else "story"
 				versus = game_mode == "versus"
@@ -374,7 +411,7 @@ func _update_preview(i: int) -> void:
 func _update_select() -> void:
 	# Novos jogadores entram apertando soco/start no próprio controle
 	var free: Array = []
-	for s in Controls.all_sets():
+	for s in Controls.join_sets():
 		if not _set_owned(s):
 			free.append(s)
 	var joiner := Controls.who_pressed(["attack", "start"], free)
@@ -422,7 +459,7 @@ func _start_game() -> void:
 		sl.node.queue_free()
 	slots = []
 	# Jogando sozinho, todos os teclados e controles comandam o P1
-	if party.size() == 1:
+	if party.size() == 1 and not Net.online():
 		party[0].sets = Controls.all_sets()
 	_spawn_party()
 	sfx.play("start", 0.0)
@@ -679,6 +716,8 @@ func shake(amount: float) -> void:
 
 
 func spawn_spark(pos: Vector2, col: Color, size: float = 1.0) -> void:
+	if Net.is_host() and not Net.peer_sets.is_empty():
+		net_events.append(["k", pos.x, pos.y, col, size])
 	var sp = SparkScript.new()
 	sp.position = pos
 	sp.col = col
@@ -747,6 +786,8 @@ func spawn_energy(p, kind: String, dir: int, sp: Dictionary) -> void:
 
 
 func popup(text: String, pos: Vector2, col: Color) -> void:
+	if Net.is_host() and not Net.peer_sets.is_empty():
+		net_events.append(["p", text, pos.x, pos.y, col])
 	var pp = PopupScript.new()
 	pp.text = text
 	pp.color = col
@@ -845,3 +886,281 @@ func _versus_champion():
 		if round_wins[p.pid] >= VERSUS_WINS:
 			return p
 	return null
+
+
+# =================== Online ===================
+func _open_ip_edit() -> void:
+	_set_mode("join_input")
+	ip_edit = LineEdit.new()
+	ip_edit.text = last_ip
+	ip_edit.placeholder_text = "IP do anfitrião (ex.: 192.168.0.10)"
+	ip_edit.position = Vector2(280, 300)
+	ip_edit.size = Vector2(400, 44)
+	ip_edit.add_theme_font_size_override("font_size", 24)
+	ip_edit.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hud_layer.add_child(ip_edit)
+	ip_edit.grab_focus()
+	ip_edit.select_all()
+	ip_edit.text_submitted.connect(_on_ip_submitted)
+
+
+func _close_ip_edit() -> void:
+	if ip_edit != null:
+		ip_edit.queue_free()
+		ip_edit = null
+
+
+func _on_ip_submitted(text: String) -> void:
+	if text.strip_edges() == "":
+		return
+	last_ip = text.strip_edges()
+	_close_ip_edit()
+	Net.join(last_ip)
+
+
+## Este computador passa a ser convidado: apaga o mundo local e espera o anfitrião.
+func become_client() -> void:
+	net_client = true
+	for n in entities.get_children():
+		n.queue_free()
+	players = []
+	slots = []
+	net_nodes.clear()
+	music.stop()
+	_set_mode("connecting")
+
+
+## Saiu do online (conexão caiu ou anfitrião encerrou): volta ao título.
+func leave_online() -> void:
+	party = []
+	skip_title = false
+	get_tree().reload_current_scene.call_deferred()
+
+
+func _client_tick(delta: float) -> void:
+	mode_time += delta
+	Net.client_tick()
+	if Input.is_physical_key_pressed(KEY_ESCAPE) and mode in ["connecting", "title"]:
+		Net.close()
+		leave_online()
+		return
+	# suaviza o movimento entre pacotes
+	for id in net_nodes:
+		var n = net_nodes[id]
+		if is_instance_valid(n) and n.has_meta("net_target"):
+			var tgt: Vector2 = n.get_meta("net_target")
+			n.position = tgt if n.position.distance_to(tgt) > 150.0 else n.position.lerp(tgt, 0.45)
+	shake_amt = move_toward(shake_amt, 0.0, 40.0 * delta)
+	var off := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * shake_amt
+	camera.position = Vector2(cam_x, 270.0) + off
+
+
+func _fighter_fields(f) -> Array:
+	return [f.position.x, f.position.y, f.height, f.facing, f.state, f.state_time, f.anim_t, f.flash, f.invuln,
+		f._current_pose(), f._attack_phase(), f.draw_facing(), f.body_scale, f.hp, f.max_hp, f.weapon]
+
+
+## Anfitrião: monta o estado completo da partida.
+func net_snapshot() -> Array:
+	var ents: Array = []
+	for n in entities.get_children():
+		if n.is_queued_for_deletion():
+			continue
+		var id := n.get_instance_id()
+		var sc = n.get_script()
+		if sc == PlayerScript:
+			ents.append(["P", id] + _fighter_fields(n) + [_char_of(n), n.pid, n.lives, n.score, n.out])
+		elif sc == EnemyScript:
+			ents.append(["E", id] + _fighter_fields(n) + [n.kind, n.block_flash, n.tier, n.display_name])
+		elif sc == CrateScript:
+			ents.append(["C", id, n.position.x, n.position.y, n.hp, n.flash, n.wobble])
+		elif sc == PickupScript:
+			ents.append(["K", id, n.position.x, n.position.y, n.kind])
+		elif sc == WeaponItemScript:
+			ents.append(["W", id, n.position.x, n.position.y, n.height, n.life, n.weapon])
+		elif sc == ThrownScript:
+			ents.append(["T", id, n.position.x, n.position.y, n.height, n.weapon, n.dir])
+		elif sc == EnergyScript:
+			ents.append(["X", id, n.position.x, n.position.y, n.kind, n.dir, n.color, n.height])
+	var slot_s: Array = []
+	for sl in slots:
+		slot_s.append([sl.char, sl.ready, sl.sets[0], sl.node.get_instance_id()])
+	var pids: Array = []
+	for p in players:
+		pids.append(p.get_instance_id())
+	var enemy_id := 0
+	if is_instance_valid(hud.enemy_ref):
+		enemy_id = hud.enemy_ref.get_instance_id()
+	var music_key: String = music.current if music.player.playing or music.want != "" else ""
+	if music.want != "":
+		music_key = music.want
+	var ev := net_events
+	net_events = []
+	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, shake_amt,
+		round_num, round_wins, round_winner, ending_page, game_mode, slot_s,
+		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents]
+
+
+func _apply_fighter(n, d: Array, i: int) -> int:
+	n.set_meta("net_target", Vector2(d[i], d[i + 1]))
+	n.height = d[i + 2]
+	n.facing = d[i + 3]
+	n.state = d[i + 4]
+	n.state_time = d[i + 5]
+	n.anim_t = d[i + 6]
+	n.flash = d[i + 7]
+	n.invuln = d[i + 8]
+	n.net_pose = d[i + 9]
+	n.net_phase = d[i + 10]
+	n.net_df = d[i + 11]
+	n.body_scale = d[i + 12]
+	n.hp = d[i + 13]
+	n.max_hp = d[i + 14]
+	n.weapon = d[i + 15]
+	return i + 16
+
+
+## Convidado: aplica o estado recebido do anfitrião.
+func net_apply(snap: Array) -> void:
+	if snap.size() < 23:
+		return
+	var new_stage: int = snap[2]
+	if new_stage != stage_idx or mode == "connecting":
+		stage_idx = new_stage
+		stage = stages[stage_idx]
+		bg.stage = stage
+	mode = snap[0]
+	mode_time = snap[1]
+	paused = snap[3]
+	combo_count = snap[4]
+	combo_timer = snap[5]
+	show_go = snap[6]
+	cam_x = snap[7]
+	shake_amt = maxf(shake_amt, snap[8])
+	round_num = snap[9]
+	round_wins = snap[10]
+	round_winner = snap[11]
+	ending_page = snap[12]
+	game_mode = snap[13]
+	versus = game_mode == "versus"
+	hud.message = snap[15]
+	hud.message_timer = snap[16]
+	hud.enemy_timer = snap[18]
+	# Entidades
+	var seen := {}
+	for d in snap[22]:
+		var id: int = d[1]
+		seen[id] = true
+		var n = net_nodes.get(id)
+		if n == null or not is_instance_valid(n):
+			n = _net_create(d)
+			if n == null:
+				continue
+			net_nodes[id] = n
+			n.position = Vector2(d[2], d[3])
+		match d[0]:
+			"P":
+				var i := _apply_fighter(n, d, 2)
+				if n.get_meta("char", -1) != d[i]:
+					var bs: float = n.body_scale
+					n.apply_character(characters[d[i]])
+					n.body_scale = bs
+					n.set_meta("char", d[i])
+				n.pid = d[i + 1]
+				n.lives = d[i + 2]
+				n.score = d[i + 3]
+				n.out = d[i + 4]
+			"E":
+				var i := _apply_fighter(n, d, 2)
+				n.block_flash = d[i + 1]
+				n.tier = d[i + 2]
+				n.display_name = d[i + 3]
+			"C":
+				n.set_meta("net_target", Vector2(d[2], d[3]))
+				n.hp = d[4]
+				n.flash = d[5]
+				n.wobble = d[6]
+			"K":
+				n.set_meta("net_target", Vector2(d[2], d[3]))
+			"W":
+				n.set_meta("net_target", Vector2(d[2], d[3]))
+				n.height = d[4]
+				n.life = d[5]
+				n.weapon = d[6]
+			"T":
+				n.set_meta("net_target", Vector2(d[2], d[3]))
+				n.height = d[4]
+				n.weapon = d[5]
+				n.dir = d[6]
+			"X":
+				n.set_meta("net_target", Vector2(d[2], d[3]))
+				n.dir = d[5]
+				n.color = d[6]
+				n.height = d[7]
+	for id in net_nodes.keys():
+		if not seen.has(id):
+			var old = net_nodes[id]
+			if is_instance_valid(old):
+				old.queue_free()
+			net_nodes.erase(id)
+	# Jogadores, seleção e barra do inimigo
+	players = []
+	for pid in snap[19]:
+		var pn = net_nodes.get(pid)
+		if pn != null and is_instance_valid(pn):
+			players.append(pn)
+	player = players[0] if not players.is_empty() else null
+	slots = []
+	for sl in snap[14]:
+		slots.append({"char": sl[0], "ready": sl[1], "sets": [sl[2]], "node": net_nodes.get(sl[3]), "t": 0.0})
+	var eid: int = snap[17]
+	hud.enemy_ref = net_nodes.get(eid) if eid != 0 else null
+	# Música
+	var mk: String = snap[20]
+	if mk == "":
+		if music.current != "" or music.want != "":
+			music.stop()
+	elif mk != music.want and mk != music.current:
+		var parts := mk.split(":")
+		music.play(parts[0], int(parts[1]), parts[2] == "boss")
+	# Sons e efeitos
+	for ev in snap[21]:
+		match ev[0]:
+			"s": sfx.play(ev[1])
+			"k": spawn_spark(Vector2(ev[1], ev[2]), ev[3], ev[4])
+			"p": popup(ev[1], Vector2(ev[2], ev[3]), ev[4])
+
+
+func _net_create(d: Array):
+	var n = null
+	match d[0]:
+		"P":
+			n = PlayerScript.new()
+			n.game = self
+			n.add_to_group("players")
+		"E":
+			n = EnemyScript.new()
+			n.game = self
+			n.add_to_group("enemies")
+			n.setup(d[18], stage, stage_idx)
+		"C":
+			n = CrateScript.new()
+			n.game = self
+		"K":
+			n = PickupScript.new()
+			n.kind = d[4]
+		"W":
+			n = WeaponItemScript.new()
+			n.game = self
+			n.weapon = d[6]
+		"T":
+			n = ThrownScript.new()
+			n.game = self
+			n.weapon = d[5]
+		"X":
+			n = EnergyScript.new()
+			n.game = self
+			n.kind = d[4]
+	if n != null:
+		entities.add_child(n)
+	return n

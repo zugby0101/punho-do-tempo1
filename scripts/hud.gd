@@ -65,8 +65,22 @@ func _draw() -> void:
 		_draw_game_hud()
 	if message_timer > 0.0 and game.mode == "play":
 		_center(230, message, 40, Color(1, 0.95, 0.4))
+	_draw_net_status()
 	match game.mode:
 		"title": _draw_title()
+		"join_input":
+			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
+			_center(200, "ENTRAR EM PARTIDA ONLINE", 40, Color(0.5, 0.9, 1))
+			_center(260, "Digite o IP do anfitrião e aperte ENTER", 20, Color(1, 1, 1))
+			_center(380, "ESC para voltar", 16, Color(0.8, 0.8, 0.9))
+			_center(430, "Mesma rede: use o IP local que aparece na tela do anfitrião.", 14, Color(0.75, 0.75, 0.85))
+			_center(452, "Pela internet: o anfitrião precisa liberar a porta 7777 (UDP) no roteador", 14, Color(0.75, 0.75, 0.85))
+			_center(472, "ou vocês podem usar uma VPN de jogos (Tailscale, ZeroTier, Radmin VPN).", 14, Color(0.75, 0.75, 0.85))
+		"connecting":
+			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
+			_center(250, "CONECTANDO...", 44, Color(0.5, 0.9, 1))
+			_center(300, Net.status if Net.status != "" else "Aguardando o anfitrião", 18, Color(1, 1, 1))
+			_center(350, "ESC para cancelar", 15, Color(0.8, 0.8, 0.9))
 		"select": _draw_select()
 		"intro": _draw_intro()
 		"stageclear":
@@ -180,6 +194,7 @@ func _draw_title() -> void:
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
+	_center(415, "ONLINE:  O = criar partida (anfitrião)   •   I = entrar numa partida (IP)", 16, Color(0.5, 0.9, 1))
 	if vs:
 		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
 	else:
@@ -287,3 +302,24 @@ func _draw_ending() -> void:
 	if game.mode_time > 2.0 and int(t * 2.0) % 2 == 0:
 		var more: bool = game.ending_page < game.players.size() - 1
 		_center(500, "ENTER: próximo final" if more else "ENTER para voltar ao título", 22, Color(1, 0.9, 0.3))
+
+
+func _draw_net_status() -> void:
+	if Net.status_timer > 0.0 and game.mode != "connecting":
+		var sy := 100.0
+		match game.mode:
+			"play": sy = 160.0
+			"select": sy = 290.0
+			"title": sy = 180.0
+		_text(Vector2(0, sy), Net.status, 15, Color(0.5, 0.9, 1), HORIZONTAL_ALIGNMENT_CENTER, W)
+	if not Net.online() or game.mode in ["connecting", "join_input"]:
+		return
+	var txt := ""
+	if Net.is_host():
+		txt = "ONLINE · anfitrião · IP %s · porta %d · convidados: %d" % [Net.local_ip(), Net.PORT, Net.connected_count()]
+	else:
+		txt = "ONLINE · conectado a %s" % Net.server_ip
+	var y := 512.0 if game.mode in ["play", "roundstart", "roundend"] else 290.0
+	if game.mode == "select":
+		y = 14.0
+	_text(Vector2(0, y), txt, 13, Color(0.5, 0.9, 1, 0.9), HORIZONTAL_ALIGNMENT_CENTER, W)

@@ -48,9 +48,14 @@ func _gen(dur: float, f: Callable) -> AudioStreamWAV:
 	return s
 
 
+var hook: Callable  # online: o anfitrião repassa os sons aos convidados
+
+
 func play(name: String, pitch_var: float = 0.08) -> void:
 	if not streams.has(name):
 		return
+	if hook.is_valid():
+		hook.call(name)
 	var p: AudioStreamPlayer = players[idx]
 	idx = (idx + 1) % players.size()
 	p.stream = streams[name]

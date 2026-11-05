@@ -24,6 +24,10 @@ func can_pick() -> bool:
 
 
 func _process(delta: float) -> void:
+	if game != null and game.net_client:
+		t += delta
+		queue_redraw()
+		return
 	if game != null and game.is_frozen() and game.mode != "play":
 		return
 	t += delta
