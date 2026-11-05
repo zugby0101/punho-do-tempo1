@@ -32,6 +32,12 @@ var lives := 3
 var score := 0
 var out := false          # sem vidas (pode continuar apertando soco)
 
+# Golpe especial do personagem
+var special_def: Dictionary = {}
+var sp_tick := -1
+var sp_fired := false
+var sp_land_t := -1.0
+
 
 func _ready() -> void:
 	if display_name == "???":
@@ -53,6 +59,7 @@ func apply_character(c: Dictionary) -> void:
 	max_hp = c.hp
 	hp = max_hp
 	move_speed = Vector2(230, 140) * float(c.speed)
+	special_def = c.get("special", {})
 	queue_redraw()
 
 
@@ -95,7 +102,9 @@ func _update(delta: float) -> void:
 				vel = Vector2.ZERO
 				start_attack(ATK_THROW)
 				game.sfx.play("whoosh")
-			elif Controls.just(sets, "special") and hp > SPECIAL_COST:
+			elif Controls.just(sets, "special") and not special_def.is_empty() and hp > int(special_def.cost):
+				_start_special()
+			elif Controls.just(sets, "special") and special_def.is_empty() and hp > SPECIAL_COST:
 				hp -= SPECIAL_COST
 				invuln = 0.45
 				vel = Vector2.ZERO
@@ -132,6 +141,8 @@ func _update(delta: float) -> void:
 				air_t += delta
 				if air_t >= float(attack.startup) and air_t < float(attack.startup) + float(attack.active):
 					_check_hits(_targets())
+		"special":
+			_process_special(delta)
 		"attack":
 			if Controls.just(sets, "attack"):
 				buffered = true
@@ -148,6 +159,163 @@ func _update(delta: float) -> void:
 				set_state("idle")
 
 
+# ---------- Golpes especiais ----------
+func _start_special() -> void:
+	var sp := special_def
+	hp -= int(sp.cost)
+	set_state("special")
+	vel = Vector2.ZERO
+	sp_tick = -1
+	sp_fired = false
+	sp_land_t = -1.0
+	hit_list.clear()
+	attack = {"pose": sp.get("pose", "special"), "dmg": int(sp.get("dmg", 10)), "reach": float(sp.get("reach", 70)),
+		"knock": false, "radial": sp.type == "spin", "depth": 28.0, "heavy": true, "phase": 1.0,
+		"spin": sp.get("spin", sp.type == "spin")}
+	match sp.type:
+		"spin":
+			invuln = float(sp.dur) + 0.1
+		"slam", "rise":
+			vz = float(sp.jump_v)
+			height = 0.1
+			vel.x = facing * float(sp.move)
+			invuln = 0.5
+			if sp.type == "slam":
+				attack.pose = "slam"
+				attack.phase = -1.0
+		"dive":
+			invuln = float(sp.dur) + 0.2
+			if not sp.has("pose"):
+				attack.pose = "dive"
+		"dash":
+			invuln = float(sp.startup) + float(sp.dur) + 0.1
+			attack.phase = -1.0
+		"projectile":
+			attack.pose = "jab"
+			attack.phase = -1.0
+		"quake":
+			attack.pose = "slam"
+			attack.phase = -1.0
+	game.sfx.play("special")
+	game.popup(sp.name + "!", position + Vector2(0, -130.0 * body_scale), sp.color)
+
+
+## Reinicia a lista de acertos a cada `interval` segundos (golpes de vários acertos).
+func _multi_tick(interval: float) -> bool:
+	if interval <= 0.0:
+		return false
+	var tick := int(state_time / interval)
+	if tick != sp_tick:
+		sp_tick = tick
+		hit_list.clear()
+		return true
+	return false
+
+
+func _end_special() -> void:
+	attack = {}
+	vel = Vector2.ZERO
+	set_state("idle")
+
+
+func _process_special(delta: float) -> void:
+	var sp := special_def
+	var t := state_time
+	var targets := _targets()
+	match sp.type:
+		"spin":
+			vel = Vector2(facing * float(sp.move), 0)
+			_multi_tick(float(sp.interval))
+			attack.knock = t >= float(sp.dur) - float(sp.interval)
+			_check_hits(targets)
+			if t >= float(sp.dur):
+				_end_special()
+		"flurry":
+			var dur := float(sp.dur)
+			if t < dur:
+				if _multi_tick(float(sp.interval)):
+					attack.pose = sp.pose_a if sp_tick % 2 == 0 else sp.pose_b
+					vel.x = facing * float(sp.lunge)
+					game.sfx.play("whoosh")
+				vel.x = move_toward(vel.x, 0.0, 600.0 * delta)
+				attack.phase = 1.0 if fmod(t, float(sp.interval)) < float(sp.interval) * 0.6 else 0.3
+				_check_hits(targets)
+			elif t < dur + 0.15:
+				if not sp_fired:
+					sp_fired = true
+					hit_list.clear()
+					attack.pose = "upper"
+					attack.dmg = int(sp.final_dmg)
+					attack.knock = true
+					attack.phase = 1.0
+					vel.x = facing * 60.0
+				_check_hits(targets)
+			elif t >= dur + 0.45:
+				_end_special()
+		"slam":
+			if sp_land_t < 0.0:
+				attack.phase = -1.0 if vz > 0.0 else 1.0
+			elif t - sp_land_t > 0.3:
+				_end_special()
+		"dive":
+			var startup := 0.08
+			var dur := float(sp.dur)
+			if t < startup:
+				vel = Vector2.ZERO
+			elif t < startup + dur:
+				height = 32.0
+				vz = 0.0
+				vel = Vector2(facing * float(sp.speed), 0)
+				var iv := float(sp.interval)
+				_multi_tick(iv)
+				attack.knock = iv <= 0.0 or t >= startup + dur - iv
+				_check_hits(targets)
+			else:
+				vel.x = move_toward(vel.x, 0.0, 900.0 * delta)
+				if height <= 0.0:
+					_end_special()
+		"rise":
+			var iv := float(sp.interval)
+			if vz > 0.0:
+				_multi_tick(iv)
+				attack.knock = iv <= 0.0 or vz < 200.0
+				_check_hits(targets)
+		"dash":
+			var st := float(sp.startup)
+			var dur := float(sp.dur)
+			if t < st:
+				vel = Vector2.ZERO
+				attack.phase = -1.0
+			elif t < st + dur:
+				attack.phase = 1.0
+				vel = Vector2(facing * float(sp.speed), 0)
+				var iv := float(sp.interval)
+				_multi_tick(iv)
+				attack.knock = iv <= 0.0 or t >= st + dur - iv
+				_check_hits(targets)
+			else:
+				vel.x = move_toward(vel.x, 0.0, 1200.0 * delta)
+				if t >= st + dur + 0.25:
+					_end_special()
+		"projectile":
+			if t >= 0.16 and not sp_fired:
+				sp_fired = true
+				attack.phase = 1.0
+				game.spawn_energy(self, "ki", facing, sp)
+			if t >= 0.5:
+				_end_special()
+		"quake":
+			if t >= 0.3 and not sp_fired:
+				sp_fired = true
+				attack.phase = 1.0
+				game.spawn_energy(self, "wave", 1, sp)
+				game.spawn_energy(self, "wave", -1, sp)
+				game.shake(8.0)
+				game.sfx.play("thud", 0.0)
+			if t >= 0.65:
+				_end_special()
+
+
 func _on_weapon_changed() -> void:
 	combo = Weapons.player_combo(weapon) if not weapon.is_empty() else BASE_COMBO
 	combo_step = 0
@@ -160,6 +328,28 @@ func _do_attack(a: Dictionary) -> void:
 
 
 func _on_land() -> void:
+	if state == "special":
+		var ty: String = special_def.type
+		if ty == "slam" and sp_land_t < 0.0:
+			# Onda de choque ao cair
+			sp_land_t = state_time
+			attack.radial = true
+			attack.knock = true
+			attack.dmg = int(special_def.dmg)
+			attack.reach = float(special_def.reach)
+			attack.depth = 50.0
+			attack.phase = 1.0
+			hit_list.clear()
+			_check_hits(_targets())
+			game.shake(10.0)
+			game.sfx.play("thud", 0.0)
+			for k in 6:
+				var a := k * TAU / 6.0
+				game.spawn_spark(position + Vector2(cos(a) * 60.0, sin(a) * 18.0 - 10.0), special_def.color, 0.9)
+			vel = Vector2.ZERO
+		elif ty in ["dive", "rise"]:
+			_end_special()
+		return
 	if state == "jump":
 		attack = {}
 		vel = Vector2.ZERO

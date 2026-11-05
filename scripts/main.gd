@@ -17,6 +17,8 @@ const Controls = preload("res://scripts/controls.gd")
 const Weapons = preload("res://scripts/weapons.gd")
 const WeaponItemScript = preload("res://scripts/weapon_item.gd")
 const ThrownScript = preload("res://scripts/thrown.gd")
+const EnergyScript = preload("res://scripts/energy.gd")
+const PopupScript = preload("res://scripts/popup.gd")
 
 const DEPTH_MIN := 360.0
 const DEPTH_MAX := 520.0
@@ -673,3 +675,28 @@ func throw_weapon(p, w: Dictionary) -> void:
 	th.dir = p.facing
 	th.position = p.position + Vector2(p.facing * 20.0, 0)
 	entities.add_child(th)
+
+
+# ---------- Golpes especiais ----------
+func spawn_energy(p, kind: String, dir: int, sp: Dictionary) -> void:
+	var e = EnergyScript.new()
+	e.game = self
+	e.owner_player = p
+	e.kind = kind
+	e.dir = dir
+	e.dmg = int(sp.dmg)
+	e.speed = float(sp.get("speed", 500.0))
+	e.color = sp.color
+	if kind == "wave":
+		e.height = 0.0
+		e.life = 0.9
+	e.position = p.position + Vector2(dir * 30.0, 2.0)
+	entities.add_child(e)
+
+
+func popup(text: String, pos: Vector2, col: Color) -> void:
+	var pp = PopupScript.new()
+	pp.text = text
+	pp.color = col
+	pp.position = pos
+	effects.add_child(pp)

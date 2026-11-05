@@ -77,15 +77,26 @@ Cada fase tem cenário próprio com parallax, inimigos com o visual da época,
 **14 personagens jogáveis** (um homem e uma mulher de cada região), cada um com
 vida/velocidade/força próprias e **final exclusivo**:
 
-| Região | Homem | Mulher |
-|---|---|---|
-| América do Sul | Mateus (Brasil) | Valentina (Argentina) |
-| América do Norte | Jake (EUA) | Itzel (México) |
-| Leste Europeu | Dmitri (Rússia) | Oksana (Ucrânia) |
-| Europa | Luca (Itália) | Amélie (França) |
-| Ásia | Kai (Japão) | Mei (China) |
-| África | Kofi (Gana) | Amara (Nigéria) |
-| Oceania | Tama (Nova Zelândia) | Kirra (Austrália) |
+Cada personagem tem um **golpe especial exclusivo** (botão Especial; gasta um pouco de vida):
+
+| Região | Personagem | Golpe especial | Como funciona |
+|---|---|---|---|
+| América do Sul | Mateus (Brasil) | Meia-lua de compasso | chute giratório que acerta dos dois lados |
+| América do Sul | Valentina (Argentina) | Rajada de jabs | sequência rápida de socos + gancho final |
+| América do Norte | Jake (EUA) | Esmagador texano | salta e cai com onda de choque em área |
+| América do Norte | Itzel (México) | Tope suicida | mergulho voador atravessando a tela |
+| Leste Europeu | Dmitri (Rússia) | Moinho siberiano | giro pesado de longo alcance |
+| Leste Europeu | Oksana (Ucrânia) | Chute do hopak | salto ascendente com vários chutes |
+| Europa | Luca (Itália) | Tornado de chutes | avança girando e chutando |
+| Europa | Amélie (França) | Fouetté triplo | três chutes longos seguidos |
+| Ásia | Kai (Japão) | Onda Ki | dispara uma bola de energia |
+| Ásia | Mei (China) | Chute da fênix | voadora que acerta várias vezes |
+| África | Kofi (Gana) | Punho do trovão | soco carregado com avanço explosivo |
+| África | Amara (Nigéria) | Onda sísmica | soca o chão e lança ondas para os dois lados |
+| Oceania | Tama (Nova Zelândia) | Investida haka | trombada de rúgbi invencível |
+| Oceania | Kirra (Austrália) | Joelhada voadora | salto para frente com joelhada |
+
+Com uma arma na mão, o botão Especial arremessa a arma.
 
 ## Música e sons
 
@@ -130,6 +141,7 @@ scripts/hud.gd          interface e telas
 scripts/music.gd        trilha sonora gerada por algoritmo
 scripts/sfx.gd          efeitos sonoros sintetizados
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
+scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante
 scripts/weapon_item.gd, thrown.gd   arma no chão e arma arremessada
 scripts/crate.gd, pickup.gd, spark.gd   caixas, comida, efeitos de impacto
 ```

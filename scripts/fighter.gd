@@ -257,6 +257,8 @@ func _attack_phase() -> float:
 	var t := state_time
 	if state == "jump":
 		return 1.0
+	if state == "special":
+		return float(attack.get("phase", 1.0))
 	var st: float = attack.startup
 	var ae: float = st + float(attack.active)
 	if t < st:
@@ -268,7 +270,7 @@ func _attack_phase() -> float:
 
 func _current_pose() -> String:
 	match state:
-		"attack":
+		"attack", "special":
 			return attack.get("pose", "jab")
 		"jump":
 			return attack.get("pose", "jump") if not attack.is_empty() else "jump"
@@ -287,7 +289,7 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 24.0 * s * shs, Color(0, 0, 0, 0.38))
 	draw_set_transform(Vector2.ZERO)
 
-	if invuln > 0.0 and state != "attack" and int(invuln * 20.0) % 2 == 0:
+	if invuln > 0.0 and not (state in ["attack", "special"]) and int(invuln * 20.0) % 2 == 0:
 		return
 	if state == "dead" and int(state_time * 16.0) % 2 == 0:
 		return
@@ -304,8 +306,10 @@ func _draw() -> void:
 			rot = -PI * 0.5 * (1.0 - state_time / 0.4)
 			off.y -= 6.0 * s * (1.0 - state_time / 0.4)
 	var df := facing
-	if state == "attack" and attack.get("pose", "") == "special":
+	if state in ["attack", "special"] and (attack.get("pose", "") == "special" or attack.get("spin", false)):
 		df = facing if int(state_time * 18.0) % 2 == 0 else -facing
+	if state == "special" and attack.get("pose", "") == "dive":
+		rot = PI * 0.45
 	draw_set_transform(off, rot * df, Vector2(df * s, s))
 	_draw_body(_current_pose(), _attack_phase())
 	draw_set_transform(Vector2.ZERO)
@@ -374,6 +378,11 @@ func _draw_body(pose: String, p: float) -> void:
 				hb = Vector2(lerpf(-2.0, 22.0, p), -62)
 				lean = 7.0 * p
 				bf.x -= 5.0 * p
+		"dive":
+			hf = Vector2(6, -96)
+			hb = Vector2(-2, -94)
+			bf = Vector2(-6, 4)
+			ff = Vector2(6, 4)
 		"throw":
 			hf = Vector2(34, -72)
 			hb = Vector2(-12, -64)

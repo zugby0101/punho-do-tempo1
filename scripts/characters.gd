@@ -22,11 +22,34 @@ static func _endings() -> Array:
 	]
 
 
+## Golpe especial exclusivo de cada personagem (mesma ordem da lista).
+## type: spin, flurry, slam, dive, rise, dash, projectile, quake (ver player.gd).
+static func _specials() -> Array:
+	return [
+		{"name": "MEIA-LUA DE COMPASSO", "type": "spin", "pose": "kick", "dur": 0.55, "interval": 0.18, "reach": 96, "dmg": 7, "move": 120.0, "cost": 6, "color": Color(1, 0.9, 0.2)},
+		{"name": "RAJADA DE JABS", "type": "flurry", "pose_a": "jab", "pose_b": "cross", "dur": 0.6, "interval": 0.08, "reach": 66, "dmg": 3, "lunge": 40.0, "final_dmg": 12, "cost": 6, "color": Color(0.5, 0.8, 1)},
+		{"name": "ESMAGADOR TEXANO", "type": "slam", "jump_v": 720.0, "move": 240.0, "reach": 125, "dmg": 20, "cost": 8, "color": Color(1, 0.7, 0.3)},
+		{"name": "TOPE SUICIDA", "type": "dive", "speed": 560.0, "dur": 0.45, "interval": 0.0, "reach": 62, "dmg": 16, "cost": 7, "color": Color(1, 0.3, 0.6)},
+		{"name": "MOINHO SIBERIANO", "type": "spin", "pose": "special", "dur": 0.8, "interval": 0.2, "reach": 112, "dmg": 9, "move": 60.0, "cost": 8, "color": Color(1, 0.3, 0.3)},
+		{"name": "CHUTE DO HOPAK", "type": "rise", "pose": "kick", "jump_v": 640.0, "move": 140.0, "interval": 0.12, "reach": 72, "dmg": 6, "cost": 6, "color": Color(1, 0.95, 0.5)},
+		{"name": "TORNADO DE CHUTES", "type": "dash", "pose": "kick", "spin": true, "startup": 0.05, "speed": 380.0, "dur": 0.5, "interval": 0.1, "reach": 72, "dmg": 5, "cost": 6, "color": Color(0.3, 1, 0.5)},
+		{"name": "FOUETTÉ TRIPLO", "type": "flurry", "pose_a": "kick", "pose_b": "kick", "dur": 0.54, "interval": 0.18, "reach": 92, "dmg": 7, "lunge": 70.0, "final_dmg": 10, "cost": 6, "color": Color(0.7, 0.6, 1)},
+		{"name": "ONDA KI", "type": "projectile", "proj": "ki", "speed": 520.0, "dmg": 18, "cost": 7, "color": Color(0.4, 0.85, 1)},
+		{"name": "CHUTE DA FÊNIX", "type": "dive", "pose": "jumpkick", "speed": 520.0, "dur": 0.5, "interval": 0.12, "reach": 68, "dmg": 6, "cost": 7, "color": Color(1, 0.4, 0.15)},
+		{"name": "PUNHO DO TROVÃO", "type": "dash", "pose": "cross", "startup": 0.22, "speed": 470.0, "dur": 0.28, "interval": 0.0, "reach": 70, "dmg": 22, "cost": 8, "color": Color(1, 1, 0.4)},
+		{"name": "ONDA SÍSMICA", "type": "quake", "dmg": 14, "speed": 420.0, "cost": 7, "color": Color(0.85, 0.6, 0.3)},
+		{"name": "INVESTIDA HAKA", "type": "dash", "pose": "charge", "startup": 0.15, "speed": 430.0, "dur": 0.6, "interval": 0.0, "reach": 60, "dmg": 15, "cost": 8, "color": Color(0.9, 0.9, 0.9)},
+		{"name": "JOELHADA VOADORA", "type": "rise", "pose": "jumpkick", "jump_v": 560.0, "move": 320.0, "interval": 0.0, "reach": 66, "dmg": 17, "cost": 7, "color": Color(1, 0.6, 0.1)},
+	]
+
+
 static func list() -> Array:
 	var arr := _list_base()
 	var ends := _endings()
+	var sps := _specials()
 	for i in arr.size():
 		arr[i]["ending"] = ends[i]
+		arr[i]["special"] = sps[i]
 	return arr
 
 

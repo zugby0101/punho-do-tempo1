@@ -202,12 +202,14 @@ func _draw_select() -> void:
 		for k in stats.size():
 			_text(Vector2(px + 8, py + 116 + k * 20), stats[k][0], 11, Color(1, 1, 1))
 			_bar(Vector2(px + 58, py + 107 + k * 20), 70, 8, stats[k][1], Color(0.3, 0.9, 1))
+		_text(Vector2(px + 8, py + 178), "ESPECIAL:", 10, Color(0.8, 0.8, 0.9))
+		_text(Vector2(px + 8, py + 190), c.special.name, 11, c.special.color)
 		if sl.ready:
-			_text(Vector2(px + 8, py + 200), "PRONTO!", 20, Color(0.4, 1, 0.5))
-			_text(Vector2(px + 8, py + 220), "pulo: cancelar", 11, Color(0.8, 0.8, 0.9))
+			_text(Vector2(px + 8, py + 210), "PRONTO!", 20, Color(0.4, 1, 0.5))
+			_text(Vector2(px + 8, py + 226), "pulo: cancelar", 10, Color(0.8, 0.8, 0.9))
 		else:
-			_text(Vector2(px + 8, py + 196), "◄► ▲▼ escolher", 11, Color(0.8, 0.8, 0.9))
-			_text(Vector2(px + 8, py + 214), "SOCO: confirmar", 12, Color(1, 0.9, 0.3))
+			_text(Vector2(px + 8, py + 210), "◄► ▲▼ escolher", 10, Color(0.8, 0.8, 0.9))
+			_text(Vector2(px + 8, py + 226), "SOCO: confirmar", 11, Color(1, 0.9, 0.3))
 
 
 func _draw_intro() -> void:
