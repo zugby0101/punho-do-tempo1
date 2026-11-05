@@ -15,6 +15,7 @@ const Stages = preload("res://scripts/stages.gd")
 const Characters = preload("res://scripts/characters.gd")
 const Controls = preload("res://scripts/controls.gd")
 const Weapons = preload("res://scripts/weapons.gd")
+const Dialogs = preload("res://scripts/dialogs.gd")
 const WeaponItemScript = preload("res://scripts/weapon_item.gd")
 const ThrownScript = preload("res://scripts/thrown.gd")
 const EnergyScript = preload("res://scripts/energy.gd")
@@ -55,6 +56,14 @@ var drop_timer := 0.0
 # Sobrevivência
 var fragment_got := false   # ganhou um Fragmento do Tempo nesta era
 var survival := false
+
+# Diálogos com chefes e sub-chefes
+var dialog_queue: Array = []   # falas na fila
+var dialog_line: Dictionary = {}  # fala atual: {name, text, color, portrait, side, voice}
+var dialog_chars := 0.0         # quantas letras já apareceram
+var dialog_wait := -1.0         # espera antes de abrir o diálogo (o chefe entra em cena)
+var dialog_pending := false     # segura o fim da fase até o diálogo terminar
+const DIALOG_CPS := 42.0        # letras por segundo
 var surv_wave := 0
 var surv_queue: Array = []    # [tipo, lado, atraso]
 var surv_break := 0.0         # pausa entre ondas
@@ -255,7 +264,7 @@ func _set_mode(m: String) -> void:
 
 
 func is_frozen() -> bool:
-	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry", "achievements"] or paused or hitstop > 0.0
+	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry", "achievements", "dialog"] or paused or hitstop > 0.0
 
 
 func cam_left() -> float:
@@ -390,6 +399,9 @@ func _physics_process(delta: float) -> void:
 				skip_title = true
 				get_tree().reload_current_scene()
 			return
+		"dialog":
+			_update_dialog(delta)
+			return
 		"roundstart":
 			if mode_time > 1.8:
 				_set_mode("play")
@@ -434,6 +446,13 @@ func _physics_process(delta: float) -> void:
 	if survival:
 		_update_survival(delta)
 		return
+
+	# Diálogo agendado (o chefe já entrou em cena)
+	if dialog_wait >= 0.0 and hitstop <= 0.0:
+		dialog_wait -= delta
+		if dialog_wait < 0.0:
+			_open_dialog()
+			return
 
 	# Jogador eliminado pode continuar enquanto o grupo segue vivo
 	for p in players:
@@ -645,7 +664,7 @@ func _update_waves(delta: float) -> void:
 			_spawn_enemy(s[0], s[1])
 	pending = pending.filter(func(item): return item[2] > 0.0)
 
-	if pending.is_empty() and _alive_enemies().is_empty():
+	if pending.is_empty() and _alive_enemies().is_empty() and not dialog_pending:
 		locked = false
 		wave_idx += 1
 		if wave_idx >= waves.size():
@@ -735,6 +754,11 @@ func _spawn_enemy(kind: String, side: int):
 		_play_stage_music(true)
 	if e.is_boss():
 		sfx.voice(e, "laugh", 1.0, 0.0)
+	if not versus and not survival:
+		if e.is_boss() and kind != "subboss":
+			_dialog_boss_intro(e)
+		elif kind == "subboss":
+			_dialog_subboss(e)
 	if kind == "secret_boss":
 		hud.show_message("CHEFE SECRETO: " + e.display_name, 3.0)
 		hud.show_enemy(e)
@@ -845,6 +869,8 @@ func on_enemy_killed(e) -> void:
 		shake(14.0)
 		hud.show_message("K.O.!", 2.5)
 		pending.clear()
+		if not versus and not survival:
+			_dialog_boss_defeat(e)
 		# Os capangas restantes caem junto com o chefe
 		for o in _alive_enemies():
 			o.take_hit(999, 1 if o.position.x > e.position.x else -1, true)
@@ -1237,7 +1263,8 @@ func net_snapshot() -> Array:
 	net_events = []
 	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, shake_amt,
 		round_num, round_wins, round_winner, ending_page, game_mode, slot_s,
-		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents, surv_wave]
+		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents, surv_wave,
+		dialog_line, dialog_chars]
 
 
 func _apply_fighter(n, d: Array, i: int) -> int:
@@ -1290,6 +1317,9 @@ func net_apply(snap: Array) -> void:
 	survival = game_mode == "survival"
 	if snap.size() > 23:
 		surv_wave = snap[23]
+	if snap.size() > 25:
+		dialog_line = snap[24]
+		dialog_chars = snap[25]
 	# Entidades
 	var seen := {}
 	for d in snap[22]:
@@ -1645,3 +1675,140 @@ func _save_settings() -> void:
 	cfg.load("user://settings.cfg")
 	cfg.set_value("visual", "rig_mode", rig_mode)
 	cfg.save("user://settings.cfg")
+
+
+# =================== Diálogos com chefes ===================
+const PLAYER_TEXT_COLORS := [Color(1, 0.45, 0.45), Color(0.5, 0.7, 1), Color(0.5, 1, 0.55), Color(1, 0.9, 0.35)]
+
+
+func _speaker(f, color: Color) -> Dictionary:
+	# Dados de quem fala, guardados na hora (o chefe pode sumir antes do fim da fala).
+	return {"name": f.display_name, "color": color, "voice": f.voice_id,
+		"pitch": sfx.body_pitch(f.body_scale),
+		"portrait": {"skin": f.skin, "hair": f.hair, "shirt": f.shirt, "hat": f.hat, "f": f.feminine}}
+
+
+func _line(spk: Dictionary, text: String, side: String, voice_line: String) -> Dictionary:
+	var d := spk.duplicate()
+	d["text"] = text
+	d["side"] = side
+	d["voice_line"] = voice_line
+	return d
+
+
+## Quem responde: de preferência um lutador com encontro especial com este chefe.
+func _responder(style: String):
+	var act := active_players()
+	if act.is_empty():
+		return null
+	for p in act:
+		if Dialogs.PAIRS.has("%s_%s" % [style, p.voice_id]):
+			return p
+	return act[randi() % act.size()]
+
+
+func _boss_color(e) -> Color:
+	return Color(0.85, 0.6, 1) if e.kind == "secret_boss" else Color(1, 0.4, 0.35)
+
+
+func _fill(text: String) -> String:
+	return text.replace("{era}", stage.name)
+
+
+func _dialog_boss_intro(e) -> void:
+	var style: String = stage.style
+	var data: Dictionary = Dialogs.BOSSES.get(style, {})
+	var p = _responder(style)
+	if data.is_empty() or p == null:
+		return
+	var boss := _speaker(e, _boss_color(e))
+	var hero := _speaker(p, PLAYER_TEXT_COLORS[p.pid] if players.size() > 1 else Color(1, 0.85, 0.3))
+	var mine: Dictionary = Dialogs.PLAYERS.get(p.voice_id, {})
+	var pair_key := "%s_%s" % [style, p.voice_id]
+	var lines: Array = []
+	if Dialogs.PAIRS.has(pair_key):
+		var pr: Array = Dialogs.PAIRS[pair_key]
+		lines = [_line(boss, pr[0], "left", "laugh"), _line(hero, pr[1], "right", "atk2"), _line(boss, data.intro[1], "left", "")]
+	else:
+		var reply: String = mine.get("eon", "") if e.kind == "secret_boss" else Dialogs.pick(mine.get("retort", []))
+		lines = [_line(boss, data.intro[0], "left", "laugh"), _line(hero, reply, "right", "atk2"), _line(boss, data.intro[1], "left", "")]
+	_queue_dialog(lines, 1.6)
+
+
+func _dialog_subboss(e) -> void:
+	var line: String = Dialogs.SUBBOSSES.get(stage.style, "")
+	var p = _responder(stage.style)
+	if line == "" or p == null:
+		return
+	var sub := _speaker(e, Color(1, 0.6, 0.9))
+	var hero := _speaker(p, PLAYER_TEXT_COLORS[p.pid] if players.size() > 1 else Color(1, 0.85, 0.3))
+	var mine: Dictionary = Dialogs.PLAYERS.get(p.voice_id, {})
+	_queue_dialog([_line(sub, line, "left", "laugh"), _line(hero, Dialogs.pick(mine.get("sub", [])), "right", "atk1")], 1.3)
+
+
+func _dialog_boss_defeat(e) -> void:
+	var data: Dictionary = Dialogs.BOSSES.get(stage.style, {})
+	var p = _responder(stage.style)
+	if data.is_empty():
+		return
+	var lines: Array = [_line(_speaker(e, _boss_color(e)), data.defeat, "left", "")]
+	if p != null:
+		var mine: Dictionary = Dialogs.PLAYERS.get(p.voice_id, {})
+		lines.append(_line(_speaker(p, PLAYER_TEXT_COLORS[p.pid] if players.size() > 1 else Color(1, 0.85, 0.3)), Dialogs.pick(mine.get("victory", [])), "right", "win"))
+	_queue_dialog(lines, 1.1)
+
+
+func _queue_dialog(lines: Array, delay: float) -> void:
+	if lines.is_empty():
+		return
+	dialog_queue = lines
+	dialog_wait = delay
+	dialog_pending = true
+
+
+func _open_dialog() -> void:
+	_set_mode("dialog")
+	_next_line()
+
+
+func _next_line() -> void:
+	if dialog_queue.is_empty():
+		_close_dialog()
+		return
+	dialog_line = dialog_queue.pop_front()
+	dialog_line.text = _fill(String(dialog_line.text))
+	dialog_chars = 0.0
+	if String(dialog_line.voice_line) != "":
+		sfx.play("vo_%s_%s" % [dialog_line.voice, dialog_line.voice_line], 0.03)
+
+
+func _close_dialog() -> void:
+	dialog_queue = []
+	dialog_line = {}
+	dialog_pending = false
+	dialog_wait = -1.0
+	_set_mode("play")
+
+
+func _update_dialog(delta: float) -> void:
+	if dialog_line.is_empty():
+		_close_dialog()
+		return
+	var total: int = String(dialog_line.text).length()
+	var before := int(dialog_chars)
+	dialog_chars = minf(dialog_chars + delta * DIALOG_CPS, float(total))
+	# "bipes" da fala no tom de quem fala (a cada 2 letras, sem contar espaços)
+	if int(dialog_chars) > before and int(dialog_chars) % 2 == 0:
+		var ch := String(dialog_line.text)[mini(int(dialog_chars), total - 1)]
+		if ch != " ":
+			sfx.play("blip", 0.06, float(dialog_line.pitch))
+	if mode_time < 0.25:
+		return
+	# PULO pula o diálogo inteiro; SOCO/ENTER mostra a fala toda ou avança
+	if Input.is_action_just_pressed("jump") or Controls.any_remote_just(["jump"]):
+		_close_dialog()
+	elif _confirm():
+		if dialog_chars < total:
+			dialog_chars = total
+		else:
+			_next_line()

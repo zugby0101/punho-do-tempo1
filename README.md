@@ -240,6 +240,22 @@ As vozes tocam em canais próprios (não cortam os efeitos) e cada personagem te
 mínimo entre falas. Para regerar: `python tools/audio/voices.py` (precisa de numpy e scipy).
 As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
+## Diálogos com chefes
+
+Na história (e na fase secreta), chefes e sub-chefes **conversam com o lutador** quando entram em cena,
+e o chefe tem uma última fala ao ser derrotado — seguida da comemoração do herói:
+
+- **13 chefes** com fala de entrada (2 linhas) e de derrota próprias; **12 sub-chefes** com uma provocação.
+- **Cada um dos 14 lutadores** responde no seu jeito (3 respostas a chefes, 2 a sub-chefes, 2 de vitória
+  e uma fala especial para o ÉON).
+- **Encontros especiais**: alguns pares têm diálogo próprio (Kai e Mei contra o Shogun, Dmitri e Oksana
+  na Guerra Fria, Tama e Mateus nas Grandes Navegações, Jake e Valentina no presente...). No co-op,
+  responde quem tem diálogo especial com o chefe; senão, um jogador ao acaso.
+- Caixa de diálogo com **retrato** (cores e chapéu de quem fala), nome, texto letra a letra com
+  “bipes” no tom da voz do personagem e uma fala gravada no início de cada linha.
+- **SOCO/ENTER** mostra a fala inteira ou avança; **PULO** pula o diálogo. O jogo fica pausado durante a
+  conversa, e a fase só termina depois da fala final do chefe. No online, o diálogo aparece para todos.
+
 ## Rigs 2D (Blender + Godot)
 
 Todos os personagens — os 14 lutadores e os 65 inimigos, sub-chefes e chefes das 13 eras —
@@ -267,6 +283,7 @@ scripts/background.gd   os 12 cenários procedurais
 scripts/hud.gd          interface e telas
 scripts/music.gd        trilha sonora gerada por algoritmo
 scripts/sfx.gd          efeitos sonoros sintetizados e reprodução das vozes
+scripts/dialogs.gd      falas dos chefes, sub-chefes e respostas de cada lutador
 audio/voices/           vozes e gritos (gerados por tools/audio/voices.py)
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante

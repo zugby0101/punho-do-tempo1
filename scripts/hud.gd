@@ -126,7 +126,7 @@ func _draw_achievements() -> void:
 
 
 func _draw_main() -> void:
-	if game.mode in ["play", "stageclear", "gameover", "roundstart", "roundend", "match"] and not game.players.is_empty():
+	if game.mode in ["play", "stageclear", "gameover", "roundstart", "roundend", "match", "dialog"] and not game.players.is_empty():
 		_draw_game_hud()
 	if message_timer > 0.0 and game.mode == "play":
 		_center(230, message, 40, Color(1, 0.95, 0.4))
@@ -135,6 +135,7 @@ func _draw_main() -> void:
 		"title": _draw_title()
 		"online_menu": _draw_online_menu()
 		"ranking": _draw_ranking()
+		"dialog": _draw_dialog()
 		"achievements": _draw_achievements()
 		"name_entry":
 			draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.85))
@@ -514,3 +515,106 @@ func _draw_ranking() -> void:
 			_text(Vector2(cols[4], y), era, 16, Color(0.4, 1, 0.5) if e.get("done", false) and not surv else col)
 			_text(Vector2(cols[5], y), "%dP" % int(e.get("players", 1)), 16, col)
 	_center(510, "ESC, ENTER ou SOCO para voltar", 15, Color(0.8, 0.8, 0.9))
+
+
+# =================== Diálogos ===================
+func _draw_dialog() -> void:
+	var d: Dictionary = game.dialog_line
+	if d.is_empty():
+		return
+	draw_rect(Rect2(0, 0, W, 540), Color(0, 0, 0, 0.25))
+	var box := Rect2(24, 372, W - 48, 138)
+	draw_rect(box, Color(0.04, 0.02, 0.09, 0.93))
+	var col: Color = d.color
+	draw_rect(box, col, false, 3.0)
+	var left: bool = d.side == "left"
+	var px := box.position.x + 14.0 if left else box.end.x - 14.0 - 104.0
+	var pr := Rect2(px, box.position.y + 16, 104, 104)
+	draw_rect(pr, Color(col.r * 0.25, col.g * 0.25, col.b * 0.3, 1))
+	draw_rect(pr, col, false, 2.0)
+	_portrait(pr, d.portrait, not left)
+	var tx := box.position.x + 134.0 if left else box.position.x + 20.0
+	var tw := box.size.x - 154.0
+	_text(Vector2(tx, box.position.y + 30), String(d.name), 20, col)
+	var shown := String(d.text).substr(0, int(game.dialog_chars))
+	draw_multiline_string_outline(font, Vector2(tx, box.position.y + 60), shown, HORIZONTAL_ALIGNMENT_LEFT, tw, 18, 3, 4, Color(0, 0, 0, 0.9))
+	draw_multiline_string(font, Vector2(tx, box.position.y + 60), shown, HORIZONTAL_ALIGNMENT_LEFT, tw, 18, 3, Color(1, 1, 1))
+	if int(game.dialog_chars) >= String(d.text).length() and int(t * 2.5) % 2 == 0:
+		draw_colored_polygon(PackedVector2Array([box.end - Vector2(28, 22), box.end - Vector2(14, 22), box.end - Vector2(21, 14)]), col)
+	var hx := box.position.x + 134.0 if left else box.position.x + 20.0
+	_text(Vector2(hx, box.end.y - 10), "SOCO/ENTER: avançar   •   PULO: pular o diálogo", 11, Color(0.6, 0.6, 0.72))
+
+
+## Retrato simples de quem fala, com as cores e o chapéu do personagem.
+func _portrait(r: Rect2, p: Dictionary, flip: bool) -> void:
+	var c := r.get_center() + Vector2(0, 8)
+	var dx := -1.0 if flip else 1.0
+	var skin: Color = p.skin
+	var hair: Color = p.hair
+	var hat: String = p.hat
+	# ombros e roupa
+	draw_colored_polygon(PackedVector2Array([c + Vector2(-40, 46), c + Vector2(40, 46), c + Vector2(30, 22), c + Vector2(-30, 22)]), p.shirt)
+	draw_rect(Rect2(c + Vector2(-7, 12), Vector2(14, 12)), skin.darkened(0.1))
+	# cabeça
+	var bald := hat in ["bald", "visor", "robot"]
+	draw_circle(c, 27.0, skin if bald else hair)
+	draw_circle(c + Vector2(4 * dx, 4), 23.0, skin)
+	if hat in ["visor", "robot"]:
+		draw_rect(Rect2(c + Vector2(-26, -26), Vector2(52, 52)), skin)
+		draw_rect(Rect2(c + Vector2(-16, -6), Vector2(32, 10)), Color(0.2, 1, 1) if hat == "visor" else Color(1, 0.2, 0.2))
+	else:
+		draw_rect(Rect2(c + Vector2(8 * dx - 3, -6), Vector2(6, 6)), Color(0.05, 0.05, 0.05))
+		draw_rect(Rect2(c + Vector2(-6 * dx - 3, -6), Vector2(6, 6)), Color(0.05, 0.05, 0.05))
+		draw_line(c + Vector2(-6, 12), c + Vector2(6, 12), skin.darkened(0.45), 2.0)
+	var gold := Color(1, 0.82, 0.25)
+	match hat:
+		"crown":
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-24, -20), c + Vector2(24, -20), c + Vector2(26, -46), c + Vector2(12, -32), c + Vector2(0, -50), c + Vector2(-12, -32), c + Vector2(-26, -46)]), gold)
+		"eon":
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-16, -64), c + Vector2(16, -64), c + Vector2(0, -46)]), gold)
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-16, -28), c + Vector2(16, -28), c + Vector2(0, -46)]), gold)
+			draw_rect(Rect2(c + Vector2(-14, -6), Vector2(10, 6)), Color(0.4, 1, 1))
+			draw_rect(Rect2(c + Vector2(4, -6), Vector2(10, 6)), Color(0.4, 1, 1))
+		"horns":
+			draw_line(c + Vector2(-14, -18), c + Vector2(-26, -46), Color(0.92, 0.88, 0.75), 6.0)
+			draw_line(c + Vector2(12, -20), c + Vector2(20, -48), Color(0.92, 0.88, 0.75), 6.0)
+		"greathelm":
+			draw_rect(Rect2(c + Vector2(-26, -28), Vector2(52, 52)), Color(0.2, 0.2, 0.24))
+			draw_rect(Rect2(c + Vector2(-4, -6), Vector2(26 * dx, 6)).abs(), Color(0.9, 0.2, 0.1))
+		"kabuto":
+			draw_arc(c + Vector2(0, -6), 28.0, PI, TAU, 16, Color(0.45, 0.06, 0.08), 12.0)
+			draw_line(c + Vector2(0, -30), c + Vector2(-18, -58), gold, 5.0)
+			draw_line(c + Vector2(0, -30), c + Vector2(20, -58), gold, 5.0)
+		"tricorn":
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-40, -14), c + Vector2(40, -14), c + Vector2(20, -44), c + Vector2(-20, -44)]), Color(0.08, 0.08, 0.1))
+		"tophat":
+			draw_rect(Rect2(c + Vector2(-20, -70), Vector2(40, 48)), Color(0.06, 0.06, 0.08))
+			draw_rect(Rect2(c + Vector2(-32, -26), Vector2(64, 8)), Color(0.06, 0.06, 0.08))
+		"spike", "helmet", "helmet2", "brodie":
+			var hc := Color(0.15, 0.15, 0.16) if hat == "spike" else (Color(0.62, 0.64, 0.68) if hat == "helmet" else Color(0.34, 0.37, 0.28))
+			draw_arc(c + Vector2(0, -4), 26.0, PI, TAU, 16, hc, 14.0)
+			if hat == "spike":
+				draw_line(c + Vector2(0, -30), c + Vector2(0, -54), Color(0.75, 0.7, 0.4), 5.0)
+		"officer":
+			draw_rect(Rect2(c + Vector2(-26, -40), Vector2(52, 18)), Color(0.22, 0.24, 0.25))
+			draw_rect(Rect2(c + Vector2(-20, -24), Vector2(40, 6)), Color(0.08, 0.08, 0.1))
+		"shades":
+			draw_rect(Rect2(c + Vector2(-18, -10), Vector2(36, 9)), Color(0.05, 0.05, 0.05))
+		"halo":
+			draw_arc(c + Vector2(0, -42), 22.0, 0, TAU, 24, Color(0.5, 1, 1, 0.9), 4.0)
+		"band":
+			draw_line(c + Vector2(-26, -12), c + Vector2(26, -14), Color(0.95, 0.1, 0.15), 7.0)
+		"luchamask":
+			draw_circle(c + Vector2(2, 2), 25.0, Color(0.95, 0.15, 0.5))
+			draw_circle(c + Vector2(10 * dx, -4), 8.0, Color(1, 1, 1))
+			draw_circle(c + Vector2(-8 * dx, -4), 8.0, Color(1, 1, 1))
+		"headwrap":
+			draw_arc(c + Vector2(0, -10), 26.0, PI * 0.9, TAU + 0.1, 16, Color(0.95, 0.6, 0.1), 16.0)
+		"ninja":
+			draw_circle(c + Vector2(2, 2), 26.0, Color(0.1, 0.1, 0.12))
+			draw_rect(Rect2(c + Vector2(-18, -12), Vector2(36, 12)), skin)
+		"wild":
+			for k in 7:
+				var a := PI + k * PI / 6.0
+				draw_circle(c + Vector2(cos(a), sin(a)) * 24.0, 10.0, hair)
+			draw_circle(c + Vector2(0, 22), 14.0, hair)

@@ -272,6 +272,9 @@ func _build_all() -> void:
 	b = _buf(0.6); _tone(b, 0, 0.25, 65, 45, 1.0, 12.0); _tone(b, 0.18, 0.4, 140, 120, 0.6, 4.0, "saw"); _noise_band(b, 0.18, 0.4, 250, 600, 0.25, "swell"); _store("sp_tama", b, 0.85)  # tambor e brado
 	b = _buf(0.6); _tone(b, 0, 0.18, 880, 880, 0.5, 2.0, "square"); _tone(b, 0.18, 0.18, 988, 988, 0.5, 2.0, "square"); _tone(b, 0.36, 0.24, 1174, 1100, 0.5, 3.0, "square"); _store("sp_kirra", b, 0.4)  # flauta do muay thai
 
+	# --- bipe dos diálogos (o tom acompanha quem fala) ---
+	b = _buf(0.035); _tone(b, 0, 0.035, 520, 470, 0.6, 40.0, "square"); _store("blip", b, 0.22)
+
 	# --- ÉON e outros ---
 	b = _buf(0.35); _tone(b, 0, 0.35, 300, 1200, 0.5, 4.0, "tri"); _ring(b, 0, 0.35, [1500.0, 2250.0], 0.3, 6.0); _store("orb", b, 0.55)
 	b = _buf(0.9); _tone(b, 0, 0.9, 900, 120, 0.6, 1.5, "saw"); _noise_band(b, 0, 0.9, 200, 4000, 0.7, "swell"); _store("warp", b, 0.8)
