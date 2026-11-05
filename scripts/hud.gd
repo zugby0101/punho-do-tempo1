@@ -61,7 +61,7 @@ func _scores_block(y: float) -> void:
 
 
 func _draw() -> void:
-	if game.mode in ["play", "stageclear", "gameover"] and not game.players.is_empty():
+	if game.mode in ["play", "stageclear", "gameover", "roundstart", "roundend", "match"] and not game.players.is_empty():
 		_draw_game_hud()
 	if message_timer > 0.0 and game.mode == "play":
 		_center(230, message, 40, Color(1, 0.95, 0.4))
@@ -84,6 +84,28 @@ func _draw() -> void:
 			_scores_block(260)
 			_center(420, "ENTER ou SOCO para continuar nesta era", 22, Color(1, 0.9, 0.3))
 		"ending": _draw_ending()
+		"roundstart":
+			var k := clampf(game.mode_time * 4.0, 0.0, 1.0)
+			_center(250, "ROUND %d" % game.round_num, int(70 * k) + 1, Color(1, 0.85, 0.3))
+			if game.mode_time > 0.9:
+				_center(310, "PREPAREM-SE...", 26, Color(1, 1, 1))
+		"roundend":
+			if game.round_winner >= 0:
+				var w = game.players[game.round_winner]
+				_center(240, "P%d %s VENCE O ROUND!" % [w.pid + 1, w.display_name], 44, PLAYER_COLORS[w.pid])
+			else:
+				_center(240, "EMPATE!", 56, Color(1, 1, 1))
+		"match":
+			draw_rect(Rect2(0, 0, W, 540), Color(0, 0, 0, 0.6))
+			var champ = game._versus_champion()
+			if champ != null:
+				_center(170, "CAMPEÃO!", 40, Color(1, 0.85, 0.3))
+				_center(240, "P%d %s" % [champ.pid + 1, champ.display_name], 64, PLAYER_COLORS[champ.pid])
+			for i in game.players.size():
+				var p = game.players[i]
+				_center(310 + i * 28, "P%d %s — %d round(s)" % [i + 1, p.display_name, game.round_wins[i]], 20, PLAYER_COLORS[i])
+			if game.mode_time > 1.5 and int(t * 2.0) % 2 == 0:
+				_center(460, "ENTER ou SOCO: revanche   •   ESC: voltar ao título", 20, Color(1, 0.9, 0.3))
 
 
 func _draw_game_hud() -> void:
@@ -94,6 +116,10 @@ func _draw_game_hud() -> void:
 		var x := 12.0 + i * 238.0
 		var col: Color = PLAYER_COLORS[i] if n > 1 else Color(1, 0.9, 0.3)
 		var tag: String = "P%d %s" % [i + 1, pl.display_name] if n > 1 else pl.display_name
+		if pl.out and game.versus:
+			_text(Vector2(x, 28), tag, 16 if n > 1 else 20, col)
+			_text(Vector2(x, 50), "NOCAUTEADO", 15, Color(1, 0.4, 0.4))
+			continue
 		if pl.out:
 			_text(Vector2(x, 30), "P%d" % (i + 1), 18, col)
 			if int(t * 2.0) % 2 == 0:
@@ -101,12 +127,21 @@ func _draw_game_hud() -> void:
 			continue
 		_text(Vector2(x, 28), tag, 16 if n > 1 else 20, col)
 		_bar(Vector2(x, 36), pw - 60.0, 12, float(pl.hp) / pl.max_hp, Color(1, 0.85, 0.15))
-		_text(Vector2(x + pw - 50.0, 48), "x%d" % pl.lives, 16, Color(1, 1, 1))
-		_text(Vector2(x, 70), "%07d" % pl.score, 15, Color(1, 1, 1))
+		if game.versus:
+			for k in game.VERSUS_WINS:
+				var won: bool = k < game.round_wins[i]
+				draw_circle(Vector2(x + pw - 46.0 + k * 16.0, 42), 6.0, Color(1, 0.85, 0.2) if won else Color(0.2, 0.2, 0.25))
+				draw_arc(Vector2(x + pw - 46.0 + k * 16.0, 42), 6.0, 0, TAU, 12, Color(0, 0, 0), 1.5)
+		else:
+			_text(Vector2(x + pw - 50.0, 48), "x%d" % pl.lives, 16, Color(1, 1, 1))
+			_text(Vector2(x, 70), "%07d" % pl.score, 15, Color(1, 1, 1))
 		if not pl.weapon.is_empty():
 			var wtxt: String = "%s ×%d" % [pl.weapon.name, int(pl.weapon.uses)]
 			_text(Vector2(x + 78, 70), wtxt, 12 if n > 1 else 14, Color(0.6, 0.95, 1))
-	_text(Vector2(0, 530), "FASE %d · %s · %s" % [game.stage_idx + 1, game.stage.name, game.stage.year], 14, Color(1, 1, 1, 0.8), HORIZONTAL_ALIGNMENT_CENTER, W)
+	var footer := "FASE %d · %s · %s" % [game.stage_idx + 1, game.stage.name, game.stage.year]
+	if game.versus:
+		footer = "VERSUS · ROUND %d · ARENA: %s" % [game.round_num, game.stage.name]
+	_text(Vector2(0, 530), footer, 14, Color(1, 1, 1, 0.8), HORIZONTAL_ALIGNMENT_CENTER, W)
 	# Inimigo atual (na parte de baixo da tela)
 	if enemy_timer > 0.0 and is_instance_valid(enemy_ref) and game.mode == "play":
 		var boss: bool = enemy_ref.is_boss()
@@ -139,16 +174,23 @@ func _draw_title() -> void:
 	]
 	for i in lines.size():
 		_center(200 + i * 26, lines[i], 15, Color(1, 1, 1))
-	_center(338, "Fase inicial (◄ ►):", 17, Color(0.8, 0.8, 0.9))
+	var vs: bool = game.game_mode == "versus"
+	_center(318, "Modo (▲ ▼):   %s     %s" % ["[ HISTÓRIA ]" if not vs else "HISTÓRIA", "[ VERSUS ]" if vs else "VERSUS"], 19, Color(1, 0.6, 0.8))
+	_center(342, "Arena (◄ ►):" if vs else "Fase inicial (◄ ►):", 15, Color(0.8, 0.8, 0.9))
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
-	_center(485, "Os outros jogadores entram na tela de seleção apertando SOCO", 15, Color(0.8, 0.8, 0.9))
+	if vs:
+		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
+	else:
+		_center(485, "Os outros jogadores entram na tela de seleção apertando SOCO", 15, Color(0.8, 0.8, 0.9))
 
 
 func _draw_select() -> void:
 	draw_rect(Rect2(0, 0, W, 292), Color(0.03, 0.0, 0.08, 0.6))
-	_center(40, "ESCOLHAM SEUS LUTADORES", 34, Color(1, 0.85, 0.3))
+	_center(40, "VERSUS — ESCOLHAM SEUS LUTADORES" if game.versus else "ESCOLHAM SEUS LUTADORES", 34, Color(1, 0.85, 0.3))
+	if game.versus and game.slots.size() < 2 and int(t * 2.0) % 2 == 0:
+		_center(292, "O Versus precisa de pelo menos 2 jogadores — o P2 aperta SOCO para entrar", 15, Color(1, 0.5, 0.5))
 	var chars: Array = game.characters
 	var cw := 74.0
 	var ch := 84.0

@@ -32,6 +32,9 @@ const DEFAULT_CHARS := [8, 9, 0, 3]
 static var stage_idx := 0
 static var party: Array = []
 static var skip_title := false
+static var game_mode := "story"  # "story" (história/co-op) ou "versus"
+
+const VERSUS_WINS := 2  # rounds para vencer a partida
 
 var stages: Array
 var characters: Array
@@ -39,7 +42,12 @@ var stage: Dictionary
 var waves: Array
 var crate_spots := [[480.0, 400.0, "apple"], [900.0, 470.0, "weapon"], [1180.0, 470.0, "chicken"], [1980.0, 390.0, "apple"], [2780.0, 480.0, "chicken"], [3620.0, 420.0, "chicken"]]
 
-var mode := "title"  # title, select, intro, play, stageclear, gameover, ending
+var mode := "title"  # title, select, intro, play, stageclear, gameover, ending, roundstart, roundend, match
+var versus := false
+var round_num := 1
+var round_wins: Array = [0, 0, 0, 0]
+var round_winner := -1   # -1 = empate
+var drop_timer := 0.0
 var paused := false
 var mode_time := 0.0
 var cam_x := HALF_W
@@ -99,7 +107,10 @@ func _ready() -> void:
 	layer.add_child(hud)
 	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 
+	versus = game_mode == "versus"
 	for c in crate_spots:
+		if versus:
+			break
 		var cr = CrateScript.new()
 		cr.game = self
 		cr.position = Vector2(c[0], c[1])
@@ -109,8 +120,11 @@ func _ready() -> void:
 	_update_camera(0.0)
 	if skip_title and not party.is_empty():
 		_spawn_party()
-		_set_mode("intro")
-		_play_stage_music(false)
+		if versus:
+			_start_round()
+		else:
+			_set_mode("intro")
+			_play_stage_music(false)
 	else:
 		party = []
 		_set_mode("title")
@@ -184,7 +198,7 @@ func _set_mode(m: String) -> void:
 
 
 func is_frozen() -> bool:
-	return mode in ["title", "select", "intro", "ending"] or paused or hitstop > 0.0
+	return mode in ["title", "select", "intro", "ending", "roundstart", "match"] or paused or hitstop > 0.0
 
 
 func cam_left() -> float:
@@ -203,7 +217,11 @@ func _physics_process(delta: float) -> void:
 	mode_time += delta
 	match mode:
 		"title":
-			if Input.is_action_just_pressed("move_right"):
+			if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
+				game_mode = "versus" if game_mode == "story" else "story"
+				versus = game_mode == "versus"
+				sfx.play("whoosh", 0.0)
+			elif Input.is_action_just_pressed("move_right"):
 				_change_stage(1)
 			elif Input.is_action_just_pressed("move_left"):
 				_change_stage(-1)
@@ -239,6 +257,23 @@ func _physics_process(delta: float) -> void:
 				skip_title = true
 				get_tree().reload_current_scene()
 			return
+		"roundstart":
+			if mode_time > 1.8:
+				_set_mode("play")
+				hud.show_message("LUTEM!", 0.9)
+				sfx.play("go", 0.0)
+			return
+		"match":
+			if mode_time > 1.5 and _confirm():
+				# Revanche com os mesmos lutadores
+				_save_party()
+				skip_title = true
+				get_tree().reload_current_scene()
+			elif mode_time > 1.0 and Input.is_action_just_pressed("pause"):
+				party = []
+				skip_title = false
+				get_tree().reload_current_scene()
+			return
 		"ending":
 			if mode_time > 2.0 and _confirm():
 				ending_page += 1
@@ -254,6 +289,10 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("pause"):
 		paused = not paused
 	if paused:
+		return
+
+	if versus:
+		_update_versus(delta)
 		return
 
 	# Jogador eliminado pode continuar enquanto o grupo segue vivo
@@ -370,6 +409,8 @@ func _update_select() -> void:
 	var all_ready := not slots.is_empty()
 	for sl in slots:
 		all_ready = all_ready and sl.ready
+	if versus and slots.size() < 2:
+		all_ready = false
 	if all_ready:
 		_start_game()
 
@@ -385,8 +426,11 @@ func _start_game() -> void:
 		party[0].sets = Controls.all_sets()
 	_spawn_party()
 	sfx.play("start", 0.0)
-	_play_stage_music(false)
-	_set_mode("intro")
+	if versus:
+		_start_round()
+	else:
+		_play_stage_music(false)
+		_set_mode("intro")
 
 
 func party_names() -> String:
@@ -603,6 +647,14 @@ func on_enemy_killed(e) -> void:
 
 
 func player_died(p) -> void:
+	if versus:
+		p.set_state("dead")
+		p.state_time = -999.0
+		p.out = true
+		sfx.play("ko", 0.0)
+		hitstop = 0.3
+		shake(10.0)
+		return
 	p.lives -= 1
 	if p.lives > 0:
 		p.respawn()
@@ -700,3 +752,96 @@ func popup(text: String, pos: Vector2, col: Color) -> void:
 	pp.color = col
 	pp.position = pos
 	effects.add_child(pp)
+
+
+# ---------- Modo Versus ----------
+## Alvos de um golpe: inimigos e caixas; no Versus, também os outros jogadores.
+func hit_targets_for(attacker) -> Array:
+	var arr: Array = _alive_enemies()
+	arr.append_array(get_tree().get_nodes_in_group("breakables"))
+	if versus:
+		for p in active_players():
+			if p != attacker:
+				arr.append(p)
+	return arr
+
+
+func _start_round() -> void:
+	# limpa a arena
+	for grp in ["weapons", "pickups", "breakables"]:
+		for n in get_tree().get_nodes_in_group(grp):
+			n.queue_free()
+	for n in entities.get_children():
+		if n.get_script() in [ThrownScript, EnergyScript]:
+			n.queue_free()
+	cam_x = HALF_W
+	locked = true
+	var spots := [Vector2(170, 400), Vector2(790, 400), Vector2(170, 490), Vector2(790, 490)]
+	for i in players.size():
+		var p = players[i]
+		p.out = false
+		p.hp = p.max_hp
+		p.weapon = {}
+		p._on_weapon_changed()
+		p.attack = {}
+		p.vel = Vector2.ZERO
+		p.height = 0.0
+		p.vz = 0.0
+		p.invuln = 0.0
+		p.set_state("idle")
+		p.position = spots[i] + Vector2(cam_left(), 0)
+		p.facing = 1 if spots[i].x < HALF_W else -1
+	drop_timer = 6.0
+	round_winner = -1
+	music.play(stage.style, stage_idx, true)
+	_set_mode("roundstart")
+
+
+func _update_versus(delta: float) -> void:
+	if hitstop > 0.0:
+		hitstop -= delta
+		_update_camera(delta)
+		return
+	combo_timer -= delta
+	if combo_timer <= 0.0:
+		combo_count = 0
+	_update_camera(delta)
+	_check_pickups()
+	if mode == "roundend":
+		if mode_time > 2.8:
+			if round_winner >= 0 and round_wins[round_winner] >= VERSUS_WINS:
+				_set_mode("match")
+				music.play("title", 0)
+				sfx.play("start", 0.0)
+			else:
+				round_num += 1
+				_start_round()
+		return
+	# Armas e comida caem do céu de tempos em tempos
+	drop_timer -= delta
+	if drop_timer <= 0.0:
+		drop_timer = randf_range(7.0, 11.0)
+		var pos := Vector2(randf_range(cam_left() + 120.0, cam_right() - 120.0), randf_range(DEPTH_MIN + 20.0, DEPTH_MAX - 20.0))
+		if randf() < 0.75:
+			var ws := Weapons.for_stage(stage_idx)
+			spawn_weapon_item(Weapons.equip(ws[randi() % 2]), pos, 1, 260.0)
+		else:
+			spawn_pickup("apple", pos)
+	# Fim do round: sobrou no máximo um de pé
+	var alive := active_players()
+	if alive.size() <= 1:
+		if alive.size() == 1:
+			round_winner = alive[0].pid
+			round_wins[round_winner] += 1
+			alive[0].invuln = 3.0
+		else:
+			round_winner = -1
+		_set_mode("roundend")
+		sfx.play("ko", 0.0)
+
+
+func _versus_champion():
+	for p in players:
+		if round_wins[p.pid] >= VERSUS_WINS:
+			return p
+	return null

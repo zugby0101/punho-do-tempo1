@@ -36,6 +36,16 @@ Detalhes do co-op:
 - Quem perde todas as vidas pode **continuar apertando SOCO** enquanto o resto do grupo estiver vivo.
 - Muitos teclados não registram várias teclas ao mesmo tempo. Para 3 ou 4 jogadores, controles funcionam melhor.
 
+## Modo Versus (2 a 4 jogadores)
+
+No título, use **▲ ▼ para escolher o modo** (História ou Versus) e **◄ ► para escolher a arena**
+(qualquer uma das 12 eras). Os jogadores entram na seleção como no co-op.
+
+- Todos contra todos: socos, combos, golpes especiais, projéteis e armas acertam os outros jogadores.
+- Armas da era e maçãs caem do céu durante a luta.
+- Quem fica de pé por último vence o round; quem vencer **2 rounds** é o campeão.
+- No fim: ENTER ou SOCO para revanche com os mesmos lutadores, ESC para voltar ao título.
+
 ## Conteúdo
 
 **12 fases, uma por período da história:**

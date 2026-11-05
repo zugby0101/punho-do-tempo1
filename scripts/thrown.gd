@@ -21,8 +21,7 @@ func _physics_process(delta: float) -> void:
 	var step := SPEED * delta
 	position.x += dir * step
 	traveled += step
-	var targets: Array = game._alive_enemies()
-	targets.append_array(get_tree().get_nodes_in_group("breakables"))
+	var targets: Array = game.hit_targets_for(owner_player)
 	for e in targets:
 		if not e.can_be_hit():
 			continue

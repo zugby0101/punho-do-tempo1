@@ -64,12 +64,7 @@ func apply_character(c: Dictionary) -> void:
 
 
 func _targets() -> Array:
-	var arr: Array = []
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if e.is_alive():
-			arr.append(e)
-	arr.append_array(get_tree().get_nodes_in_group("breakables"))
-	return arr
+	return game.hit_targets_for(self)
 
 
 func _update(delta: float) -> void:
@@ -384,9 +379,9 @@ func color() -> Color:
 
 
 func _draw() -> void:
-	if out:
+	if out and not game.versus:
 		return
-	if game != null and game.players.size() > 1 and game.mode == "play":
+	if game != null and game.players.size() > 1 and game.mode in ["play", "roundstart", "roundend"] and not out:
 		var c := color()
 		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.32))
 		draw_arc(Vector2.ZERO, 26.0 * body_scale, 0, TAU, 24, c, 4.0)

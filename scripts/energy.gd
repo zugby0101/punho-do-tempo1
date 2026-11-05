@@ -23,8 +23,7 @@ func _physics_process(delta: float) -> void:
 	if life <= 0.0 or position.x < game.cam_left() - 40.0 or position.x > game.cam_right() + 40.0:
 		queue_free()
 		return
-	var targets: Array = game._alive_enemies()
-	targets.append_array(get_tree().get_nodes_in_group("breakables"))
+	var targets: Array = game.hit_targets_for(owner_player)
 	for e in targets:
 		if e in hit_list or not e.can_be_hit():
 			continue
