@@ -68,6 +68,8 @@ golpes e tombos, seguindo o tronco ou a cabeça:
 | Rabo de cavalo (Valentina) | `tail` | balança ~6 px para os lados, com pivô na nuca |
 | Faixa do Kai | `band_tail` | a ponta da faixa tremula ~5 px |
 | Faixa dos ninjas (Ninja, Hanzo, Eco Veloz) | `ninja_tail` | a ponta da faixa tremula ~5 px |
+| Tranças (Oksana e Itzel) | `braid` | balançam ~5 px, mais devagar que o rabo de cavalo |
+| Cabelo comprido (Kirra) | `hair_long` | ondula de leve, ~3,5 px |
 
 As frequências são múltiplas de 1,5 rad/s para que todos os efeitos fechem o loop juntos,
 sem salto quando ele recomeça.

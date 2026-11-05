@@ -126,11 +126,11 @@ def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
         front.append((dome(hx, hy - 1, 10.5, math.pi * 0.9, 2 * math.pi), hair))
         front.append((rect(hx + 3, hy - 10, 8, 4), hair))
     elif style == "longhair":
-        back.append((rect(hx - 11, hy - 4, 12, 26), hair))
+        back.append((rect(hx - 11, hy - 4, 12, 26), hair, "hair_long"))
         front.append((dome(hx, hy - 1, 10.5, math.pi * 0.9, 2 * math.pi), hair))
         front.append((rect(hx + 3, hy - 10, 8, 4), hair))
     elif style == "braidcrown":
-        back.append((capsule((hx - 8, hy), (hx - 10, hy + 22), 5.0), hair))
+        back.append((capsule((hx - 8, hy), (hx - 10, hy + 22), 5.0), hair, "braid"))
         front.append((dome(hx, hy - 1, 10.0), hair))
         for i in range(5):
             front.append((circle(hx - 9 + i * 4.5, hy - 9 + abs(i - 2) * 1.5, 3.2, 10), darken(hair, -0.15)))
@@ -159,7 +159,7 @@ def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
         front.append((capsule((hx - 10, hy - 6), (hx + 8, hy - 9), 3.0, 3), (0.1, 0.5, 0.3, 1)))
     elif style == "luchamask":
         mask = (0.95, 0.15, 0.5, 1)
-        back.append((capsule((hx - 8, hy - 2), (hx - 14, hy + 18), 5.0), hair))
+        back.append((capsule((hx - 8, hy - 2), (hx - 14, hy + 18), 5.0), hair, "braid"))
         front.append((circle(hx + 1, hy + 1, 10.5), mask))
         front.append((circle(hx + 5, hy - 1, 3.5, 10), (0.98, 0.98, 0.98, 1)))
         front.append((rect(hx + 5, hy - 2, 2, 2), (0.05, 0.05, 0.05, 1)))
@@ -362,7 +362,10 @@ def fx_bone_specs(c, j):
     # cabelo e faixas que balançam (pivô na raiz, preso à cabeça)
     for hat, bone, root, tip in (("ponytail", "tail", (-8, -4), (-15, 15)),
                                  ("band", "band_tail", (-9, -4), (-18, 2)),
-                                 ("ninja", "ninja_tail", (-9, -4), (-17, 0))):
+                                 ("ninja", "ninja_tail", (-9, -4), (-17, 0)),
+                                 ("braidcrown", "braid", (-8, 0), (-10, 22)),
+                                 ("luchamask", "braid", (-8, -2), (-14, 18)),
+                                 ("longhair", "hair_long", (-5, -4), (-5, 22))):
         if c["hat"] == hat:
             out.append((bone, (head[0] + root[0], head[1] + root[1]), (head[0] + tip[0], head[1] + tip[1]), "head", False, True, True))
     if c["hat"] == "halo":
@@ -664,7 +667,8 @@ def make_fx_action(arm, name, fx_names):
             pbs["cape_1"].keyframe_insert("rotation_euler", frame=f)
             pbs["cape_2"].keyframe_insert("rotation_euler", frame=f)
         # balanços (frequências múltiplas de 1,5 rad/s para o loop fechar sem pulo)
-        for bone, amp, w in (("tail", 0.15, 7.5), ("band_tail", 0.28, 10.5), ("ninja_tail", 0.35, 9.0)):
+        for bone, amp, w in (("tail", 0.15, 7.5), ("band_tail", 0.28, 10.5), ("ninja_tail", 0.35, 9.0),
+                             ("braid", 0.12, 6.0), ("hair_long", 0.07, 4.5)):
             if bone in fx_names:
                 pbs[bone].rotation_euler = (0, 0, amp * math.sin(t * w) * rs)
                 pbs[bone].keyframe_insert("rotation_euler", frame=f)
