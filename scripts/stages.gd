@@ -39,7 +39,7 @@ static func _list_base() -> Array:
 	return [
 		{
 			"name": "IDADE DA PEDRA", "year": "10.000 a.C.", "style": "stone",
-			"intro": "{p} cai no passado distante. Uma tribo hostil bloqueia o caminho!",
+			"intro": "Queda no passado distante! Uma tribo hostil bloqueia o caminho de {p}.",
 			"sky": [Color(0.35, 0.6, 0.9), Color(0.5, 0.7, 0.92), Color(0.85, 0.75, 0.6), Color(0.95, 0.6, 0.35)],
 			"sun": Color(1, 0.95, 0.6),
 			"thug": _look("TRIBAL", Color(0.75, 0.55, 0.2), Color(0.6, 0.42, 0.15), "wild", tan, Color(0.3, 0.18, 0.08)),

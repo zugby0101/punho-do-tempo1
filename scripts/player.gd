@@ -1,7 +1,9 @@
 extends "res://scripts/fighter.gd"
 ## Jogador: combo de 4 golpes, pulo, voadora e especial giratório.
 
+const Controls = preload("res://scripts/controls.gd")
 const SPECIAL_COST := 6
+const PLAYER_COLORS := [Color(1, 0.3, 0.3), Color(0.35, 0.6, 1), Color(0.35, 0.95, 0.4), Color(1, 0.85, 0.2)]
 
 const ATK_JAB := {"pose": "jab", "dmg": 5, "reach": 58, "startup": 0.04, "active": 0.07, "recovery": 0.14, "knock": false, "lunge": 50.0}
 const ATK_JAB2 := {"pose": "jab", "dmg": 5, "reach": 58, "startup": 0.04, "active": 0.07, "recovery": 0.14, "knock": false, "lunge": 50.0}
@@ -19,6 +21,13 @@ var air_t := 0.0
 var air_attacked := false
 var hits_taken := 0
 var hits_taken_timer := 0.0
+
+# Co-op
+var pid := 0              # 0..3 (P1..P4)
+var sets: Array = ["k1"]  # conjuntos de controle que este jogador usa
+var lives := 3
+var score := 0
+var out := false          # sem vidas (pode continuar apertando soco)
 
 
 func _ready() -> void:
@@ -61,19 +70,19 @@ func _update(delta: float) -> void:
 
 	match state:
 		"idle", "walk":
-			var input := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+			var input := Controls.vector(sets)
 			vel = Vector2(input.x * move_speed.x, input.y * move_speed.y)
 			if absf(input.x) > 0.1:
 				facing = 1 if input.x > 0.0 else -1
 			state = "walk" if input.length() > 0.1 else "idle"
 
-			if Input.is_action_just_pressed("special") and hp > SPECIAL_COST:
+			if Controls.just(sets, "special") and hp > SPECIAL_COST:
 				hp -= SPECIAL_COST
 				invuln = 0.45
 				vel = Vector2.ZERO
 				start_attack(ATK_SPECIAL)
 				game.sfx.play("special")
-			elif Input.is_action_just_pressed("jump"):
+			elif Controls.just(sets, "jump"):
 				set_state("jump")
 				vz = 640.0
 				height = 0.1
@@ -81,20 +90,20 @@ func _update(delta: float) -> void:
 				attack = {}
 				air_attacked = false
 				game.sfx.play("jump")
-			elif Input.is_action_just_pressed("attack"):
+			elif Controls.just(sets, "attack"):
 				if combo_timer <= 0.0:
 					combo_step = 0
 				# Para cima + soco = gancho
-				if Input.is_action_pressed("move_up") and absf(input.x) < 0.3 and combo_step == 0:
+				if Controls.pressed(sets, "up") and absf(input.x) < 0.3 and combo_step == 0:
 					_do_attack(ATK_UPPER)
 					combo_step = 0
 				else:
 					_do_attack(combo[combo_step])
 		"jump":
 			# Pequeno controle no ar
-			var ix := Input.get_axis("move_left", "move_right")
+			var ix := Controls.vector(sets).x
 			vel.x = move_toward(vel.x, ix * move_speed.x, 400.0 * delta)
-			if Input.is_action_just_pressed("attack") and not air_attacked:
+			if Controls.just(sets, "attack") and not air_attacked:
 				air_attacked = true
 				attack = ATK_JUMPKICK
 				hit_list.clear()
@@ -105,7 +114,7 @@ func _update(delta: float) -> void:
 				if air_t >= float(attack.startup) and air_t < float(attack.startup) + float(attack.active):
 					_check_hits(_targets())
 		"attack":
-			if Input.is_action_just_pressed("attack"):
+			if Controls.just(sets, "attack"):
 				buffered = true
 			var act_end: float = float(attack.startup) + float(attack.active)
 			var done := _process_attack(delta, _targets())
@@ -149,7 +158,29 @@ func _clamp_position() -> void:
 
 
 func _die() -> void:
-	game.player_died()
+	game.player_died(self)
+
+
+func _on_dead_done() -> void:
+	pass  # o corpo do jogador nunca é removido
+
+
+func color() -> Color:
+	return PLAYER_COLORS[pid]
+
+
+func _draw() -> void:
+	if out:
+		return
+	if game != null and game.players.size() > 1 and game.mode == "play":
+		var c := color()
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.32))
+		draw_arc(Vector2.ZERO, 26.0 * body_scale, 0, TAU, 24, c, 4.0)
+		draw_set_transform(Vector2.ZERO)
+		var top := -100.0 * body_scale - height
+		draw_string(ThemeDB.fallback_font, Vector2(-14, top), "P%d" % (pid + 1), HORIZONTAL_ALIGNMENT_CENTER, 28, 15, c)
+		draw_colored_polygon(PackedVector2Array([Vector2(-5, top + 4), Vector2(5, top + 4), Vector2(0, top + 10)]), c)
+	super._draw()
 
 
 func respawn() -> void:
@@ -161,4 +192,5 @@ func respawn() -> void:
 	vel = Vector2.ZERO
 	attack = {}
 	invuln = 2.5
-	position.x = game.cam_x - 150.0
+	out = false
+	position.x = clampf(game.cam_x - 150.0 + pid * 60.0, game.cam_left() + 40.0, game.cam_right() - 40.0)

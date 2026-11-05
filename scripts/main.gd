@@ -1,5 +1,6 @@
 extends Node2D
-## Gerenciador do jogo: entrada, câmera, ondas, pontuação, progressão das 12 fases.
+## Gerenciador do jogo: entrada, câmera, ondas, pontuação, progressão das 12 fases
+## e co-op local para até 4 jogadores.
 
 const PlayerScript = preload("res://scripts/player.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
@@ -12,17 +13,19 @@ const HudScript = preload("res://scripts/hud.gd")
 const MusicScript = preload("res://scripts/music.gd")
 const Stages = preload("res://scripts/stages.gd")
 const Characters = preload("res://scripts/characters.gd")
+const Controls = preload("res://scripts/controls.gd")
 
 const DEPTH_MIN := 360.0
 const DEPTH_MAX := 520.0
 const STAGE_LEN := 4400.0
 const HALF_W := 480.0
+const MAX_PLAYERS := 4
+const DEFAULT_CHARS := [8, 9, 0, 3]
 
-# Progresso que sobrevive ao recarregar a cena entre fases
+# Progresso que sobrevive ao recarregar a cena entre fases.
+# party: [{char, sets, lives, score}] — um item por jogador.
 static var stage_idx := 0
-static var char_idx := 8
-static var carry_score := 0
-static var carry_lives := 3
+static var party: Array = []
 static var skip_title := false
 
 var stages: Array
@@ -42,13 +45,13 @@ var show_go := false
 var go_timer := 0.0
 var hitstop := 0.0
 var shake_amt := 0.0
-var score := 0
-var lives := 3
 var combo_count := 0
 var combo_timer := 0.0
-var boss_ref = null
+var ending_page := 0
 
-var player
+var players: Array = []
+var slots: Array = []   # tela de seleção: [{sets, char, ready, node}]
+var player              # atalho para o P1
 var entities: Node2D
 var effects: Node2D
 var camera: Camera2D
@@ -60,13 +63,11 @@ var bg
 
 func _ready() -> void:
 	randomize()
-	_setup_inputs()
+	Controls.setup()
 	stages = Stages.list()
 	characters = Characters.list()
 	stage = stages[stage_idx]
 	waves = Stages.waves_for(stage_idx)
-	score = carry_score
-	lives = carry_lives
 
 	sfx = SfxScript.new()
 	add_child(sfx)
@@ -93,11 +94,6 @@ func _ready() -> void:
 	layer.add_child(hud)
 	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 
-	player = PlayerScript.new()
-	player.game = self
-	player.apply_character(characters[char_idx])
-	player.position = Vector2(220, 430)
-	entities.add_child(player)
 	for c in crate_spots:
 		var cr = CrateScript.new()
 		cr.game = self
@@ -106,55 +102,74 @@ func _ready() -> void:
 		cr.add_to_group("breakables")
 		entities.add_child(cr)
 	_update_camera(0.0)
-	if skip_title:
+	if skip_title and not party.is_empty():
+		_spawn_party()
 		_set_mode("intro")
 		_play_stage_music(false)
 	else:
+		party = []
 		_set_mode("title")
 		music.play("title", 0)
 	music.prefetch(stage.style, stage_idx, false)
 	music.prefetch(stage.style, stage_idx, true)
 
 
-func _setup_inputs() -> void:
-	var keys := {
-		"move_left": [KEY_A, KEY_LEFT],
-		"move_right": [KEY_D, KEY_RIGHT],
-		"move_up": [KEY_W, KEY_UP],
-		"move_down": [KEY_S, KEY_DOWN],
-		"attack": [KEY_J, KEY_Z],
-		"jump": [KEY_K, KEY_X, KEY_SPACE],
-		"special": [KEY_L, KEY_C],
-		"start": [KEY_ENTER, KEY_KP_ENTER],
-		"pause": [KEY_ESCAPE, KEY_P],
-	}
-	var buttons := {
-		"move_left": [JOY_BUTTON_DPAD_LEFT], "move_right": [JOY_BUTTON_DPAD_RIGHT],
-		"move_up": [JOY_BUTTON_DPAD_UP], "move_down": [JOY_BUTTON_DPAD_DOWN],
-		"attack": [JOY_BUTTON_X], "jump": [JOY_BUTTON_A], "special": [JOY_BUTTON_Y, JOY_BUTTON_B],
-		"start": [JOY_BUTTON_START], "pause": [JOY_BUTTON_BACK],
-	}
-	var axes := {
-		"move_left": [JOY_AXIS_LEFT_X, -1.0], "move_right": [JOY_AXIS_LEFT_X, 1.0],
-		"move_up": [JOY_AXIS_LEFT_Y, -1.0], "move_down": [JOY_AXIS_LEFT_Y, 1.0],
-	}
-	for action in keys:
-		if InputMap.has_action(action):
-			continue  # já registrado (cena recarregada)
-		InputMap.add_action(action, 0.3)
-		for k in keys[action]:
-			var ev := InputEventKey.new()
-			ev.physical_keycode = k
-			InputMap.action_add_event(action, ev)
-		for b in buttons.get(action, []):
-			var jb := InputEventJoypadButton.new()
-			jb.button_index = b
-			InputMap.action_add_event(action, jb)
-		if axes.has(action):
-			var jm := InputEventJoypadMotion.new()
-			jm.axis = axes[action][0]
-			jm.axis_value = axes[action][1]
-			InputMap.action_add_event(action, jm)
+# ---------- Jogadores ----------
+func _make_player(pid: int, char_i: int, sets: Array):
+	var p = PlayerScript.new()
+	p.game = self
+	p.pid = pid
+	p.sets = sets
+	p.apply_character(characters[char_i])
+	entities.add_child(p)
+	return p
+
+
+func _spawn_party() -> void:
+	for i in party.size():
+		var info: Dictionary = party[i]
+		var p = _make_player(i, info.char, info.sets)
+		p.lives = info.lives
+		p.score = info.score
+		p.position = Vector2(200.0 + i * 25.0, 375.0 + i * 40.0)
+		players.append(p)
+	player = players[0]
+
+
+func _save_party() -> void:
+	party = []
+	for p in players:
+		party.append({"char": _char_of(p), "sets": p.sets, "lives": p.lives, "score": p.score})
+
+
+func _char_of(p) -> int:
+	for i in characters.size():
+		if characters[i].name == p.display_name:
+			return i
+	return 0
+
+
+## Jogadores em campo (não eliminados).
+func active_players() -> Array:
+	var arr: Array = []
+	for p in players:
+		if is_instance_valid(p) and not p.out and p.is_alive():
+			arr.append(p)
+	return arr
+
+
+## Jogador mais próximo que pode ser perseguido (ignora quem está caído).
+func nearest_player(pos: Vector2):
+	var best = null
+	var bd := INF
+	for p in active_players():
+		if p.state in ["down", "dead"]:
+			continue
+		var d := pos.distance_squared_to(p.position)
+		if d < bd:
+			bd = d
+			best = p
+	return best
 
 
 func _set_mode(m: String) -> void:
@@ -182,36 +197,19 @@ func _physics_process(delta: float) -> void:
 	mode_time += delta
 	match mode:
 		"title":
-			# Esquerda/direita escolhe a fase inicial
 			if Input.is_action_just_pressed("move_right"):
 				_change_stage(1)
 			elif Input.is_action_just_pressed("move_left"):
 				_change_stage(-1)
-			elif _confirm() and mode_time > 0.3:
-				sfx.play("go", 0.0)
-				_set_mode("select")
-				_preview_character()
+			elif mode_time > 0.3:
+				var who := Controls.who_pressed(["attack", "start"])
+				if who != "":
+					sfx.play("go", 0.0)
+					_set_mode("select")
+					_add_slot(who)
 			return
 		"select":
-			# Colunas = regiões (homem em cima, mulher embaixo)
-			var moved := -1
-			if Input.is_action_just_pressed("move_right"):
-				moved = posmod(char_idx + 2, characters.size())
-			elif Input.is_action_just_pressed("move_left"):
-				moved = posmod(char_idx - 2, characters.size())
-			elif Input.is_action_just_pressed("move_down") or Input.is_action_just_pressed("move_up"):
-				moved = char_idx ^ 1
-			if moved >= 0:
-				char_idx = moved
-				_preview_character()
-				sfx.play("whoosh", 0.0)
-			if _confirm() and mode_time > 0.3:
-				sfx.play("start", 0.0)
-				_play_stage_music(false)
-				player.apply_character(characters[char_idx])
-				player.position = Vector2(220, 430)
-				player.facing = 1
-				_set_mode("intro")
+			_update_select()
 			return
 		"intro":
 			if mode_time > 3.5 or (mode_time > 0.6 and _confirm()):
@@ -219,34 +217,47 @@ func _physics_process(delta: float) -> void:
 				hud.show_message("LUTE!", 1.2)
 			return
 		"stageclear":
-			if mode_time > 1.5 and Input.is_action_just_pressed("start"):
-				carry_score = score
-				carry_lives = lives
+			if mode_time > 1.5 and _confirm():
+				_save_party()
 				stage_idx += 1
 				skip_title = true
 				get_tree().reload_current_scene()
 			return
 		"gameover":
-			if mode_time > 1.0 and Input.is_action_just_pressed("start"):
-				# Continua na mesma fase
-				carry_score = 0
-				carry_lives = 3
+			if mode_time > 1.0 and _confirm():
+				# Continua na mesma fase, com vidas cheias
+				_save_party()
+				for info in party:
+					info.lives = 3
+					info.score = 0
 				skip_title = true
 				get_tree().reload_current_scene()
 			return
 		"ending":
-			if mode_time > 2.0 and Input.is_action_just_pressed("start"):
-				stage_idx = 0
-				carry_score = 0
-				carry_lives = 3
-				skip_title = false
-				get_tree().reload_current_scene()
+			if mode_time > 2.0 and _confirm():
+				ending_page += 1
+				if ending_page >= players.size():
+					stage_idx = 0
+					party = []
+					skip_title = false
+					get_tree().reload_current_scene()
+				else:
+					_show_ending_page()
 			return
 
 	if Input.is_action_just_pressed("pause"):
 		paused = not paused
 	if paused:
 		return
+
+	# Jogador eliminado pode continuar enquanto o grupo segue vivo
+	for p in players:
+		if p.out and Controls.just(p.sets, "attack"):
+			p.lives = 3
+			p.score = 0
+			p.respawn()
+			hud.show_message("P%d VOLTOU!" % (p.pid + 1), 1.2)
+			sfx.play("go", 0.0)
 
 	if hitstop > 0.0:
 		hitstop -= delta
@@ -268,11 +279,117 @@ func _physics_process(delta: float) -> void:
 			show_go = false
 
 
-func _preview_character() -> void:
-	player.apply_character(characters[char_idx])
-	player.body_scale *= 1.8
-	player.position = Vector2(cam_left() + 790.0, 470.0)
-	player.facing = -1
+# ---------- Tela de seleção (entrar no jogo) ----------
+func _set_owned(set_name: String) -> bool:
+	for sl in slots:
+		if set_name in sl.sets:
+			return true
+	return false
+
+
+func _add_slot(set_name: String) -> void:
+	if slots.size() >= MAX_PLAYERS:
+		return
+	var idx := slots.size()
+	var char_i: int = DEFAULT_CHARS[idx]
+	if _taken(char_i, -1):
+		char_i = _next_free(char_i, 1, -1)
+	var node = _make_player(idx, char_i, [set_name])
+	slots.append({"sets": [set_name], "char": char_i, "ready": false, "node": node, "t": mode_time})
+	_update_preview(idx)
+	sfx.play("go", 0.0)
+
+
+## Cada personagem só pode ser escolhido por um jogador.
+func _taken(char_i: int, except_slot: int) -> bool:
+	for k in slots.size():
+		if k != except_slot and slots[k].char == char_i:
+			return true
+	return false
+
+
+func _next_free(from: int, step: int, slot: int) -> int:
+	var c := from
+	for _n in characters.size():
+		c = posmod(c + step, characters.size())
+		if not _taken(c, slot):
+			return c
+	return from
+
+
+func _update_preview(i: int) -> void:
+	var sl: Dictionary = slots[i]
+	var node = sl.node
+	node.apply_character(characters[sl.char])
+	node.body_scale *= 1.25
+	node.position = Vector2(cam_left() + 8.0 + i * 238.0 + 190.0, 522.0)
+	node.facing = -1
+
+
+func _update_select() -> void:
+	# Novos jogadores entram apertando soco/start no próprio controle
+	var free: Array = []
+	for s in Controls.all_sets():
+		if not _set_owned(s):
+			free.append(s)
+	var joiner := Controls.who_pressed(["attack", "start"], free)
+	if joiner != "" and mode_time > 0.2:
+		_add_slot(joiner)
+
+	for i in slots.size():
+		var sl: Dictionary = slots[i]
+		var sets: Array = sl.sets
+		if sl.ready:
+			if Controls.just(sets, "jump"):
+				sl.ready = false
+				sfx.play("whoosh", 0.0)
+			continue
+		var moved := -1
+		if Controls.just(sets, "right"):
+			moved = _next_free(sl.char, 2, i)
+		elif Controls.just(sets, "left"):
+			moved = _next_free(sl.char, -2, i)
+		elif Controls.just(sets, "down") or Controls.just(sets, "up"):
+			moved = sl.char ^ 1
+			if _taken(moved, i):
+				moved = -1
+		if moved >= 0:
+			sl.char = moved
+			_update_preview(i)
+			sfx.play("whoosh", 0.0)
+		elif mode_time - float(sl.t) > 0.3 and (Controls.just(sets, "attack") or Controls.just(sets, "start")):
+			sl.ready = true
+			sfx.play("pickup", 0.0)
+
+	var all_ready := not slots.is_empty()
+	for sl in slots:
+		all_ready = all_ready and sl.ready
+	if all_ready:
+		_start_game()
+
+
+func _start_game() -> void:
+	party = []
+	for sl in slots:
+		party.append({"char": sl.char, "sets": sl.sets, "lives": 3, "score": 0})
+		sl.node.queue_free()
+	slots = []
+	# Jogando sozinho, todos os teclados e controles comandam o P1
+	if party.size() == 1:
+		party[0].sets = Controls.all_sets()
+	_spawn_party()
+	sfx.play("start", 0.0)
+	_play_stage_music(false)
+	_set_mode("intro")
+
+
+func party_names() -> String:
+	var names: Array = []
+	for p in players:
+		names.append(p.display_name)
+	if names.size() <= 1:
+		return names[0] if names.size() == 1 else ""
+	return ", ".join(names.slice(0, names.size() - 1)) + " e " + names[-1]
 
 
 func _play_stage_music(intense: bool) -> void:
@@ -287,9 +404,17 @@ func _change_stage(d: int) -> void:
 	sfx.play("whoosh", 0.0)
 
 
+# ---------- Câmera e ondas ----------
 func _update_camera(delta: float) -> void:
-	if not locked and player != null:
-		var desired: float = player.position.x + 60.0
+	var act := active_players()
+	if not locked and not act.is_empty():
+		var min_x := INF
+		var max_x := -INF
+		for p in act:
+			min_x = minf(min_x, p.position.x)
+			max_x = maxf(max_x, p.position.x)
+		# avança com quem está na frente, sem deixar ninguém para trás
+		var desired := minf(max_x + 60.0, min_x + HALF_W - 40.0)
 		if desired > cam_x:
 			cam_x = move_toward(cam_x, desired, 500.0 * delta)
 		cam_x = minf(cam_x, STAGE_LEN - HALF_W)
@@ -305,8 +430,18 @@ func _update_waves(delta: float) -> void:
 			locked = true
 			show_go = false
 			pending = []
-			for s in waves[wave_idx].spawn:
+			var base: Array = waves[wave_idx].spawn
+			for s in base:
 				pending.append(s.duplicate())
+			# Mais jogadores = mais capangas
+			var grunts: Array = base.filter(func(s): return s[0] in ["thug", "knife", "brute"])
+			if grunts.is_empty():
+				grunts = [["thug", 1, 0.0], ["knife", -1, 0.0]]
+			for extra in (players.size() - 1) * 2:
+				var src: Array = grunts[extra % grunts.size()].duplicate()
+				src[1] = -src[1] if extra % 2 == 0 else src[1]
+				src[2] = float(src[2]) + 1.2 + extra * 0.9
+				pending.append(src)
 		return
 
 	for s in pending:
@@ -327,21 +462,36 @@ func _update_waves(delta: float) -> void:
 
 
 func _stage_cleared() -> void:
-	score += 2000 + lives * 1000
+	for p in players:
+		if not p.out:
+			p.score += 2000 + p.lives * 1000
 	music.stop()
 	sfx.play("start", 0.0)
 	if stage_idx >= stages.size() - 1:
 		_set_mode("ending")
 		music.play("title", 0)
-		# Personagem em destaque na tela final
-		player.apply_character(characters[char_idx])
-		player.body_scale *= 2.0
-		player.position = Vector2(cam_left() + 780.0, 480.0)
-		player.facing = -1
-		player.set_state("idle")
-		player.vel = Vector2.ZERO
+		ending_page = 0
+		_show_ending_page()
 	else:
 		_set_mode("stageclear")
+
+
+## Tela final: uma página com o final de cada jogador.
+func _show_ending_page() -> void:
+	mode_time = 0.0
+	for i in players.size():
+		var p = players[i]
+		p.out = i != ending_page
+		if i == ending_page:
+			p.apply_character(characters[_char_of(p)])
+			p.body_scale *= 2.0
+			p.position = Vector2(cam_left() + 780.0, 480.0)
+			p.facing = -1
+			p.height = 0.0
+			p.vz = 0.0
+			p.set_state("idle")
+			p.vel = Vector2.ZERO
+		p.queue_redraw()
 
 
 func _spawn_enemy(kind: String, side: int) -> void:
@@ -349,6 +499,10 @@ func _spawn_enemy(kind: String, side: int) -> void:
 	e.game = self
 	e.add_to_group("enemies")
 	e.setup(kind, stage, stage_idx)
+	# Mais vida com mais jogadores
+	var mult := 1.0 + 0.35 * (players.size() - 1)
+	e.max_hp = int(e.max_hp * mult)
+	e.hp = e.max_hp
 	e.position = Vector2(cam_x + side * (HALF_W + 60.0), randf_range(DEPTH_MIN + 10.0, DEPTH_MAX - 10.0))
 	e.facing = -side
 	entities.add_child(e)
@@ -372,30 +526,37 @@ func _alive_enemies() -> Array:
 	return arr
 
 
-## Chefes sempre atacam; dos demais, no máximo 2 atacam ao mesmo tempo.
+## Chefes sempre atacam; dos demais, só alguns atacam ao mesmo tempo
+## (1 + número de jogadores); os outros rodeiam.
 func _assign_aggression() -> void:
 	var list := _alive_enemies()
-	list.sort_custom(func(a, b): return a.position.distance_to(player.position) < b.position.distance_to(player.position))
-	var slots := 2
+	var dist := func(e) -> float:
+		var tg = nearest_player(e.position)
+		return e.position.distance_to(tg.position) if tg != null else INF
+	list.sort_custom(func(a, b): return dist.call(a) < dist.call(b))
+	var slots_left := 1 + active_players().size()
 	for e in list:
 		if e.is_boss():
 			e.aggressive = true
-		elif slots > 0:
+		elif slots_left > 0:
 			e.aggressive = true
-			slots -= 1
+			slots_left -= 1
 		else:
 			e.aggressive = false
 
 
 func _check_pickups() -> void:
-	if player == null or not player.is_alive() or player.height > 10.0:
-		return
-	for p in get_tree().get_nodes_in_group("pickups"):
-		if absf(p.position.x - player.position.x) < 30.0 and absf(p.position.y - player.position.y) < 18.0:
-			player.hp = mini(player.max_hp, player.hp + p.heal)
-			score += 200
-			sfx.play("pickup", 0.0)
-			p.queue_free()
+	for pl in active_players():
+		if pl.height > 10.0:
+			continue
+		for p in get_tree().get_nodes_in_group("pickups"):
+			if p.is_queued_for_deletion():
+				continue
+			if absf(p.position.x - pl.position.x) < 30.0 and absf(p.position.y - pl.position.y) < 18.0:
+				pl.hp = mini(pl.max_hp, pl.hp + p.heal)
+				pl.score += 200
+				sfx.play("pickup", 0.0)
+				p.queue_free()
 
 
 # ---------- Eventos de combate ----------
@@ -405,16 +566,20 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 	shake(6.0 if heavy else 2.5)
 	var s: float = target.get("body_scale") if target.get("body_scale") != null else 1.0
 	var pos: Vector2 = target.position + Vector2(-attacker.facing * 6.0, -58.0 * s - target.height)
-	spawn_spark(pos, Color(1, 0.95, 0.5) if attacker == player else Color(1, 0.4, 0.3), 1.3 if heavy else 1.0)
+	var by_player: bool = attacker in players
+	spawn_spark(pos, attacker.color() if by_player and players.size() > 1 else (Color(1, 0.95, 0.5) if by_player else Color(1, 0.4, 0.3)), 1.3 if heavy else 1.0)
 	sfx.play("heavy" if heavy else "hit")
-	if attacker == player:
-		score += int(atk.dmg) * 10
+	if by_player:
+		attacker.score += int(atk.dmg) * 10
 		combo_count += 1
 		combo_timer = 1.2
+		if "last_hitter" in target:
+			target.last_hitter = attacker
 
 
 func on_enemy_killed(e) -> void:
-	score += e.score_value
+	if e.last_hitter != null and is_instance_valid(e.last_hitter):
+		e.last_hitter.score += e.score_value
 	sfx.play("ko")
 	if e.kind == "subboss":
 		hitstop = 0.25
@@ -428,23 +593,27 @@ func on_enemy_killed(e) -> void:
 		pending.clear()
 		# Os capangas restantes caem junto com o chefe
 		for o in _alive_enemies():
-			o.take_hit(999, 1 if o.position.x > player.position.x else -1, true)
+			o.take_hit(999, 1 if o.position.x > e.position.x else -1, true)
 
 
-func player_died() -> void:
-	lives -= 1
-	if lives > 0:
-		player.respawn()
-		hud.show_message("VIDAS: %d" % lives, 1.5)
+func player_died(p) -> void:
+	p.lives -= 1
+	if p.lives > 0:
+		p.respawn()
+		hud.show_message("P%d: %d VIDAS" % [p.pid + 1, p.lives] if players.size() > 1 else "VIDAS: %d" % p.lives, 1.5)
 		for e in _alive_enemies():
-			if absf(e.position.x - player.position.x) < 250.0 and e.can_be_hit():
-				e.take_hit(0, 1 if e.position.x > player.position.x else -1, true, 0.8)
+			if absf(e.position.x - p.position.x) < 250.0 and e.can_be_hit():
+				e.take_hit(0, 1 if e.position.x > p.position.x else -1, true, 0.8)
 	else:
-		player.set_state("dead")
-		player.state_time = -999.0  # mantém o corpo na tela
-		_set_mode("gameover")
-		music.stop()
+		p.set_state("dead")
+		p.state_time = -999.0
+		p.out = true
 		sfx.play("ko", 0.0)
+		if active_players().is_empty():
+			_set_mode("gameover")
+			music.stop()
+		else:
+			hud.show_message("P%d FORA! (soco para continuar)" % (p.pid + 1), 2.0)
 
 
 func shake(amount: float) -> void:

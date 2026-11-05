@@ -3,6 +3,7 @@ extends "res://scripts/fighter.gd"
 ## e telegrafam os golpes antes de bater.
 
 var kind := "thug"
+var last_hitter = null  # jogador que deu o último golpe (recebe os pontos)
 var tier := 0  # 1 = fácil, 2 = difícil, 3 = muito difícil, 0 = chefe
 var block_flash := 0.0
 var blocked_last := false
@@ -116,10 +117,10 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 
 
 func _update(delta: float) -> void:
-	var target = game.player
+	var target = game.nearest_player(position)
 	match state:
 		"idle", "walk":
-			if target == null or not target.is_alive() or target.state == "down":
+			if target == null:
 				vel = vel.move_toward(Vector2.ZERO, 600.0 * delta)
 				state = "idle"
 				return
@@ -152,7 +153,7 @@ func _update(delta: float) -> void:
 				start_attack(attacks[randi() % attacks.size()])
 				attack_cd = randf_range(0.4, 0.9) if is_boss() else randf_range(0.7, 1.5)
 		"attack":
-			if _process_attack(delta, [target]):
+			if _process_attack(delta, game.active_players()):
 				attack = {}
 				set_state("idle")
 

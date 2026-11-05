@@ -10,18 +10,31 @@ gerados por código.
 2. Abra o Godot → **Importar** → selecione `project.godot` desta pasta.
 3. Aperte **F5**.
 
-## Controles
+## Controles e co-op (1 a 4 jogadores)
 
-| Ação | Teclado | Controle |
-|---|---|---|
-| Mover | WASD / Setas | Analógico / D-pad |
-| Soco (combo de 4 golpes) | J ou Z | X / □ |
-| Gancho | Cima + Soco | |
-| Pular / voadora | K, X ou Espaço (+ Soco no ar) | A / ✕ |
-| Especial giratório (gasta vida) | L ou C | Y / △ ou B / ○ |
-| Confirmar / Pausa | Enter / Esc ou P | Start / Back |
+Até 4 pessoas jogam juntas no mesmo computador. Na tela de seleção, cada jogador
+**aperta SOCO no próprio teclado ou controle para entrar**, escolhe o personagem
+(cada lutador só pode ser escolhido por um jogador) e confirma com SOCO.
+O jogo começa quando todos estão prontos.
 
+| Jogador | Mover | Soco | Pulo | Especial |
+|---|---|---|---|---|
+| Teclado 1 | W A S D | J | K / Espaço | L |
+| Teclado 2 | Setas | `,` | `.` | `/` |
+| Teclado 3 | T F G H | Z | X | C |
+| Teclado 4 | Numpad 8 4 5 6 | Numpad 7 | Numpad 9 | Numpad + |
+| Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ |
+
+Jogando sozinho, qualquer teclado ou controle comanda o P1.
+Enter confirma nos menus, Esc ou P pausa. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 No título, ◄ ► escolhe a fase inicial.
+
+Detalhes do co-op:
+- Os inimigos ficam mais fortes e mais numerosos conforme o número de jogadores.
+- A câmera acompanha o grupo sem deixar ninguém para trás.
+- Cada jogador tem vida, vidas extras e pontuação próprias. Quem acerta o golpe final leva os pontos do inimigo.
+- Quem perde todas as vidas pode **continuar apertando SOCO** enquanto o resto do grupo estiver vivo.
+- Muitos teclados não registram várias teclas ao mesmo tempo. Para 3 ou 4 jogadores, controles funcionam melhor.
 
 ## Conteúdo
 
@@ -82,7 +95,8 @@ As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
 ```
 scenes/main.tscn        cena principal (só carrega main.gd)
-scripts/main.gd         estados do jogo, câmera, ondas, progressão
+scripts/main.gd         estados do jogo, câmera, ondas, progressão, co-op
+scripts/controls.gd     controles dos 4 jogadores (teclados e controles)
 scripts/fighter.gd      base dos lutadores: física pseudo-3D, golpes, desenho
 scripts/player.gd       jogador: combo, pulo, voadora, especial
 scripts/enemy.gd        IA, tiers, sub-chefes e chefes
