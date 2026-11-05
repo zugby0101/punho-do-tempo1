@@ -186,6 +186,7 @@ func drop_weapon(dir: int) -> void:
 
 func _break_weapon() -> void:
 	game.spawn_spark(position + Vector2(facing * 40.0, -60.0 * body_scale), Color(0.9, 0.9, 1.0), 0.9)
+	game.spawn_fx("break", position + Vector2(facing * 40.0, -60.0 * body_scale - height), position, facing, weapon.get("color", Color(0.7, 0.7, 0.72)))
 	game.sfx.play("break")
 	if game.hud != null and is_in_group("players"):
 		game.hud.show_message("%s QUEBROU!" % weapon.name, 1.0)

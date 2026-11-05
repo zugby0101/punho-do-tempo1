@@ -7,6 +7,7 @@ const EnemyScript = preload("res://scripts/enemy.gd")
 const CrateScript = preload("res://scripts/crate.gd")
 const PickupScript = preload("res://scripts/pickup.gd")
 const SparkScript = preload("res://scripts/spark.gd")
+const Fx = preload("res://scripts/fx.gd")
 const SfxScript = preload("res://scripts/sfx.gd")
 const BgScript = preload("res://scripts/background.gd")
 const HudScript = preload("res://scripts/hud.gd")
@@ -83,8 +84,10 @@ var name_queue: Array = []       # jogadores que ainda vão digitar o nome
 var name_entries: Array = []
 var ach_page := 0
 var _v_held := false
+var _p_held := false
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
+static var fx_enabled := true    # partículas dos golpes (P no título)
 static var settings_loaded := false
 const ONLINE_OPTIONS := [
 	["CRIAR SALA", "pelo servidor intermediário — ninguém precisa abrir portas"],
@@ -339,6 +342,15 @@ func _physics_process(delta: float) -> void:
 				sfx.play("whoosh", 0.0)
 			elif not Input.is_physical_key_pressed(KEY_V):
 				_v_held = false
+			if Input.is_physical_key_pressed(KEY_P) and not _p_held:
+				_p_held = true
+				fx_enabled = not fx_enabled
+				_save_settings()
+				sfx.play("whoosh", 0.0)
+				if fx_enabled:
+					spawn_fx("energy", Vector2(cam_x, 470), Vector2(cam_x, 500), 1, Color(1, 0.8, 0.3))
+			elif not Input.is_physical_key_pressed(KEY_P):
+				_p_held = false
 			if Input.is_action_just_pressed("achievements"):
 				ach_page = 0
 				_set_mode("achievements")
@@ -828,7 +840,11 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 	spawn_spark(pos, attacker.color() if by_player and players.size() > 1 else (Color(1, 0.95, 0.5) if by_player else Color(1, 0.4, 0.3)), 1.3 if heavy else 1.0)
 	var wpn: Dictionary = attacker.weapon if "weapon" in attacker else {}
 	var bs: float = attacker.body_scale if "body_scale" in attacker else 1.0
-	sfx.play(sfx.impact_for(atk, wpn), 0.07, sfx.body_pitch(bs))
+	var impact: String = sfx.impact_for(atk, wpn)
+	sfx.play(impact, 0.07, sfx.body_pitch(bs))
+	# partículas do golpe: o tipo segue o impacto (soco, chute, pancada, lâmina, metal, madeira, energia...)
+	var fx_col: Color = atk.get("color", attacker.color()) if atk.get("energy", false) else (attacker.color() if by_player and players.size() > 1 else (Color(1, 0.85, 0.35) if by_player else Color(1, 0.45, 0.3)))
+	spawn_fx(impact.substr(2), pos, target.position, attacker.facing, fx_col, (1.35 if heavy else 1.0) * clampf(bs, 0.8, 1.6))
 	if by_player:
 		attacker.score += int(atk.dmg) * 10
 		combo_count += 1
@@ -859,6 +875,8 @@ func on_enemy_killed(e) -> void:
 			else:
 				Ach.track(p, "subs")
 	sfx.play("ko")
+	var big := 1.6 if e.kind in ["boss", "subboss", "secret_boss"] else 1.0
+	spawn_fx("ko", e.position + Vector2(0, -50.0 * e.body_scale - e.height), e.position, -e.facing, Color(1, 0.75, 0.3) if big == 1.0 else Color(1, 0.4, 0.9), big)
 	if e.kind == "subboss":
 		hitstop = 0.25
 		shake(10.0)
@@ -919,6 +937,15 @@ func spawn_spark(pos: Vector2, col: Color, size: float = 1.0) -> void:
 	sp.col = col
 	sp.size = size
 	effects.add_child(sp)
+
+
+## Partículas (fx.gd); no online o host repassa aos clientes.
+func spawn_fx(kind: String, pos: Vector2, feet: Vector2, dir: int, col: Color, k: float = 1.0) -> void:
+	if Net.is_host() and not Net.peer_sets.is_empty():
+		net_events.append(["x", kind, pos.x, pos.y, feet.x, feet.y, dir, col, k])
+	if not fx_enabled:
+		return
+	Fx.burst(effects, kind, pos, feet, dir, col, k)
 
 
 func spawn_pickup(kind: String, pos: Vector2) -> void:
@@ -1402,6 +1429,7 @@ func net_apply(snap: Array) -> void:
 		match ev[0]:
 			"s": sfx.play_exact(ev[1], float(ev[2]) if ev.size() > 2 else 1.0)
 			"k": spawn_spark(Vector2(ev[1], ev[2]), ev[3], ev[4])
+			"x": spawn_fx(ev[1], Vector2(ev[2], ev[3]), Vector2(ev[4], ev[5]), ev[6], ev[7], ev[8])
 			"p": popup(ev[1], Vector2(ev[2], ev[3]), ev[4])
 			"a":
 				if ev[1] == Net.my_set:
@@ -1668,12 +1696,14 @@ func _load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://settings.cfg") == OK:
 		rig_mode = cfg.get_value("visual", "rig_mode", true)
+		fx_enabled = cfg.get_value("visual", "particles", true)
 
 
 func _save_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load("user://settings.cfg")
 	cfg.set_value("visual", "rig_mode", rig_mode)
+	cfg.set_value("visual", "particles", fx_enabled)
 	cfg.save("user://settings.cfg")
 
 

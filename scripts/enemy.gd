@@ -219,6 +219,7 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 		vel = Vector2(dir * 90.0, 0)
 		game.sfx.play("block", 0.1)
 		game.spawn_spark(position + Vector2(-dir * 14.0, -60.0), Color(0.4, 0.8, 1.0), 0.8)
+		game.spawn_fx("block", position + Vector2(-dir * 14.0, -60.0 * body_scale - height), position, dir, Color(0.4, 0.8, 1.0))
 		return
 	if tier == 3 and not knock and hp - dmg > 0:
 		hp -= dmg

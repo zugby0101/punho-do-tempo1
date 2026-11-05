@@ -240,6 +240,27 @@ As vozes tocam em canais próprios (não cortam os efeitos) e cada personagem te
 mínimo entre falas. Para regerar: `python tools/audio/voices.py` (precisa de numpy e scipy).
 As trilhas são geradas numa thread, em menos de 1 segundo cada.
 
+## Partículas dos golpes
+
+Cada acerto solta partículas conforme o tipo do golpe (`scripts/fx.gd`, com `CPUParticles2D`, que
+funciona no renderizador Compatibility e na web):
+
+| Golpe | Efeito |
+|---|---|
+| jab / cross | faíscas rápidas para a frente; o cross ainda tem anel de impacto |
+| gancho | faíscas subindo em leque, que caem com a gravidade |
+| chute | faíscas e nuvem de poeira |
+| pancada (slam) | explosão de faíscas, anel grande, poeira no chão e pedrinhas voando |
+| investida | jato de faíscas na direção do golpe e poeira nos pés |
+| lâmina | riscos de corte na diagonal e faíscas de metal |
+| arma de metal / de madeira | faíscas laranja caindo / lascas de madeira girando |
+| energia (especiais) | partículas brilhantes na cor do especial e onda de choque |
+| arma arremessada, defesa, arma quebrando | detritos, estilhaços azuis, pedaços da arma |
+| nocaute | explosão grande (maior e rosa nos chefes) com poeira no chão |
+
+Golpes pesados e lutadores grandes geram efeitos maiores; no co-op as faíscas têm a cor do jogador.
+No online, o host manda os efeitos para todos. **P** no título liga/desliga as partículas.
+
 ## Diálogos com chefes
 
 Na história (e na fase secreta), chefes e sub-chefes **conversam com o lutador** quando entram em cena,
@@ -290,6 +311,7 @@ scripts/hud.gd          interface e telas
 scripts/music.gd        trilha sonora gerada por algoritmo
 scripts/sfx.gd          efeitos sonoros sintetizados e reprodução das vozes
 scripts/dialogs.gd      falas dos chefes, sub-chefes e respostas de cada lutador
+scripts/fx.gd           partículas dos golpes (fx_ring.gd: anel de choque)
 audio/voices/           vozes e gritos (gerados por tools/audio/voices.py)
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante
