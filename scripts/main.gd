@@ -25,6 +25,8 @@ const DEPTH_MAX := 520.0
 const STAGE_LEN := 4400.0
 const HALF_W := 480.0
 const MAX_PLAYERS := 4
+const LAST_ERA := 11     # última era normal (CRONOS)
+const SECRET_IDX := 12   # fase secreta (ÉON)
 const DEFAULT_CHARS := [8, 9, 0, 3]
 
 # Progresso que sobrevive ao recarregar a cena entre fases.
@@ -51,6 +53,7 @@ var round_winner := -1   # -1 = empate
 var drop_timer := 0.0
 
 # Sobrevivência
+var fragment_got := false   # ganhou um Fragmento do Tempo nesta era
 var survival := false
 var surv_wave := 0
 var surv_queue: Array = []    # [tipo, lado, atraso]
@@ -108,7 +111,7 @@ var bg
 func _ready() -> void:
 	randomize()
 	Controls.setup()
-	stages = Stages.list()
+	stages = Stages.list() + [Stages.secret()]
 	characters = Characters.list()
 	stage = stages[stage_idx]
 	waves = Stages.waves_for(stage_idx)
@@ -577,7 +580,8 @@ func _play_stage_music(intense: bool) -> void:
 
 
 func _change_stage(d: int) -> void:
-	stage_idx = posmod(stage_idx + d, stages.size())
+	# a fase secreta só aparece na lista depois de desbloqueada
+	stage_idx = posmod(stage_idx + d, stages.size() if secret_unlocked() else SECRET_IDX)
 	stage = stages[stage_idx]
 	waves = Stages.waves_for(stage_idx)
 	bg.stage = stage
@@ -660,13 +664,22 @@ func _stage_cleared() -> void:
 				Ach.flag(p, "coop2")
 			if players.size() >= 4:
 				Ach.flag(p, "coop4")
-			if stage_idx >= stages.size() - 1:
+			if stage_idx == LAST_ERA or stage_idx == SECRET_IDX:
 				Ach.flag(p, "ending")
+			if stage_idx == SECRET_IDX:
+				Ach.flag(p, "eon")
+			# Fragmento do Tempo: concluir a era sem perder nenhuma vida
+			if stage_idx <= LAST_ERA and p.lives >= p.start_lives:
+				if not (stage_idx in Ach.stats.get("fragments", [])):
+					fragment_got = true
+				Ach.collect(p, "fragments", stage_idx)
 			p.start_lives = p.lives
 			p.damage_taken = 0
 	music.stop()
 	sfx.play("start", 0.0)
-	if stage_idx >= stages.size() - 1:
+	# Depois de CRONOS: com os 12 fragmentos, a fenda para a fase secreta se abre
+	var finished := stage_idx == SECRET_IDX or (stage_idx == LAST_ERA and not secret_unlocked())
+	if finished:
 		_set_mode("ending")
 		music.play("title", 0)
 		ending_page = 0
@@ -707,7 +720,12 @@ func _spawn_enemy(kind: String, side: int):
 	entities.add_child(e)
 	if e.is_boss():
 		_play_stage_music(true)
-	if kind == "boss":
+	if kind == "secret_boss":
+		hud.show_message("CHEFE SECRETO: " + e.display_name, 3.0)
+		hud.show_enemy(e)
+		sfx.play("roar", 0.0)
+		shake(12.0)
+	elif kind == "boss":
 		hud.show_message("CHEFE: " + e.display_name, 2.5)
 		hud.show_enemy(e)
 		sfx.play("roar", 0.0)
@@ -788,13 +806,15 @@ func on_enemy_killed(e) -> void:
 		Ach.track(killer, "kos")
 		Ach.best(killer, "score", killer.score)
 	# Chefes contam para todo o grupo
-	if e.kind in ["boss", "subboss"]:
+	if e.kind in ["boss", "subboss", "secret_boss"]:
 		for p in players:
-			if e.kind == "boss":
+			if e.kind in ["boss", "secret_boss"]:
 				Ach.track(p, "bosses_n")
 				Ach.collect(p, "bosses", stage_idx)
-				if stage_idx == stages.size() - 1:
+				if stage_idx == LAST_ERA and e.kind == "boss":
 					Ach.flag(p, "cronos")
+				if e.kind == "secret_boss":
+					Ach.flag(p, "eon")
 			else:
 				Ach.track(p, "subs")
 	sfx.play("ko")
@@ -803,7 +823,7 @@ func on_enemy_killed(e) -> void:
 		shake(10.0)
 		hud.show_message("SUB-CHEFE DERROTADO!", 2.0)
 		_play_stage_music(false)
-	elif e.kind == "boss":
+	elif e.kind in ["boss", "secret_boss"]:
 		hitstop = 0.4
 		shake(14.0)
 		hud.show_message("K.O.!", 2.5)
@@ -902,7 +922,7 @@ func throw_weapon(p, w: Dictionary) -> void:
 
 
 # ---------- Golpes especiais ----------
-func spawn_energy(p, kind: String, dir: int, sp: Dictionary) -> void:
+func spawn_energy(p, kind: String, dir: int, sp: Dictionary):
 	var e = EnergyScript.new()
 	e.game = self
 	e.owner_player = p
@@ -916,6 +936,7 @@ func spawn_energy(p, kind: String, dir: int, sp: Dictionary) -> void:
 		e.life = 0.9
 	e.position = p.position + Vector2(dir * 30.0, 2.0)
 	entities.add_child(e)
+	return e
 
 
 func popup(text: String, pos: Vector2, col: Color) -> void:
@@ -1559,7 +1580,7 @@ func _survival_wave_cleared() -> void:
 		spawn_pickup("chicken", Vector2(cam_x + randf_range(-150, 150), randf_range(DEPTH_MIN + 20, DEPTH_MAX - 20)))
 	# Viagem no tempo a cada 5 ondas: nova era, novos inimigos, nova música
 	if surv_wave % 5 == 0:
-		stage_idx = (stage_idx + 1) % stages.size()
+		stage_idx = (stage_idx + 1) % SECRET_IDX
 		stage = stages[stage_idx]
 		bg.stage = stage
 		_play_stage_music(false)
@@ -1568,3 +1589,18 @@ func _survival_wave_cleared() -> void:
 		shake(8.0)
 		for k in 8:
 			spawn_spark(Vector2(cam_x + randf_range(-400, 400), randf_range(120, 480)), Color(0.6, 0.9, 1), 1.5)
+
+
+# =================== Chefe secreto ===================
+func fragments() -> int:
+	var arr: Array = Ach.stats.get("fragments", [])
+	return arr.size()
+
+
+## Os 12 Fragmentos do Tempo (um por era, ganho ao concluí-la sem perder vidas) abrem a fase secreta.
+func secret_unlocked() -> bool:
+	return fragments() >= 12
+
+
+func has_fragment(idx: int) -> bool:
+	return idx in Ach.stats.get("fragments", [])

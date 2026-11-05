@@ -56,6 +56,7 @@ func _draw() -> void:
 		"utopia": _utopia()
 		"dystopia": _dystopia()
 		"apocalypse": _apocalypse()
+		"void": _void()
 		_: _modern()
 
 	# Barreira no fim da fase
@@ -70,6 +71,7 @@ func _draw() -> void:
 
 func _end_color() -> Color:
 	match style:
+		"void": return Color(0.1, 0.05, 0.2)
 		"stone": return Color(0.35, 0.28, 0.22)
 		"utopia": return Color(0.8, 0.85, 0.9)
 		"apocalypse": return Color(0.12, 0.05, 0.15)
@@ -80,6 +82,8 @@ func _end_color() -> Color:
 func _draw_celestial(cx: float) -> void:
 	var sc: Color = stage.sun
 	var pos := Vector2(cx * 0.97 + 220.0, 95.0)
+	if style == "void":
+		return  # o relógio gigante substitui o sol
 	if style == "apocalypse":
 		# Lua partida
 		draw_circle(pos, 50.0, sc)
@@ -578,3 +582,73 @@ func _apocalypse() -> void:
 		var ax := left + fposmod(k * 113.0 - t * 30.0, right - left)
 		var ay := fposmod(k * 61.0 - t * (25.0 + k % 4 * 8.0), 560.0)
 		draw_circle(Vector2(ax, ay), 2.0, Color(1, 0.5, 0.2, 0.6))
+
+
+
+# ====================== ALÉM DO TEMPO (fase secreta) ======================
+func _void() -> void:
+	var cx: float = game.cam_x
+	# estrelas piscando
+	for k in 90:
+		var sx := left + fposmod(k * 157.3 - cx * 0.1, right - left)
+		var sy := fposmod(k * 61.7, 330.0)
+		var tw := 0.4 + 0.6 * absf(sin(t * (1.0 + k % 5) + k))
+		draw_circle(Vector2(sx, sy), 1.0 + (k % 3) * 0.6, Color(1, 1, 1, tw))
+	# relógio gigante ao fundo
+	var cc := Vector2(cx * 0.9 + 48.0, 150.0)
+	draw_circle(cc, 130.0, Color(0.15, 0.08, 0.28, 0.8))
+	draw_arc(cc, 130.0, 0, TAU, 64, Color(1, 0.8, 0.35, 0.6), 4.0)
+	draw_arc(cc, 112.0, 0, TAU, 64, Color(1, 0.8, 0.35, 0.25), 2.0)
+	for h in 12:
+		var a := h * TAU / 12.0 - PI * 0.5
+		var d := Vector2(cos(a), sin(a))
+		draw_line(cc + d * 100.0, cc + d * 122.0, Color(1, 0.85, 0.4, 0.8), 4.0 if h % 3 == 0 else 2.0)
+	var ah := t * 0.3
+	var am := -t * 1.7
+	draw_line(cc, cc + Vector2(cos(ah), sin(ah)) * 60.0, Color(1, 0.85, 0.4, 0.9), 6.0)
+	draw_line(cc, cc + Vector2(cos(am), sin(am)) * 95.0, Color(0.6, 0.9, 1, 0.9), 3.0)
+	draw_circle(cc, 8.0, Color(1, 0.85, 0.4))
+	# fragmentos das 12 eras flutuando (cores dos sóis de cada era)
+	var stages_list: Array = game.stages
+	for k in 12:
+		var col: Color = stages_list[k].sun
+		var fx := left + fposmod(k * 83.0 + t * (10.0 + k * 2.0), right - left)
+		var fy := 60.0 + fposmod(k * 47.0, 200.0) + sin(t * 1.3 + k) * 12.0
+		var r := 9.0 + (k % 3) * 3.0
+		var rot := t * (0.5 + k * 0.1)
+		var pts := PackedVector2Array()
+		for v in 4:
+			var aa := rot + v * TAU / 4.0
+			pts.append(Vector2(fx, fy) + Vector2(cos(aa), sin(aa)) * (r if v % 2 == 0 else r * 0.55))
+		draw_colored_polygon(pts, Color(col.r, col.g, col.b, 0.85))
+		draw_circle(Vector2(fx, fy), r * 1.8, Color(col.r, col.g, col.b, 0.12))
+	# ruínas de várias eras flutuando (silhuetas)
+	for sg in _segments(320.0, 1.0):
+		var x: float = sg[1]
+		var i: int = sg[0]
+		var by := 250.0 + sin(t * 0.8 + i) * 6.0
+		var c := Color(0.2, 0.12, 0.35)
+		match posmod(i, 4):
+			0:  # coluna antiga
+				draw_rect(Rect2(x + 40, by - 120, 34, 120), c)
+				draw_rect(Rect2(x + 30, by - 130, 54, 12), c)
+			1:  # torre de castelo
+				draw_rect(Rect2(x + 60, by - 100, 60, 100), c)
+				for m in 3:
+					draw_rect(Rect2(x + 60 + m * 22, by - 114, 14, 14), c)
+			2:  # pagode
+				draw_colored_polygon(PackedVector2Array([Vector2(x + 30, by - 60), Vector2(x + 150, by - 60), Vector2(x + 120, by - 90), Vector2(x + 60, by - 90)]), c)
+				draw_rect(Rect2(x + 70, by - 60, 40, 60), c)
+			3:  # prédio futurista
+				draw_rect(Rect2(x + 70, by - 150, 40, 150), c)
+				draw_circle(Vector2(x + 90, by - 150), 20.0, c)
+		draw_rect(Rect2(x + 20, by, 140, 6), Color(0.6, 0.4, 1, 0.35))
+	# chão de vidro luminoso
+	_floor(330.0, Color(0.06, 0.03, 0.12), Color(0.7, 0.45, 1))
+	for sg in _segments(80.0, 1.0):
+		draw_line(Vector2(sg[1], 336), Vector2(sg[1] - 70, 540), Color(0.5, 0.3, 0.9, 0.35), 1.5)
+	for r in 6:
+		var yy := 350.0 + r * 32.0 + fposmod(t * 20.0, 32.0)
+		draw_line(Vector2(left, yy), Vector2(right, yy), Color(0.5, 0.3, 0.9, 0.25), 1.0)
+	var glow := 0.35 + 0.25 * sin(t * 2.0)
+	draw_rect(Rect2(left, 330, right - left, 3), Color(1, 0.85, 0.4, glow))

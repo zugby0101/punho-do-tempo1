@@ -677,6 +677,18 @@ func _draw_hat(head: Vector2) -> void:
 				draw_line(head + Vector2(-5 + i * 5, -9), head + Vector2(-6 + i * 5, -17), _c(Color(0.9, 0.3, 0.1)), 3.0)
 			draw_rect(Rect2(head + Vector2(-10, -7), Vector2(21, 4)), _c(Color(0.3, 0.25, 0.2)))
 			draw_circle(head + Vector2(7, -5), 4.0, _c(Color(0.4, 0.9, 0.4)))
+		"eon":
+			# ampulheta flutuante sobre a cabeça e olhos brilhantes
+			var gold := _c(Color(1, 0.82, 0.3))
+			var hy := -26.0 + sin(anim_t * 3.0) * 2.0
+			draw_colored_polygon(PackedVector2Array([head + Vector2(-9, hy - 10), head + Vector2(9, hy - 10), head + Vector2(0, hy)]), gold)
+			draw_colored_polygon(PackedVector2Array([head + Vector2(-9, hy + 10), head + Vector2(9, hy + 10), head + Vector2(0, hy)]), gold)
+			draw_arc(head + Vector2(0, hy), 15.0, 0, TAU, 20, Color(1, 0.85, 0.4, 0.5), 2.0)
+			draw_rect(Rect2(head + Vector2(2, -3), Vector2(4, 3)), _c(Color(0.4, 1, 1)))
+			draw_rect(Rect2(head + Vector2(7, -3), Vector2(3, 3)), _c(Color(0.4, 1, 1)))
+			for k in 3:
+				var a2 := anim_t * 1.5 + k * TAU / 3.0
+				draw_circle(head + Vector2(cos(a2) * 18.0, sin(a2) * 8.0 + hy), 2.0, Color(0.7, 0.9, 1, 0.8))
 		"crown":
 			var gc := _c(Color(1, 0.8, 0.15))
 			draw_colored_polygon(PackedVector2Array([head + Vector2(-10, -8), head + Vector2(10, -8), head + Vector2(11, -20),

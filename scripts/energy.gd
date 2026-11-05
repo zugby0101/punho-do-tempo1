@@ -12,6 +12,7 @@ var height := 50.0
 var life := 1.2
 var t := 0.0
 var hit_list: Array = []
+var hostile := false  # disparado por um inimigo: acerta os jogadores
 
 
 func _physics_process(delta: float) -> void:
@@ -27,7 +28,7 @@ func _physics_process(delta: float) -> void:
 	if life <= 0.0 or position.x < game.cam_left() - 40.0 or position.x > game.cam_right() + 40.0:
 		queue_free()
 		return
-	var targets: Array = game.hit_targets_for(owner_player)
+	var targets: Array = game.active_players() if hostile else game.hit_targets_for(owner_player)
 	for e in targets:
 		if e in hit_list or not e.can_be_hit():
 			continue

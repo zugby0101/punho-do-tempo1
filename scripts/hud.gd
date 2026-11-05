@@ -173,8 +173,13 @@ func _draw_main() -> void:
 			_center(170, "ERA CONCLUÍDA!", 64, Color(0.4, 1, 0.5))
 			_center(215, game.stage.name, 24, Color(1, 1, 1))
 			_scores_block(265)
+			if game.fragment_got:
+				_center(380, "✦ FRAGMENTO DO TEMPO OBTIDO! (%d/12) ✦" % game.fragments(), 20, Color(1, 0.85, 0.4))
 			var nxt: Dictionary = game.stages[game.stage_idx + 1]
-			_center(410, "Próxima viagem: %s (%s)" % [nxt.name, nxt.year], 22, Color(0.6, 0.9, 1))
+			if game.stage_idx + 1 == game.SECRET_IDX:
+				_center(410, "Os 12 Fragmentos brilham... uma fenda se abre: ??? (%s)" % nxt.year, 20, Color(0.85, 0.6, 1))
+			else:
+				_center(410, "Próxima viagem: %s (%s)" % [nxt.name, nxt.year], 22, Color(0.6, 0.9, 1))
 			if int(t * 2.0) % 2 == 0:
 				_center(455, "ENTER ou SOCO para viajar no tempo", 22, Color(1, 0.9, 0.3))
 		"gameover":
@@ -292,6 +297,11 @@ func _draw_title() -> void:
 	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
 	if int(t * 2.0) % 2 == 0:
 		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
+	if game.fragments() > 0:
+		var ftxt := "✦ Fragmentos do Tempo: %d/12" % game.fragments()
+		if game.secret_unlocked():
+			ftxt += " — FASE SECRETA DESBLOQUEADA (13ª na lista de fases)"
+		_center(395, ftxt, 14, Color(1, 0.85, 0.4))
 	_center(415, "ONLINE: O = criar/entrar numa sala  •  R = ranking  •  M = conquistas (%d/%d)" % [Ach.unlocked_count(), Ach.LIST.size()], 16, Color(0.5, 0.9, 1))
 	if gm == "survival":
 		_center(485, "Sobrevivência: ondas infinitas que ficam cada vez mais difíceis. Até onde você chega?", 15, Color(0.8, 0.8, 0.9))
@@ -379,8 +389,13 @@ func _draw_intro() -> void:
 	_center(330, String(st.intro).replace("{p}", game.party_names()), 18, Color(1, 1, 1, k))
 	_center(375, "Sub-chefe: %s   •   Chefe: %s" % [st.subboss.name, st.boss.name], 16, Color(1, 0.55, 0.55, k))
 	_center(400, "Inimigos: ★ %s   ★★ %s   ★★★ %s" % [st.thug.name, st.knife.name, st.brute.name], 15, Color(0.8, 0.9, 0.8, k))
-	var ws: Array = game.Weapons.for_stage(game.stage_idx)
+	var ws: Array = game.Weapons.for_stage(mini(game.stage_idx, game.LAST_ERA))
 	_center(422, "Armas da era: %s e %s" % [ws[0].name, ws[1].name], 15, Color(0.6, 0.95, 1, k))
+	if game.stage_idx <= game.LAST_ERA and not game.versus and not game.survival:
+		if game.has_fragment(game.stage_idx):
+			_center(446, "✦ Fragmento do Tempo desta era: obtido", 14, Color(1, 0.85, 0.4, k))
+		else:
+			_center(446, "✧ Fragmento do Tempo: conclua esta era sem perder nenhuma vida (%d/12)" % game.fragments(), 14, Color(0.85, 0.75, 0.5, k))
 
 
 func _draw_ending() -> void:
@@ -388,8 +403,17 @@ func _draw_ending() -> void:
 	draw_rect(Rect2(640, 0, W - 640, 130), Color(0, 0, 0, 0.72))
 	var p = game.players[game.ending_page]
 	var ch: Dictionary = game.characters[game._char_of(p)]
-	_center(70, "A LINHA DO TEMPO FOI SALVA!", 44, Color(1, 0.85, 0.3))
-	_center(108, "%s derrotou CRONOS e atravessou as 12 eras." % game.party_names(), 18, Color(0.7, 0.9, 1))
+	var true_end: bool = game.stage_idx == game.SECRET_IDX
+	if true_end:
+		_center(62, "FINAL VERDADEIRO", 44, Color(0.85, 0.6, 1))
+		_center(96, "%s derrotou ÉON, O ETERNO. O tempo está livre para sempre." % game.party_names(), 17, Color(1, 0.85, 0.4))
+	else:
+		_center(70, "A LINHA DO TEMPO FOI SALVA!", 44, Color(1, 0.85, 0.3))
+		_center(108, "%s derrotou CRONOS e atravessou as 12 eras." % game.party_names(), 18, Color(0.7, 0.9, 1))
+	if not true_end:
+		var missing: int = 12 - game.fragments()
+		if missing > 0:
+			_text(Vector2(40, 470), "Ainda faltam %d Fragmentos do Tempo... algo espera além do tempo." % missing, 15, Color(0.85, 0.6, 1))
 	var title := "FINAL DE %s" % ch.name
 	if game.players.size() > 1:
 		title = "P%d · " % (game.ending_page + 1) + title

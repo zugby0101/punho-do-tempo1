@@ -17,6 +17,8 @@ const LIST := [
 	["all_eras", "MESTRE DAS ERAS", "Conclua as 12 eras.", "set", "eras", 12, Color(0.4, 0.7, 1)],
 	["ending", "GUARDIÃO DO TEMPO", "Chegue ao final da história.", "flag", "ending", 1, Color(1, 0.85, 0.3)],
 	["cronos", "O FIM DE CRONOS", "Derrote CRONOS, o chefe final.", "flag", "cronos", 1, Color(0.75, 0.3, 1)],
+	["fragments", "GUARDIÃO DOS FRAGMENTOS", "Reúna os 12 Fragmentos do Tempo.", "set", "fragments", 12, Color(1, 0.85, 0.4)],
+	["eon", "O ETERNO CAIU", "Derrote o chefe secreto.", "flag", "eon", 1, Color(0.85, 0.6, 1)],
 	["all_chars", "CIDADÃO DO MUNDO", "Conclua uma era com cada um dos 14 lutadores.", "set", "chars", 14, Color(1, 0.6, 0.2)],
 	# Combate
 	["ko_1", "PRIMEIRO NOCAUTE", "Derrote um inimigo.", "count", "kos", 1, Color(1, 0.5, 0.4)],

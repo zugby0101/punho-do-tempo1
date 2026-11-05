@@ -86,13 +86,13 @@ Os menus entre as fases podem ser confirmados por qualquer jogador.
 
 ## Conquistas
 
-São **35 conquistas desbloqueáveis**, salvas no computador de cada jogador. Um aviso aparece
+São **37 conquistas desbloqueáveis**, salvas no computador de cada jogador. Um aviso aparece
 na tela quando uma é desbloqueada. No título, **M** (ou **Tab**) mostra todas, com o progresso
 das que faltam.
 
 | Categoria | Exemplos |
 |---|---|
-| Jornada | concluir eras, passar pelas 12 eras, chegar ao final, derrotar CRONOS, zerar com os 14 lutadores |
+| Jornada | concluir eras, passar pelas 12 eras, chegar ao final, derrotar CRONOS, zerar com os 14 lutadores, reunir os 12 Fragmentos, derrotar o chefe secreto |
 | Combate | 1, 100 e 1000 nocautes; combos de 10, 25 e 50 golpes; sub-chefes e chefes (incluindo os 12) |
 | Armas e golpes | pegar armas, coletar as 24 armas, acertar arremessos, 50 especiais, quebrar caixas, comer |
 | Desafios | concluir uma era sem perder vida, sem levar dano ou com a última vida; 100 mil e 500 mil pontos |
@@ -121,6 +121,13 @@ Futuro em que tudo deu certo · Futuro em que tudo deu errado · Futuro em que d
 
 Cada fase tem cenário próprio com parallax, inimigos com o visual da época,
 **1 sub-chefe** (no meio da fase) e **1 chefe** (no fim). A dificuldade sobe a cada era.
+
+**Chefe secreto (spoiler!):** cada era esconde um **Fragmento do Tempo**, ganho ao concluí-la
+**sem perder nenhuma vida** (a abertura de cada era mostra se você já tem o dela). Com os
+**12 fragmentos**, derrotar CRONOS abre a fase secreta **ALÉM DO TEMPO**, com os Ecos sombrios,
+o sub-chefe CRONOS RENASCIDO e o chefe secreto **ÉON, O ETERNO**: três fases, orbes temporais
+em leque, investidas e, a cada terço de vida, ele dobra o tempo, se teletransporta e convoca Ecos.
+Vencê-lo leva ao **Final Verdadeiro**. Depois de desbloqueada, a fase aparece como 13ª na escolha de fases.
 
 **3 tiers de inimigos em cada fase:**
 - ★ Fácil: lento, um golpe só

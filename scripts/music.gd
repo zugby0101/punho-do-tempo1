@@ -157,6 +157,12 @@ static func style_def(style: String) -> Dictionary:
 				"lead": W_SQUARE, "lead_oct": 2, "density": 0.55, "pad": W_SAW,
 				"bass": W_SAW, "bass_pat": "x.x.x.x.x.x.x.x.", "bass_mode": "root",
 				"drums": {"kick": "x.x.x.x.x.x.x.x.", "snare": "....x.......x...", "tom": "............xxxx", "hat": "x.x.x.x.x.x.x.x."}}
+		"void":
+			return {"bpm": 132, "root": 41, "scale": [0, 2, 4, 6, 8, 10], "prog": [0, 1, 3, 2],
+				"lead": W_SINE, "bell": true, "lead_oct": 2, "density": 0.55, "pad": W_SAW,
+				"arp": W_TRI, "arp_rate": 1,
+				"bass": W_SAW, "bass_pat": "x..x..x.x..x..x.", "bass_mode": "octave",
+				"drums": {"kick": "x...x...x...x...", "snare": "....x.......x...", "tom": "..........x.x.xx", "hat": "x.x.x.x.x.x.x.x."}}
 		"title":
 			return {"bpm": 120, "root": 48, "scale": major, "prog": [0, 5, 3, 4],
 				"lead": W_SQUARE, "vib": true, "lead_oct": 1, "density": 0.6,

@@ -79,6 +79,20 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 				{"pose": "kick", "dmg": 12, "reach": 72, "startup": 0.34, "active": 0.1, "recovery": 0.4, "knock": true, "lunge": 90.0, "heavy": true},
 			]
 			special_attack = {"pose": "charge", "dmg": 12, "reach": 56, "startup": 0.5, "active": 0.55, "recovery": 0.5, "knock": true, "dash": 430.0, "depth": 28.0, "heavy": true}
+		"secret_boss":
+			display_name = "ÉON, O ETERNO"
+			max_hp = 380
+			body_scale = 1.6
+			move_speed = Vector2(115, 78)
+			score_value = 20000
+			hurt_time = 0.14
+			aggressive = true
+			attacks = [
+				{"pose": "jab", "dmg": 11, "reach": 66, "startup": 0.24, "active": 0.08, "recovery": 0.28, "knock": false, "lunge": 70.0},
+				{"pose": "slam", "dmg": 19, "reach": 72, "startup": 0.42, "active": 0.1, "recovery": 0.42, "knock": true, "lunge": 60.0, "heavy": true},
+				{"pose": "special", "dmg": 14, "reach": 100, "startup": 0.35, "active": 0.3, "recovery": 0.4, "knock": true, "radial": true, "depth": 40.0, "heavy": true},
+			]
+			special_attack = {"pose": "charge", "dmg": 17, "reach": 64, "startup": 0.45, "active": 0.65, "recovery": 0.45, "knock": true, "dash": 560.0, "depth": 32.0, "heavy": true}
 		"boss":
 			display_name = "CHEFE MARRETA"
 			max_hp = 220
@@ -105,7 +119,7 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 		hat = look.hat
 		skin = look.skin
 		hair = look.hair
-	if kind == "boss":
+	if kind in ["boss", "secret_boss"]:
 		cape = stage.get("cape", Color(0, 0, 0, 0))
 	max_hp = int(max_hp * (1.0 + stage_idx * 0.1))
 	score_value = int(score_value * (1.0 + stage_idx * 0.25))
@@ -167,6 +181,8 @@ func _update(delta: float) -> void:
 
 			var dx := absf(target.position.x - position.x)
 			var dy := absf(target.position.y - position.y)
+			if kind == "secret_boss" and _eon_ai(delta, target, dx):
+				return
 			if not special_attack.is_empty() and special_cd <= 0.0 and dx > 200.0 and dy < 25.0:
 				special_cd = randf_range(4.0, 6.0)
 				start_attack(special_attack)
@@ -215,6 +231,8 @@ func tier_label() -> String:
 		1: return "★ FÁCIL"
 		2: return "★★ DIFÍCIL"
 		3: return "★★★ MUITO DIFÍCIL"
+	if kind == "secret_boss":
+		return "CHEFE SECRETO"
 	return "SUB-CHEFE" if kind == "subboss" else "CHEFE"
 
 
@@ -235,7 +253,61 @@ func _on_weapon_changed() -> void:
 
 
 func is_boss() -> bool:
-	return kind == "boss" or kind == "subboss"
+	return kind == "boss" or kind == "subboss" or kind == "secret_boss"
+
+
+# ---------- ÉON, o chefe secreto ----------
+var eon_phase := 0       # 0, 1, 2 (troca a cada terço de vida)
+var orb_cd := 3.0
+
+
+## Comportamentos extras do ÉON. Retorna true se já agiu neste quadro.
+func _eon_ai(delta: float, target, dx: float) -> bool:
+	orb_cd -= delta
+	# Dobra o tempo ao perder cada terço da vida
+	var want_phase := 0
+	if hp < max_hp * 0.34:
+		want_phase = 2
+	elif hp < max_hp * 0.67:
+		want_phase = 1
+	if want_phase > eon_phase:
+		eon_phase = want_phase
+		_eon_time_warp()
+		return true
+	# Leque de orbes temporais (mais orbes nas fases finais)
+	if orb_cd <= 0.0 and dx > 120.0:
+		orb_cd = randf_range(3.2, 4.5) - eon_phase * 0.6
+		facing = 1 if target.position.x > position.x else -1
+		var lanes := [-30.0, 0.0, 30.0] if eon_phase < 2 else [-45.0, -15.0, 15.0, 45.0]
+		for off in lanes:
+			var orb = game.spawn_energy(self, "ki", facing, {"dmg": 10 + eon_phase * 3, "speed": 330.0 + eon_phase * 60.0, "color": Color(0.85, 0.6, 1)})
+			orb.hostile = true
+			orb.height = 55.0
+			orb.position.y = clampf(position.y + off, game.DEPTH_MIN, game.DEPTH_MAX)
+		game.sfx.play("special")
+		vel = Vector2.ZERO
+		start_attack({"pose": "throw", "dmg": 0, "reach": -99, "startup": 0.05, "active": 0.05, "recovery": 0.35, "knock": false})
+		return true
+	return false
+
+
+func _eon_time_warp() -> void:
+	game.hitstop = 0.6
+	game.shake(14.0)
+	game.sfx.play("roar")
+	game.popup("ÉON DOBRA O TEMPO!", position + Vector2(0, -170.0), Color(1, 0.85, 0.4))
+	for k in 8:
+		var a := k * TAU / 8.0
+		game.spawn_spark(position + Vector2(cos(a) * 50.0, sin(a) * 20.0 - 70.0), Color(0.85, 0.6, 1), 1.4)
+	# teletransporte para o outro lado da tela
+	var left_side: bool = position.x > game.cam_x
+	position.x = game.cam_left() + 140.0 if left_side else game.cam_right() - 140.0
+	invuln = 1.2
+	attack = {}
+	set_state("idle")
+	# convoca Ecos
+	for k in eon_phase + 1:
+		game._spawn_enemy("knife" if k % 2 == 0 else "thug", 1 if k % 2 == 0 else -1)
 
 
 func _separate() -> void:

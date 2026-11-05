@@ -172,6 +172,27 @@ static func _list_base() -> Array:
 	]
 
 
+## Fase secreta (índice 12): só aparece com os 12 Fragmentos do Tempo.
+const SECRET_IDX := 12
+
+
+static func secret() -> Dictionary:
+	var shade := Color(0.32, 0.22, 0.45)
+	return {
+		"name": "ALÉM DO TEMPO", "year": "∞", "style": "void", "secret": true,
+		"intro": "Os 12 Fragmentos se uniram e abriram uma fenda. Do outro lado, {p} encontra quem criou CRONOS...",
+		"sky": [Color(0.02, 0.0, 0.06), Color(0.06, 0.02, 0.14), Color(0.12, 0.04, 0.24), Color(0.22, 0.08, 0.3)],
+		"sun": Color(1, 0.85, 0.4),
+		"thug": _look("ECO SOMBRIO", Color(0.12, 0.08, 0.2), Color(0.08, 0.05, 0.14), "hood", shade, Color(0.05, 0.02, 0.1)),
+		"knife": _look("ECO VELOZ", Color(0.25, 0.1, 0.4), Color(0.1, 0.05, 0.18), "ninja", shade, Color(0.05, 0.02, 0.1)),
+		"brute": _look("ECO COLOSSAL", Color(0.18, 0.12, 0.3), Color(0.1, 0.06, 0.18), "horns", Color(0.38, 0.28, 0.55), Color(0.05, 0.02, 0.1)),
+		"subboss": _look("CRONOS RENASCIDO", Color(0.15, 0.05, 0.25), Color(0.08, 0.02, 0.12), "crown", Color(0.55, 0.5, 0.7)),
+		"boss": _look("ÉON, O ETERNO", Color(0.08, 0.05, 0.15), Color(0.05, 0.03, 0.1), "eon", Color(0.2, 0.15, 0.35), Color(0.9, 0.75, 0.3)),
+		"secret_boss": _look("ÉON, O ETERNO", Color(0.08, 0.05, 0.15), Color(0.05, 0.03, 0.1), "eon", Color(0.2, 0.15, 0.35), Color(0.9, 0.75, 0.3)),
+		"cape": Color(0.85, 0.65, 0.2),
+	}
+
+
 ## Gera as ondas de inimigos da fase (dificuldade cresce com o índice).
 static func waves_for(idx: int) -> Array:
 	var rng := RandomNumberGenerator.new()
@@ -204,6 +225,8 @@ static func waves_for(idx: int) -> Array:
 			spawn.insert(0, ["subboss", 1, 0.0])
 		result.append({"x": trig[w], "spawn": spawn})
 	var boss_wave := [["boss", 1, 0.5], ["thug", -1, 4.0], ["knife", 1, 9.0]]
+	if idx == SECRET_IDX:
+		boss_wave = [["secret_boss", 1, 0.5]]
 	if idx >= 6:
 		boss_wave.append(["brute", -1, 14.0])
 	result.append({"x": 3920.0, "spawn": boss_wave})
