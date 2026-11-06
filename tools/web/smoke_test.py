@@ -105,6 +105,8 @@ def main():
             lines.append("- agente de teste no navegador: %s" % ("passou" if not fails else "**%d falha(s)**" % len(fails)))
             for f in fails[:20]:
                 lines.append("  - %s" % f)
+    if not ok:
+        lines += ["", "Últimas linhas do console:", "```"] + [l[:300] for l in log[-40:]] + ["```"]
     text = "\n".join(lines)
     print(text)
     import os

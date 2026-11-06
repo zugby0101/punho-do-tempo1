@@ -46,6 +46,7 @@ var plan_t := 0.0
 var prev_enemies := {}
 var shots_taken := 0
 var orig_hook: Callable
+static var seed_base := 1  # --seed=N: outra sequência de sorteios (mesma N = mesmas partidas)
 var only := 0                 # --only=N: joga só a partida N (sem a varredura dos rigs)
 var trace := 0                # --trace=N: linha do tempo da partida N no log, a cada 0,5 s
 var trace_t := 0.0
@@ -73,6 +74,11 @@ func _ready() -> void:
 			only = int(a.substr(7))
 		elif a.begins_with("--trace="):
 			trace = int(a.substr(8))
+		elif a.begins_with("--seed="):
+			seed_base = int(a.substr(7))
+	# Sorteios repetíveis: a mesma partida sempre joga igual (o jogo chama randomize() ao abrir).
+	# Antes cada execução sorteava diferente, e uma partida azarada parecia defeito do lutador.
+	seed(seed_base * 1000 + run_idx + 2)
 	DirAccess.make_dir_recursive_absolute(_abs(out_dir))
 	if not FileAccess.file_exists(_abs(out_dir + "/.gdignore")):
 		var gi := FileAccess.open(_abs(out_dir + "/.gdignore"), FileAccess.WRITE)  # o Godot não importa as capturas
