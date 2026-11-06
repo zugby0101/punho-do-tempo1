@@ -405,6 +405,57 @@ def enemy_hurt_check(players_hb, name, hurt):
     return bad
 
 
+def enemy_attacks():
+    """{tipo: (escala, [(pose, alcance, radial)])} lidos de scripts/enemy.gd (golpes normais da IA)."""
+    text = (ROOT / "scripts" / "enemy.gd").read_text(encoding="utf-8")
+    out = {}
+    parts = re.split(r'^\t\t"(\w+)":\n', text, flags=re.M)
+    for kind, body in zip(parts[1::2], parts[2::2]):
+        sc = re.search(r"body_scale = (" + NUM + ")", body)
+        m = re.search(r"\battacks = \[(.*?)\]\n", body, re.S)
+        if not m:
+            continue
+        atks = [(a, float(r), '"radial": true' in line)
+                for line in m.group(1).split("\n") for a, r in re.findall(r'"pose": "(\w+)".*?"reach": (' + NUM + ')', line)]
+        out[kind] = (float(sc.group(1)) if sc else 1.0, atks)
+    return out
+
+
+def player_hurt_check(enemy_hb, players_hurt, enemy_hurt):
+    """Os golpes normais de cada inimigo (no tamanho do tipo dele) acertam cada lutador parado, com a
+    hurtbox animada do lutador (primeiro quadro do idle), à distância em que a IA para (48 px × escala)."""
+    bad = []
+    sizes = player_sizes()
+    us = [U_HIT + (U_HOLD - U_HIT) * i / 24.0 for i in range(25)]
+    kinds = enemy_attacks()
+    for name, hb in enemy_hb.items():
+        kind = name.split("_", 1)[1]
+        if kind not in kinds:
+            continue
+        scale, atks = kinds[kind]
+        for sl, hurt in players_hurt.items():
+            sz = sizes[sl]
+            x0, y0, x1, y1 = hurt["idle"]["box"][1:5]
+            hover = max(0.0, -enemy_hurt[name]["idle"]["box"][4]) * scale  # quem flutua desce para golpear
+            for an, reach, radial in atks:
+                if an not in hb:
+                    continue
+                dx = 48.0 * scale
+                tx0, tx1 = dx - x1 * sz, dx - x0 * sz  # lutador virado para o inimigo
+                th0, th1 = -y1 * sz, -y0 * sz
+                ok = any(b and tx1 >= b[0] and tx0 <= b[1] and b[3] >= th0 and b[2] <= th1
+                         for b in (simulate(hb[an], u, reach, None, scale, -hover, both=radial, an=an) for u in us))
+                if not ok:
+                    bad.append("%s (%s, escala %.1f) não acerta %s parado" % (name, an, scale, sl))
+            if kind == "secret_boss" and "throw" in hb:
+                # orbes: saem da mão no quadro de soltura (já no chão) e voam a essa altura
+                _, h = release_point(hb["throw"])
+                h = h * scale - hover
+                if not (h + KI_R >= -y1 * sz and h - KI_R <= -y0 * sz):
+                    bad.append("%s (orbes na altura %.0f) não acertam %s parado" % (name, h, sl))
+    return bad
+
+
 def _fmt(v):
     if isinstance(v, dict):
         return "{" + ", ".join('"%s": %s' % (k, _fmt(x)) for k, x in v.items()) + "}"
@@ -425,35 +476,68 @@ def rig_hitboxes(text):
     return {an: strike_data(bones, anims[an], an) for an in STRIKES if an in anims}
 
 
-# Hurtbox do corpo quadro a quadro (inimigos): caixa em volta dos ossos do corpo em cada amostra.
-BODY_BONES = ("pelvis", "spine", "head", "arm_b_up", "arm_b_lo", "arm_f_up", "arm_f_lo",
+# Hurtbox do corpo quadro a quadro: caixa da silhueta desenhada (peças do corpo) em cada amostra.
+BODY_BONES = ("root", "pelvis", "spine", "head", "arm_b_up", "arm_b_lo", "arm_f_up", "arm_f_lo",
               "leg_b_up", "leg_b_lo", "foot_b", "leg_f_up", "leg_f_lo", "foot_f")
-LIMB_PAD = 5.0     # meia espessura dos membros (px)
-HEAD_R = 10.0      # raio da cabeça em volta do meio do osso head
 HURT_STEP = 1.0 / 30.0
-HURT_ANIMS = ("idle", "walk", "hurt", "jab", "cross", "upper", "kick", "swing", "slam", "charge", "throw", "special")
+HURT_ANIMS = ("idle", "walk", "hurt", "jab", "cross", "upper", "kick", "swing", "slam", "charge", "throw", "special",
+              "jump", "jumpkick", "dive")
 
 
-def body_box(bones, pose):
-    xs, ys = [], []
-    for n in BODY_BONES:
-        if n not in bones:
+def parse_parts(text):
+    """Peças desenhadas (Polygon2D com skinning): vértices em repouso e [(osso, pesos por vértice)]."""
+    parts = []
+    for m in re.finditer(r'\[node name="(\w+)" type="Polygon2D" parent="Parts"\]\n(.*?)(?=\n\[|\Z)', text, re.S):
+        body = m.group(2)
+        poly = re.search(r"^polygon = PackedVector2Array\(([^)]*)\)", body, re.M)
+        bl = re.search(r"^bones = \[(.*)\]$", body, re.M)
+        if not poly or not bl:
             continue
-        x, y, _ = pose[n]
-        tx, ty = tip(bones, pose, n)
-        if n == "head":
-            cx, cy = (x + tx) / 2, (y + ty) / 2
-            xs += [cx - HEAD_R, cx + HEAD_R]
-            ys += [cy - HEAD_R, cy + HEAD_R]
-        else:
-            xs += [x - LIMB_PAD, x + LIMB_PAD, tx - LIMB_PAD, tx + LIMB_PAD]
-            ys += [y - LIMB_PAD, y + LIMB_PAD, ty - LIMB_PAD, ty + LIMB_PAD]
+        v = _floats(poly.group(1))
+        verts = list(zip(v[0::2], v[1::2]))
+        ws = [(path.split("/")[-1], _floats(w))
+              for path, w in re.findall(r'NodePath\("([^"]+)"\), PackedFloat32Array\(([^)]*)\)', bl.group(1))]
+        parts.append((m.group(1), verts, ws))
+    return parts
+
+
+def _inv(t):
+    x, y, a = t
+    c, s = math.cos(-a), math.sin(-a)
+    return (-(x * c - y * s), -(x * s + y * c), -a)
+
+
+def _apply(t, p):
+    x, y, a = t
+    return (x + p[0] * math.cos(a) - p[1] * math.sin(a), y + p[0] * math.sin(a) + p[1] * math.cos(a))
+
+
+def body_box(bones, pose, parts, rest):
+    """Caixa da silhueta desenhada neste quadro: cada vértice das peças do corpo (cabelo e chapéu
+    incluídos) deformado pelos ossos como o Godot faz (pose do osso x inverso do repouso)."""
+    xs, ys = [], []
+    for name, verts, ws in parts:
+        if any(b not in BODY_BONES for b, _ in ws):
+            continue  # capas, halo, ampulheta, orbes, tranças: efeitos que balançam sozinhos
+        for i, v in enumerate(verts):
+            x = y = tw = 0.0
+            for b, w in ws:
+                wi = w[i] if i < len(w) else 0.0
+                if wi <= 0.0:
+                    continue
+                q = _apply(pose[b], _apply(_inv(rest[b]), v))
+                x, y, tw = x + q[0] * wi, y + q[1] * wi, tw + wi
+            if tw > 0.0:
+                xs.append(x / tw)
+                ys.append(y / tw)
     return min(xs), min(ys), max(xs), min(max(ys), 0.0)  # não passa do chão
 
 
 def rig_hurtboxes(text):
     """{anim: {"len": duração (s), "box": PackedFloat32Array(u, x0, y0, x1, y1, ...)}} a cada 1/30 de u."""
     bones, anims = parse_scene(text)
+    parts = parse_parts(text)
+    rest = pose_at(bones, {"length": 1.0, "tracks": {}}, 0.0)
     out = {}
     for an in HURT_ANIMS:
         if an not in anims:
@@ -462,7 +546,7 @@ def rig_hurtboxes(text):
         n = int(round(1.0 / HURT_STEP))
         for i in range(n + 1):
             u = i / n
-            x0, y0, x1, y1 = body_box(bones, pose_at(bones, anims[an], u))
+            x0, y0, x1, y1 = body_box(bones, pose_at(bones, anims[an], u), parts, rest)
             box += [round(u, 4), round(x0, 1), round(y0, 1), round(x1, 1), round(y1, 1)]
         out[an] = {"len": round(anims[an]["length"], 4), "box": box}
     return out
@@ -495,14 +579,18 @@ def main():
                     late.append("%s/%s %s=%.3f %s=%.3f" % (fp.stem, an, k0, d[k0], k1, d[k1]))
         late += gameplay_check(fp.stem, hb) + special_check(fp.stem, hb) + projectile_check(fp.stem, hb, fp.parent == RIGS) + crate_check(fp.stem, hb)
         if not only_check:
-            hurt = rig_hurtboxes(text) if fp.parent != RIGS else None  # hurtbox animada: inimigos
-            fp.write_text(write_meta(text, hb, hurt), encoding="utf-8")
+            fp.write_text(write_meta(text, hb, rig_hurtboxes(text)), encoding="utf-8")  # hurtbox animada: todos
         summary = "  ".join("%s:%s %.2f-%.2f" % (an, d["bone"].replace("arm_", "").replace("_lo", ""), d["on"], d["off"])
                             for an, d in hb.items())
         print("%-28s %s" % (fp.relative_to(ROOT), summary))
     players_hb = {fp.stem: rig_hitboxes(fp.read_text(encoding="utf-8")) for fp in sorted(RIGS.glob("*.tscn"))}
+    enemy_hb, enemy_hurt = {}, {}
     for fp in sorted((RIGS / "enemies").glob("*.tscn")):
-        late += enemy_hurt_check(players_hb, fp.stem, rig_hurtboxes(fp.read_text(encoding="utf-8")))
+        text = fp.read_text(encoding="utf-8")
+        enemy_hb[fp.stem], enemy_hurt[fp.stem] = rig_hitboxes(text), rig_hurtboxes(text)
+        late += enemy_hurt_check(players_hb, fp.stem, enemy_hurt[fp.stem])
+    players_hurt = {fp.stem: rig_hurtboxes(fp.read_text(encoding="utf-8")) for fp in sorted(RIGS.glob("*.tscn"))}
+    late += player_hurt_check(enemy_hb, players_hurt, enemy_hurt)
     print("%d rigs. Problemas (janela fora da linha do tempo do jogo ou golpe que não acerta mais): %d" % (len(files), len(late)))
     for s in late:
         print("  ", s)

@@ -66,6 +66,7 @@ func apply_character(c: Dictionary) -> void:
 	move_speed = Vector2(230, 140) * float(c.speed)
 	special_def = c.get("special", {})
 	attach_rig("res://rigs/%s.tscn" % rig_slug(c.name))
+	anim_hurtbox = not hurtboxes.is_empty()  # hurtbox do corpo quadro a quadro
 	voice_id = rig_slug(c.name)
 	queue_redraw()
 

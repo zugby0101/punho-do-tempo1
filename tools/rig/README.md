@@ -245,17 +245,24 @@ do lutador encosta nela (antes: ±30 px do centro e só com o lutador a até 10 
 — de uma caixa quebrada ou no meio da fase — ela salta 34 px para fora (0,35 s), junto com as tábuas,
 e a área acompanha o salto. F3 mostra a área em azul-claro.
 
-**Inimigos.** Além dos golpes, os 65 rigs de inimigos têm hurtbox animada (`metadata/hurtboxes`, gravada
-pelo `hitboxes.py`): a caixa em volta dos ossos do corpo (membros com 5 px de espessura, cabeça com raio
-10) em cada 1/30 da animação de `idle`, `walk`, `hurt` e de cada golpe. No jogo (`fighter.gd` →
-`hurt_rect`), ela segue a animação que está na tela: encolhe na dor, cresce quando o braço ou o pé
-estica e sobe quando o ÉON flutua. O corpo real tem ~80 px de altura (a caixa fixa tinha 100).
+**Hurtbox animada (inimigos e jogadores).** Os 79 rigs têm `metadata/hurtboxes`, gravada pelo
+`hitboxes.py`: a caixa da **silhueta desenhada** (cada vértice das peças do corpo — cabelo e chapéu
+incluídos, capas e efeitos de fora — deformado pelos ossos como o Godot faz) a cada 1/30 de `idle`,
+`walk`, `hurt`, `jump`, `jumpkick`, `dive` e de cada golpe. No jogo (`fighter.gd` → `hurt_rect`), ela
+segue a animação que está na tela: encolhe na dor, cresce quando o braço ou o pé estica, encolhe no pulo
+e na voadora, deita no mergulho e sobe quando o ÉON flutua. Os corpos têm de 84 a 103 px de altura
+(a caixa fixa tinha 100), conforme o personagem e o penteado.
 
 - **Gancho:** no quadro de impacto o punho já passou do queixo, então a hitbox do `upper` cobre o
   caminho da ponta nos últimos 0,04 da animação (`SWEPT`). Sem isso, 733 combinações de
   inimigo × lutador × escala errariam o gancho.
+- **Quem flutua desce para golpear** (`strike_drop`): o ÉON paira 16 px (× 1,6) acima do chão; nos
+  golpes ele desce até o chão na preparação, fica no chão na janela de acerto e volta a flutuar na
+  recuperação — o desenho e as caixas usam o mesmo valor. Sem isso, o jab, o giro e as orbes passavam
+  acima da cabeça de todos os lutadores (37 falhas no `--check`).
 - **IA:** o inimigo só solta um golpe que alcançaria o alvo de verdade (`would_hit`: a hitbox da animação
   em 3 quadros da janela de acerto, mais o avanço do lunge, contra a hurtbox do alvo). Antes: 70 px de
   distância e alvo a menos de 40 px do chão.
 - O `--check` confere que jab, cross, gancho, chute, voadora e golpe armado de cada lutador acertam
-  cada inimigo parado, nas escalas 1,0, 1,3 e 1,6.
+  cada inimigo parado (escalas 1,0, 1,3 e 1,6), e que os golpes normais de cada inimigo — no tamanho do
+  tipo dele, lidos de `enemy.gd` — e as orbes do ÉON acertam cada lutador parado.

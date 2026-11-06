@@ -73,7 +73,8 @@ var power := 1.0
 # a janela de contato e a posição da ponta que acerta (punho, pé ou arma) quadro a quadro.
 var hitboxes: Dictionary = {}
 var hurtboxes: Dictionary = {}   # metadata/hurtboxes: caixa do corpo quadro a quadro (inimigos)
-var anim_hurtbox := false        # usa a hurtbox animada (inimigos) em vez da caixa fixa
+var anim_hurtbox := false        # usa a hurtbox animada em vez da caixa fixa
+var hover_px := 0.0              # quanto o rig flutua no idle (ÉON); desce isso para golpear
 static var use_anim_hitboxes := true
 static var show_hitboxes := false  # F3 mostra hitboxes (vermelho) e hurtboxes (verde)
 const HURT_H := 100.0   # altura da hurtbox do corpo (px, escala 1)
@@ -354,14 +355,15 @@ func hitbox_at(atk: Dictionary, an: String, u: float) -> Dictionary:
 	# alcance: o "reach" do golpe (equilíbrio do jogo) acompanhando o quanto a ponta está esticada agora
 	var ext := clampf(tip.x / peak, 0.2, 1.15)
 	var far := float(atk.reach) * ext * s
-	var tip_h := height - tip.y * s
+	var base_h := height - strike_drop(an, u)  # quem flutua desce para golpear
+	var tip_h := base_h - tip.y * s
 	var lo_h := tip_h
 	var hi_h := tip_h
 	if an in SWEPT:
 		# o punho sobe tão rápido que no quadro de impacto já passou do queixo: vale o caminho até ali
 		var prev := _hb_point(d.pts, 3, maxf(u - SWEEP_U, 0.0))
-		lo_h = minf(lo_h, height - prev.y * s)
-		hi_h = maxf(hi_h, height - prev.y * s)
+		lo_h = minf(lo_h, base_h - prev.y * s)
+		hi_h = maxf(hi_h, base_h - prev.y * s)
 	# golpes giratórios (radial, ou o lutador vira de um lado para o outro): acerta dos dois lados
 	var both: bool = atk.get("radial", false) or atk.get("spin", false)
 	return {"x0": -far if both else -15.0, "x1": far, "h0": lo_h - r * s, "h1": hi_h + r * s,
@@ -407,7 +409,26 @@ func release_point(an: String, fallback: Vector2) -> Vector2:
 		return Vector2(fallback.x * body_scale, height + fallback.y * body_scale)
 	var d: Dictionary = hitboxes[an]
 	var p := _hb_point(d.pts, 3, float(d.on))
-	return Vector2(p.x * body_scale, height - p.y * body_scale)
+	return Vector2(p.x * body_scale, height - strike_drop(an, float(d.on)) - p.y * body_scale)
+
+
+## Quem flutua (ÉON: pés acima do chão no idle) desce até o chão para golpear: acompanha a preparação
+## (u 0 -> 0,30), fica no chão na janela de acerto e volta a flutuar na recuperação. O desenho do rig e as
+## caixas usam o mesmo valor, então o soco aparece e acerta na mesma altura.
+func strike_drop(an: String, u: float) -> float:
+	if hover_px <= 1.0 or u < 0.0 or not hitboxes.has(an):
+		return 0.0
+	var k := 1.0
+	if u < 0.30:
+		k = u / 0.30
+	elif u > 0.42:
+		k = 1.0 - (u - 0.42) / 0.58
+	return hover_px * body_scale * clampf(k, 0.0, 1.0)
+
+
+## Descida deste quadro (só durante golpes).
+func strike_drop_now(ra: Array) -> float:
+	return strike_drop(ra[0], ra[1]) if state == "attack" else 0.0
 
 
 ## A faixa de altura [h0, h1] (acima do chão) de um projétil cruza a hurtbox do alvo?
@@ -454,7 +475,17 @@ func hurt_rect() -> Rect2:
 	var df := draw_facing()
 	var x0: float = v[0] * s * df
 	var x1: float = v[2] * s * df
-	return Rect2(minf(x0, x1), v[1] * s - height, absf(x1 - x0), (v[3] - v[1]) * s)
+	var drop := strike_drop_now(ra)
+	var r := Rect2(minf(x0, x1), v[1] * s - height + drop, absf(x1 - x0), (v[3] - v[1]) * s)
+	var rot := body_rot() * df
+	if rot != 0.0:
+		# corpo deitado (mergulho): gira a caixa em volta dos pés, como o desenho
+		var base := Vector2(0.0, -height)
+		var g := Rect2(base + (r.position - base).rotated(rot), Vector2.ZERO)
+		for c in [Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]:
+			g = g.expand(base + (c - base).rotated(rot))
+		r = g
+	return r
 
 
 ## O golpe `atk` alcançaria `tg` agora? Confere a hitbox em alguns quadros da janela de contato
@@ -588,6 +619,7 @@ func _draw() -> void:
 		rot = DIVE_ROT
 	if use_rig:
 		var ra: Array = [net_rig_anim, net_rig_u] if net else rig_anim()
+		off.y += strike_drop_now(ra)
 		_sync_rig(off, rot * df, Vector2(df * s, s), ra[0], ra[1], net_phase if net else _attack_phase())
 		return
 	draw_set_transform(off, rot * df, Vector2(df * s, s))
@@ -724,6 +756,9 @@ func attach_rig(path: String) -> void:
 		strike_points = rig_tree.get_meta("strike_points", {})
 	hitboxes = rig.get_meta("hitboxes", {})
 	hurtboxes = rig.get_meta("hurtboxes", {})
+	hover_px = 0.0
+	if hurtboxes.has("idle"):
+		hover_px = maxf(0.0, -float(hurtboxes.idle.box[4]))  # pés acima do chão no primeiro quadro do idle
 
 
 ## Dirige o AnimationTree: escolhe o estado da máquina, a posição nos BlendSpaces e a fase.
