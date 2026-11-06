@@ -1195,7 +1195,9 @@ func player_died(p) -> void:
 		p.state_time = -999.0
 		p.out = true
 		sfx.play("ko", 0.0)
-		if active_players().is_empty():
+		# Só acaba quando todos estão fora: quem ainda tem vidas pode estar caído com 0 de vida,
+		# esperando renascer (active_players() não conta esse jogador)
+		if players.all(func(q): return q.out):
 			if survival:
 				for pl in players:
 					Ach.best(pl, "score", pl.score)
