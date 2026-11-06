@@ -318,7 +318,7 @@ func _eon_ai(delta: float, target, dx: float) -> bool:
 
 func _eon_time_warp() -> void:
 	game.hitstop = 0.6
-	game.shake(14.0)
+	game.shake(14.0, Vector2.ZERO, self)
 	game.sfx.play("warp", 0.0)
 	game.sfx.voice(self, "laugh", 1.0, 0.0)
 	game.popup("ÉON DOBRA O TEMPO!", position + Vector2(0, -170.0), Color(1, 0.85, 0.4))

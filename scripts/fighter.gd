@@ -241,7 +241,8 @@ func _physics_process(delta: float) -> void:
 					vz = 230.0
 					height = 0.1
 					vel.x *= 0.5
-					game.shake(5.0, Vector2(0, 0.5))
+					game.shake(5.0, Vector2(0, 0.5), self)
+					game.bump(2.0 * body_scale * body_scale)  # corpo grande caindo pesa mais
 					if is_in_group("players"):
 						game.rumble(self, 0.4, 0.5, 0.15)
 					game.sfx.play("thud")

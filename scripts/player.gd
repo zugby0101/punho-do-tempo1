@@ -342,7 +342,7 @@ func _process_special(delta: float) -> void:
 				for d in [1, -1]:
 					var wv = game.spawn_energy(self, "wave", d, sp)
 					wv.position.x = position.x + facing * rp.x
-				game.shake(8.0, Vector2(0, 0.6))
+				game.shake(8.0, Vector2(0, 0.6), self)
 				game.rumble(self, 0.5, 0.75, 0.25)
 				game.sfx.play("quake", 0.03)
 			if t >= 0.65:
@@ -401,7 +401,7 @@ func _on_land() -> void:
 			attack.phase = 1.0
 			hit_list.clear()
 			_check_hits(_targets())
-			game.shake(10.0, Vector2(0, 0.8))
+			game.shake(10.0, Vector2(0, 0.8), self)
 			game.rumble(self, 0.6, 0.9, 0.22)
 			game.sfx.play("i_slam", 0.03, game.sfx.body_pitch(body_scale))
 			for k in 6:
