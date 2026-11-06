@@ -53,6 +53,47 @@ static func player_combo(w: Dictionary) -> Array:
 	]
 
 
+## Tamanho do desenho de cada formato, a partir da mão (o mesmo de draw()):
+## x = quanto passa para trás da mão, y = até onde vai à frente, z = meia largura (perpendicular).
+static func extent(w: Dictionary) -> Vector3:
+	var L: float = w.len
+	match w.get("shape", ""):
+		"sword", "katana", "knife", "energy":
+			return Vector3(6.0, L, 5.0)
+		"club", "bat":
+			return Vector3(6.0, L + 5.5, 5.5)
+		"mace":
+			return Vector3(6.0, L + 9.0, 9.0)
+		"staff":
+			return Vector3(L * 0.9, L, 2.0)
+		"energystaff":
+			return Vector3(L * 0.9 + 6.0, L + 6.0, 6.0)
+		"spear":
+			return Vector3(20.0, L + 12.0, 5.0)
+		"oar":
+			return Vector3(14.0, L + 18.0, 7.0)
+		"wrench":
+			return Vector3(6.0, L + 7.0, 5.0)
+		"shovel":
+			return Vector3(8.0, L + 18.0, 7.0)
+		"pipe":
+			return Vector3(8.0, L, 4.0)
+		"scythe":
+			return Vector3(18.0, L, 24.0)
+	return Vector3(0.0, L, 2.0)
+
+
+## Caixa (alinhada aos eixos) que o desenho da arma ocupa, com a mão em `h` e no ângulo `angle`.
+static func bounds(w: Dictionary, h: Vector2, angle: float) -> Rect2:
+	var e := extent(w)
+	var d := Vector2(cos(angle), sin(angle))
+	var n := Vector2(-d.y, d.x)
+	var r := Rect2(h - d * e.x, Vector2.ZERO)
+	for p in [h - d * e.x + n * e.z, h - d * e.x - n * e.z, h + d * e.y + n * e.z, h + d * e.y - n * e.z]:
+		r = r.expand(p)
+	return r
+
+
 ## Desenha a arma a partir da mão `h`, apontando no ângulo `angle` (0 = para frente).
 static func draw(ci: CanvasItem, w: Dictionary, h: Vector2, angle: float, white := false) -> void:
 	var d := Vector2(cos(angle), sin(angle))

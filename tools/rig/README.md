@@ -225,3 +225,9 @@ O `--check` também simula cada especial (lido de `characters.gd`) no quadro em 
 O `--check` confere em todos os 79 rigs que o impacto da animação cai no começo da janela de acerto
 do jogo (u = 0,30) e simula os golpes do jogo (alcances e armas reais): cada um precisa ainda acertar
 um alvo parado a 90% do alcance em algum quadro da janela.
+
+**Armas no chão.** A área de pegar uma arma caída é exatamente o que está desenhado
+(`Weapons.extent` / `Weapons.bounds`: cabo, lâmina, pá do remo, ponta da lança, lâmina da foice...),
+deitada no chão ou girando enquanto quica. O lutador alcança do corpo até a mão da frente na guarda
+(primeiro quadro do `jab` do rig, `fighter.gd` → `grab_box`), da altura da mão até o chão: dá para
+pegar a arma ainda no ar quando ela passa na altura da mão. Entre várias, pega a mais próxima.

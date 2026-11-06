@@ -2,7 +2,8 @@ extends Node2D
 ## Visualização de depuração das hitboxes sincronizadas com a animação (F3 durante o jogo).
 ##  - verde: hurtbox do corpo (onde o lutador pode ser atingido);
 ##  - vermelho: hitbox do golpe neste quadro (faixa de alcance na altura da ponta que acerta);
-##  - círculo amarelo: a ponta (punho, pé ou arma) tirada da animação.
+##  - círculo amarelo: a ponta (punho, pé ou arma) tirada da animação;
+##  - contorno amarelo: alcance para pegar armas do chão (a arma tem a área dela, também amarela).
 ## Fica por cima do rig (último filho do lutador).
 
 var f  # lutador
@@ -16,6 +17,8 @@ func _process(_delta: float) -> void:
 
 func _draw() -> void:
 	draw_rect(f.hurtbox(), Color(0.2, 1, 0.3, 0.8), false, 1.0)
+	if f.is_in_group("players") and f.weapon.is_empty() and f.state in ["idle", "walk"]:
+		draw_rect(f.grab_box(), Color(1, 0.85, 0.2, 0.7), false, 1.0)  # alcance para pegar armas
 	if f.attack.is_empty():
 		return
 	var hb: Dictionary = f.hitbox_now()

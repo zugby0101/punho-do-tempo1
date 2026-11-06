@@ -1132,13 +1132,26 @@ func spawn_weapon_item(w: Dictionary, pos: Vector2, dir: int, h: float = 0.0) ->
 	it.height = maxf(h, 1.0)
 
 
+## Arma ao alcance da mão: a área de pegar do lutador (corpo + mão da guarda do rig) cruza o desenho
+## da arma — no chão ou ainda quicando, se ela estiver na altura da mão. Pega a mais próxima.
 func weapon_near(p):
+	var grab: Rect2 = p.grab_box()
+	var best = null
+	var best_d := INF
 	for it in get_tree().get_nodes_in_group("weapons"):
 		if it.is_queued_for_deletion() or not it.can_pick():
 			continue
-		if absf(it.position.x - p.position.x) < 38.0 and absf(it.position.y - p.position.y) < 20.0:
-			return it
-	return null
+		if absf(it.position.y - p.position.y) >= WeaponItemScript.PICK_DEPTH:
+			continue
+		var box: Rect2 = it.pick_box()
+		box.position += Vector2(it.position.x - p.position.x, 0.0)
+		if not grab.intersects(box, true):
+			continue
+		var dd := absf(box.get_center().x - grab.get_center().x)
+		if dd < best_d:
+			best_d = dd
+			best = it
+	return best
 
 
 ## rp = ponto de soltura (à frente dos pés, altura), tirado da animação de arremesso (fighter.release_point).
