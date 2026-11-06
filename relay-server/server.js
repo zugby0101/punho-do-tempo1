@@ -116,6 +116,7 @@ wss.on("connection", (ws) => {
 });
 
 function handleControl(ws, msg) {
+  if (!msg || typeof msg !== "object") return; // "null", números etc.: ignorados (antes derrubavam o servidor)
   if (ws.role) return; // cada conexão só cria ou entra uma vez
   if (msg.op === "host") {
     if (rooms.size >= MAX_ROOMS) return send(ws, { op: "error", msg: "Servidor cheio, tente mais tarde." });

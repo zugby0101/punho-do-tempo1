@@ -1,19 +1,13 @@
-"""Modelos definitivos dos 79 personagens: acabamento final de arte sobre as peças dos rigs.
+"""Detalhes do estilo de luta dos 14 lutadores, por cima do acabamento dos rigs.
 
-    python tools/rig/models.py            # aplica em rigs/**/*.tscn (pode rodar de novo: refaz do zero)
+    python tools/rig/models.py      # aplica em rigs/*.tscn (pode rodar de novo: refaz do zero)
 
-Sobre as peças geradas pelo Blender (Polygon2D com skinning no nó Parts), acrescenta:
-  * contorno em cada peça (um tom bem escuro da própria cor, ~1,3 px), desenhado logo atrás dela;
-  * sombreamento cel: o lado da peça longe da luz (luz vindo de cima e da frente) num tom mais escuro,
-    e um brilho estreito no lado iluminado;
-  * rosto: branco do olho, sobrancelha (franzida nos inimigos) e boca — robôs, visores e o ÉON mantêm
-    o rosto deles; ninjas mascarados ficam sem boca;
-  * detalhes do estilo de luta de cada um dos 14 lutadores (luvas, faixas, cordão, joelheiras, tatuagens,
-    mongkol...).
-
-As peças novas têm nomes com prefixo (ol_, sh_, hl_, fc_, dt_) e são refeitas a cada execução a partir das
-originais; cores trocadas guardam a original em metadata/base_color. Todas usam o skinning da peça de
-origem, então acompanham as animações. Depois, rode tools/rig/hitboxes.py (as hurtboxes usam a silhueta).
+O acabamento geral dos 79 (contorno, luz e sombra, rosto) vem do blender_rig.py (peças ol_* e dt_*).
+Este script só acrescenta, nos 14 lutadores, o que é do estilo de luta de cada um — luvas, faixas com
+pontas, cordão de capoeira, cinturão, joelheiras, mão enfaixada do dambe, pulseiras, tatuagens, mongkol e
+prajioud —, cada acessório com contorno e sombra próprios. As peças dele têm o prefixo est_ (as do
+Blender não são tocadas) e entram no fim do grupo da peça de origem (depois do contorno, da peça e dos
+detalhes dela), presas aos mesmos ossos. Rodar de novo não muda nada.
 """
 import math
 import re
@@ -21,21 +15,14 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import chars  # noqa: E402
 import hitboxes as H  # noqa: E402
-import looks  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 RIGS = ROOT / "rigs"
-GEN = ("ol_", "sh_", "hl_", "fc_", "dt_")
-LIGHT = (0.45, -0.89)           # de onde vem a luz (x para a frente, y para baixo): cima e frente
-OUTLINE = 1.3                   # px
-NO_OUTLINE = ("eye",)
-NO_FACE = ("robot", "visor", "eon")
-
-
-# ---------------------------------------------------------------------------
-# Cena: peças do nó Parts
+PRE = "est_"
+LIGHT = (0.45, -0.89)           # luz de cima e da frente (x para a frente, y para baixo)
+OUTLINE = 1.3
+NO_OUTLINE = ()
 
 
 def _f(x):
@@ -176,10 +163,6 @@ def lighter(c, k):
     return [c[0] + (1 - c[0]) * k, c[1] + (1 - c[1]) * k, c[2] + (1 - c[2]) * k, c[3]]
 
 
-# ---------------------------------------------------------------------------
-# Acabamento: contorno, sombra e brilho de uma peça
-
-
 def finish(it, outline=True):
     """[texto do contorno, (a peça vem depois), sombra, brilho] desta peça."""
     vs, c = it["verts"], it["color"]
@@ -189,7 +172,7 @@ def finish(it, outline=True):
     single = len(it["weights"]) == 1
     if outline and it["name"] not in NO_OUTLINE and abs(area(vs)) >= 6.0:
         oc = [c[0] * 0.22 + 0.02, c[1] * 0.22 + 0.02, c[2] * 0.22 + 0.04, c[3]]
-        before.append(part_node(it, oc, offset(vs, OUTLINE), "ol_" + it["name"]))
+        before.append(part_node(it, oc, offset(vs, OUTLINE), PRE + "ol_" + it["name"]))
     if single and abs(area(vs)) >= 10.0:
         cx, cy = centroid(vs)
         lx, ly = LIGHT
@@ -198,15 +181,11 @@ def finish(it, outline=True):
         bone = it["weights"][0][0]
         shade = clip(vs, -lx, -ly, -(lx * cx + ly * cy) + 0.12 * R)   # lado longe da luz
         if len(shade) >= 3 and abs(area(shade)) > 1.0:
-            after.append(poly_node("sh_" + it["name"], darker(c, 0.72, 0.03), shade, bone))
+            after.append(poly_node(PRE + "sh_" + it["name"], darker(c, 0.72, 0.03), shade, bone))
         hi = clip(vs, lx, ly, lx * cx + ly * cy + 0.62 * R)              # brilho no lado da luz
         if len(hi) >= 3 and abs(area(hi)) > 0.6:
-            after.append(poly_node("hl_" + it["name"], lighter(c, 0.22), hi, bone))
+            after.append(poly_node(PRE + "hl_" + it["name"], lighter(c, 0.22), hi, bone))
     return before, after
-
-
-# ---------------------------------------------------------------------------
-# Rosto e detalhes de estilo
 
 
 def bone_path(it_by_name, bone):
@@ -224,41 +203,16 @@ def bbox(vs):
     return min(xs), min(ys), max(xs), max(ys)
 
 
-def face_parts(by, enemy, hat):
-    """Branco do olho (antes do olho), sobrancelha e boca (depois do olho)."""
-    if hat in NO_FACE or "eye" not in by:
-        return [], []
-    eye, face = by["eye"], by.get("face")
-    head = bone_path(by, "head")
-    x0, y0, x1, y1 = bbox(eye["verts"])
-    skin = face["color"] if face else [0.9, 0.7, 0.55, 1]
-    before = [poly_node("fc_white", [0.97, 0.96, 0.92, 1], [(x0 - 1.2, y0 - 0.6), (x1 + 0.6, y0 - 0.6), (x1 + 0.6, y1 + 0.6), (x0 - 1.2, y1 + 0.6)], head)]
-    after = []
-    if hat != "luchamask":
-        brow = [0.08, 0.06, 0.05, 1]
-        if enemy:   # franzida: a ponta da frente desce
-            pts = quad((x0 - 1.8, y0 - 3.3), (x1 + 1.2, y0 - 1.6), 1.3)
-        else:       # determinada
-            pts = quad((x0 - 1.8, y0 - 2.9), (x1 + 1.2, y0 - 2.4), 1.2)
-        after.append(poly_node("fc_brow", brow, pts, head))
-    if hat != "ninja":
-        lip = darker(skin, 0.42)
-        my = y1 + 4.4
-        after.append(poly_node("fc_mouth", lip, quad((x0 - 0.2, my + (0.4 if enemy else 0.0)), (x1 + 1.8, my), 1.0), head))
-    return before, after
-
-
 # Detalhes de estilo dos 14 lutadores: (peça depois da qual entra, função) e trocas de cor
 GLOVE = {"valentina": [0.82, 0.08, 0.1, 1], "luca": [0.12, 0.3, 0.85, 1], "amelie": [0.12, 0.14, 0.38, 1], "kirra": [0.8, 0.06, 0.08, 1]}
 BELT = {"kai": [0.06, 0.06, 0.07, 1], "mei": [0.82, 0.1, 0.1, 1], "oksana": [0.85, 0.1, 0.12, 1], "dmitri": [0.8, 0.1, 0.1, 1],
         "mateus": [0.95, 0.82, 0.1, 1], "itzel": [0.95, 0.75, 0.2, 1]}
 BELT_TAILS = ("kai", "mei", "oksana", "mateus")
-SLEEVES = ("kai", "mei", "dmitri")   # jaqueta/kimono: o braço de cima com a cor do tronco
 
 
 def style_details(slug, by, bones, rest):
-    """{nome da peça: [nós novos depois dela]} e {nome da peça: cor nova}."""
-    add, recolor = {}, {}
+    """{nome da peça: [(nome, cor, polígono, osso), ...]}: acessórios que entram no fim do grupo da peça."""
+    add = {}
     if slug in GLOVE:
         for side in ("b", "f"):
             h = by.get("hand_" + side)
@@ -267,119 +221,103 @@ def style_details(slug, by, bones, rest):
                 r = max(math.hypot(x - cx, y - cy) for x, y in h["verts"])
                 g = GLOVE[slug] if side == "f" else darker(GLOVE[slug], 0.85)
                 path = h["weights"][0][0]
-                add.setdefault("hand_" + side, []).append(("dt_glove_" + side, g, circle(cx + 0.6, cy, r * 1.45), path))
+                add.setdefault("hand_" + side, []).append((PRE + "glove_" + side, g, circle(cx + 0.6, cy, r * 1.45), path))
                 # punho branco da luva
-                add["hand_" + side].append(("dt_cuff_" + side, [0.95, 0.95, 0.92, 1],
+                add["hand_" + side].append((PRE + "cuff_" + side, [0.95, 0.95, 0.92, 1],
                                             band_across("arm_%s_lo" % side, rest, bones, 0.78, 7.5, 2.4), bone_path(by, "arm_%s_lo" % side)))
     if slug in BELT and "belt" in by:
-        recolor["belt"] = BELT[slug]
         x0, y0, x1, y1 = bbox(by["belt"]["verts"])
         pel = bone_path(by, "pelvis")
+        # faixa por cima do cinto (cobre a fivela: faixa de quimono/sambo não tem fivela)
+        add.setdefault("belt", []).append((PRE + "belt", BELT[slug], by["belt"]["verts"], pel))
         if slug in BELT_TAILS:
-            tails = [("dt_tail_1", quad((x1 - 3, y1), (x1 - 1, y1 + 9), 2.2)), ("dt_tail_2", quad((x1 - 5, y1), (x1 - 6, y1 + 8), 2.0))]
+            tails = [(PRE + "tail_1", quad((x1 - 3, y1), (x1 - 1, y1 + 9), 2.2)), (PRE + "tail_2", quad((x1 - 5, y1), (x1 - 6, y1 + 8), 2.0))]
             for nm, pts in tails:
                 add.setdefault("belt", []).append((nm, BELT[slug], pts, pel))
         if slug == "mateus":   # cordão da capoeira: duas cores trançadas
-            add.setdefault("belt", []).append(("dt_cord", [0.15, 0.6, 0.2, 1], quad((x0, (y0 + y1) / 2), (x1, (y0 + y1) / 2), 1.0), pel))
+            add.setdefault("belt", []).append((PRE + "cord", [0.15, 0.6, 0.2, 1], quad((x0, (y0 + y1) / 2), (x1, (y0 + y1) / 2), 1.0), pel))
         if slug == "itzel":    # cinturão de campeã: placa dourada na frente
             cx = (x0 + x1) / 2 + 3
-            add.setdefault("belt", []).append(("dt_plate", [1.0, 0.86, 0.3, 1], circle(cx, (y0 + y1) / 2, 4.2, 10), pel))
-    if slug in SLEEVES and "torso" in by:
-        for side in ("b", "f"):
-            if "arm_%s_up" % side in by:
-                recolor["arm_%s_up" % side] = by["torso"]["color"] if side == "f" else darker(by["torso"]["color"], 0.9)
+            add.setdefault("belt", []).append((PRE + "plate", [1.0, 0.86, 0.3, 1], circle(cx, (y0 + y1) / 2, 4.2, 10), pel))
     if slug == "jake":         # joelheiras
         for side in ("b", "f"):
-            add.setdefault("leg_%s_lo" % side, []).append(("dt_knee_" + side, [0.1, 0.1, 0.12, 1],
+            add.setdefault("leg_%s_lo" % side, []).append((PRE + "knee_" + side, [0.1, 0.1, 0.12, 1],
                                                           band_across("leg_%s_lo" % side, rest, bones, 0.12, 9.5, 6.0), bone_path(by, "leg_%s_lo" % side)))
     if slug == "kofi":         # dambe: a mão da frente enfaixada (a "lança")
         h = by.get("hand_f")
         if h:
             cx, cy = centroid(h["verts"])
             r = max(math.hypot(x - cx, y - cy) for x, y in h["verts"])
-            add.setdefault("hand_f", []).append(("dt_wrap_h", [0.93, 0.9, 0.82, 1], circle(cx, cy, r * 1.15), h["weights"][0][0]))
+            add.setdefault("hand_f", []).append((PRE + "wrap_h", [0.93, 0.9, 0.82, 1], circle(cx, cy, r * 1.15), h["weights"][0][0]))
             for k, t in enumerate((0.45, 0.65, 0.85)):
-                add["hand_f"].append(("dt_wrap_%d" % k, [0.93, 0.9, 0.82, 1], band_across("arm_f_lo", rest, bones, t, 8.0, 2.2), bone_path(by, "arm_f_lo")))
+                add["hand_f"].append((PRE + "wrap_%d" % k, [0.93, 0.9, 0.82, 1], band_across("arm_f_lo", rest, bones, t, 8.0, 2.2), bone_path(by, "arm_f_lo")))
     if slug == "amara":        # pulseiras de contas
         for side in ("b", "f"):
-            add.setdefault("hand_" + side, []).append(("dt_beads_" + side, [0.95, 0.55, 0.1, 1],
+            add.setdefault("hand_" + side, []).append((PRE + "beads_" + side, [0.95, 0.55, 0.1, 1],
                                                        band_across("arm_%s_lo" % side, rest, bones, 0.8, 8.0, 2.6), bone_path(by, "arm_%s_lo" % side)))
     if slug == "tama":         # tatuagens (faixas) nos braços e coxas
         for side in ("b", "f"):
             for limb, ts in (("arm_%s_up" % side, (0.35, 0.6)), ("arm_%s_lo" % side, (0.3,)), ("leg_%s_up" % side, (0.45, 0.65))):
                 if limb in by:
                     for k, t in enumerate(ts):
-                        add.setdefault(limb, []).append(("dt_tattoo_%s_%d" % (limb, k), [0.12, 0.09, 0.09, 1],
+                        add.setdefault(limb, []).append((PRE + "tattoo_%s_%d" % (limb, k), [0.12, 0.09, 0.09, 1],
                                                          band_across(limb, rest, bones, t, 9.0, 1.4), bone_path(by, limb)))
     if slug == "kirra":        # prajioud no braço e mongkol na cabeça
         for side in ("b", "f"):
             limb = "arm_%s_up" % side
             if limb in by:
-                add.setdefault(limb, []).append(("dt_praj_" + side, [0.85, 0.1, 0.12, 1], band_across(limb, rest, bones, 0.3, 9.5, 3.0), bone_path(by, limb)))
+                add.setdefault(limb, []).append((PRE + "praj_" + side, [0.85, 0.1, 0.12, 1], band_across(limb, rest, bones, 0.3, 9.5, 3.0), bone_path(by, limb)))
         if "face" in by:
             x0, y0, x1, y1 = bbox(by["face"]["verts"])
             hy = y0 + 2.5
-            add.setdefault("face", []).append(("dt_mongkol", [0.96, 0.94, 0.88, 1], quad((x0 - 1.5, hy + 1.5), (x1 + 0.8, hy - 0.5), 2.6), bone_path(by, "head")))
-            add["face"].append(("dt_mongkol_r", [0.85, 0.1, 0.12, 1], quad((x0 - 1.5, hy + 1.5), (x1 + 0.8, hy - 0.5), 0.9), bone_path(by, "head")))
-    return add, recolor
+            add.setdefault("face", []).append((PRE + "mongkol", [0.96, 0.94, 0.88, 1], quad((x0 - 1.5, hy + 1.5), (x1 + 0.8, hy - 0.5), 2.6), bone_path(by, "head")))
+            add["face"].append((PRE + "mongkol_r", [0.85, 0.1, 0.12, 1], quad((x0 - 1.5, hy + 1.5), (x1 + 0.8, hy - 0.5), 0.9), bone_path(by, "head")))
+    return add
 
 
-# ---------------------------------------------------------------------------
+
+FIGHTERS = ("mateus", "valentina", "jake", "itzel", "dmitri", "oksana", "luca", "amelie", "kai", "mei", "kofi", "amara", "tama", "kirra")
+THIN = ("tattoo", "cord", "mongkol_r", "wrap_", "cuff", "praj", "beads")
 
 
-def info():
-    """{slug: (é inimigo, chapéu)} dos 79."""
-    out = {}
-    for c in chars.load_characters():
-        out[chars.slug(c["name"])] = (False, c["hat"])
-    for c in looks.enemy_rigs():
-        out[c["slug"]] = (True, c["hat"])
-    return out
-
-
-def build(text, slug, enemy, hat):
+def build(text, slug):
     start, end, head, items = parse(text)
     bones, _anims = H.parse_scene(text)
     rest = H.pose_at(bones, {"length": 1.0, "tracks": {}}, 0.0)
-    base = [it for it in items if not it["name"].startswith(GEN)]
-    by = {it["name"]: it for it in base if it["type"] == "Polygon2D"}
-    add, recolor = style_details(slug, by, bones, rest)
-    f_before, f_after = face_parts(by, enemy, hat)
+    items = [it for it in items if not it["name"].startswith(PRE)]
+    by = {it["name"]: it for it in items if it["type"] == "Polygon2D" and not it["name"].startswith(("ol_", "dt_"))}
+    add = style_details(slug, by, bones, rest)
     out = [head]
-    for it in base:
-        if it["type"] != "Polygon2D":
-            out.append(it["raw"])
-            continue
-        orig = list(it["color"])
-        if it["name"] in recolor:
-            it = dict(it, color=recolor[it["name"]])
-        before, after = finish(it)
-        out += before
-        if it["name"] == "eye":
-            out += f_before
-        node = part_node(it) if it["name"] not in recolor else part_node(it) + "\nmetadata/base_color = Color(%s)" % ", ".join(_fc(c) for c in orig)
-        out.append(node)
-        out += after
-        if it["name"] == "eye":
-            out += f_after
-        for nm, col, pts, path in add.get(it["name"], []):
-            # acessório também ganha contorno e sombra (menos as faixas finas)
+    pending = []
+
+    def flush():
+        for nm, col, pts, path in pending:
             acc = {"name": nm, "color": col, "verts": pts, "weights": [(path, [1.0] * len(pts))]}
-            thin = nm.startswith(("dt_tattoo", "dt_cord", "dt_mongkol_r", "dt_wrap_", "dt_cuff"))
+            thin = nm[len(PRE):].startswith(THIN)
             b2, a2 = finish(acc, outline=not thin)
-            out += b2
+            out.extend(b2)
             out.append(poly_node(nm, col, pts, path))
-            out += a2
+            out.extend(a2)
+        pending.clear()
+
+    for it in items:
+        # um grupo do acabamento começa no contorno (ol_*) ou no encaixe da arma: fecha o grupo anterior
+        if it["name"].startswith("ol_") or it["type"] != "Polygon2D":
+            flush()
+        out.append(it["raw"])
+        pending.extend(add.get(it["name"], []))
+    flush()
     return text[:start] + "\n\n".join(out) + "\n\n" + text[end:]
 
 
 def main():
-    inf = info()
-    files = sorted(RIGS.glob("*.tscn")) + sorted((RIGS / "enemies").glob("*.tscn"))
-    for fp in files:
-        enemy, hat = inf.get(fp.stem, (fp.parent != RIGS, "none"))
-        fp.write_text(build(fp.read_text(encoding="utf-8"), fp.stem, enemy, hat), encoding="utf-8")
-    print("%d modelos acabados" % len(files))
+    n = 0
+    for slug in FIGHTERS:
+        fp = RIGS / ("%s.tscn" % slug)
+        if fp.exists():
+            fp.write_text(build(fp.read_text(encoding="utf-8"), slug), encoding="utf-8")
+            n += 1
+    print("detalhes de estilo em %d lutadores" % n)
 
 
 if __name__ == "__main__":

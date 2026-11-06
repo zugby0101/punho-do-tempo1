@@ -934,8 +934,9 @@ func _phase_u(p: float) -> float:
 	return 0.42 + 0.58 * (1.0 - p)
 
 
-## Peças de acabamento do modelo definitivo (tools/rig/models.py): contorno, sombra, brilho, rosto, detalhes.
-const DETAIL_PREFIX := ["ol_", "sh_", "hl_", "fc_", "dt_"]
+## Peças de acabamento do modelo definitivo: contorno e detalhes do blender_rig.py (ol_, dt_) e detalhes de
+## estilo dos lutadores (tools/rig/models.py, est_). No rig simples (V no título) ficam escondidas.
+const DETAIL_PREFIX := ["ol_", "dt_", "est_"]
 
 
 func _apply_model_detail() -> void:

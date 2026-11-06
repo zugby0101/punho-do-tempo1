@@ -95,8 +95,8 @@ func _process(delta: float) -> void:
 		t += delta
 		queue_redraw()
 		return
-	if game != null and game.is_frozen() and game.mode != "play":
-		return
+	if game != null and game.is_frozen():
+		return  # pausa, hitstop e telas sem jogo: a arma para junto com o resto (não some nem machuca)
 	t += delta
 	life -= delta
 	if life <= 0.0:

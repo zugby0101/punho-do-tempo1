@@ -67,6 +67,8 @@ func _process(delta: float) -> void:
 	flash = maxf(0.0, flash - delta)
 	wobble = maxf(0.0, wobble - delta)
 	var host: bool = game != null and not game.net_client
+	if host and game.is_frozen():
+		return  # pausa / hitstop: as tábuas não voam (nem machucam) com o jogo parado
 	if hp <= 0:
 		# também no convidado online: o hp chega do anfitrião e a quebra anima aqui
 		break_t = maxf(break_t, 0.0) + delta

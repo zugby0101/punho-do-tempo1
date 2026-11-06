@@ -7,7 +7,7 @@ Etapas:
   1. blender_rig.py  — monta armatures, IK, peças e animações; salva art/rigs/punho_rigs.blend,
                        art/rigs/json/*.json e art/rigs/preview.png
   2. rig_to_godot.py — gera rigs/*.tscn (Skeleton2D + Polygon2D + AnimationPlayer) e confere a cinemática
-  3. models.py       — acabamento final (contorno, sombreado, rosto, detalhes de estilo dos lutadores)
+  3. models.py       — detalhes do estilo de luta dos 14 lutadores (luvas, faixas, cordão, tatuagens...)
   4. hitboxes.py     — grava em cada cena as hitboxes sincronizadas com as animações (metadata/hitboxes)
 """
 import sys

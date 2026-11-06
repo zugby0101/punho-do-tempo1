@@ -70,6 +70,15 @@ def darken(c, amt):
     return (c[0] * (1 - amt), c[1] * (1 - amt), c[2] * (1 - amt), c[3])
 
 
+def lighten(c, amt):
+    return (c[0] + (1 - c[0]) * amt, c[1] + (1 - c[1]) * amt, c[2] + (1 - c[2]) * amt, c[3])
+
+
+def ink(c):
+    """Cor do contorno de uma peça: a cor dela bem escura (contorno colorido, não preto chapado)."""
+    return (c[0] * 0.28 + 0.03, c[1] * 0.26 + 0.025, c[2] * 0.3 + 0.04, 1.0)
+
+
 # ---------------------------------------------------------------------------
 # Geometria das peças (coordenadas do jogo, pose de repouso)
 
@@ -104,6 +113,52 @@ def capsule(a, b, w, n=6):
 
 def line(a, b, w):
     return capsule(a, b, w, 3)
+
+
+def ellipse(cx, cy, rx, ry, n=14):
+    return [(cx + math.cos(i * 2 * math.pi / n) * rx, cy + math.sin(i * 2 * math.pi / n) * ry) for i in range(n)]
+
+
+def offset_poly(poly, d, miter=2.5):
+    """Polígono expandido `d` px para fora (contorno), mantendo o número de vértices
+    (assim os pesos por vértice da capa continuam valendo)."""
+    n = len(poly)
+    area = sum(poly[i][0] * poly[(i + 1) % n][1] - poly[(i + 1) % n][0] * poly[i][1] for i in range(n))
+    sgn = 1.0 if area > 0 else -1.0  # normal para fora conforme o sentido do polígono
+
+    def edge_normal(i, step):
+        a = poly[i]
+        for k in range(1, n):  # pula vértices repetidos
+            b = poly[(i + step * k) % n]
+            dx, dy = (b[0] - a[0]) * step, (b[1] - a[1]) * step
+            ln = math.hypot(dx, dy)
+            if ln > 1e-6:
+                return (dy / ln * sgn, -dx / ln * sgn)
+        return (0.0, 0.0)
+
+    out = []
+    for i in range(n):
+        n1, n2 = edge_normal(i, -1), edge_normal(i, 1)
+        bx, by = n1[0] + n2[0], n1[1] + n2[1]
+        bl = math.hypot(bx, by)
+        if bl < 1e-6:
+            bx, by, bl = n2[0], n2[1], 1.0
+        bx, by = bx / bl, by / bl
+        cos_h = max(bx * n2[0] + by * n2[1], 1.0 / miter)
+        out.append((poly[i][0] + bx * d / cos_h, poly[i][1] + by * d / cos_h))
+    return out
+
+
+def limb_shine(a, b, w, side=1.0):
+    """Reflexo de luz ao longo de um membro: faixa fina do lado da frente/de cima, sem tocar as pontas."""
+    ang = math.atan2(b[1] - a[1], b[0] - a[0])
+    px, py = -math.sin(ang), math.cos(ang)
+    if px * side < 0 or (abs(px) < 1e-3 and py > 0):
+        px, py = -px, -py  # o lado que aponta para a frente (x+), de onde vem a luz
+    o = w * 0.2
+    a2 = (a[0] + (b[0] - a[0]) * 0.18 + px * o, a[1] + (b[1] - a[1]) * 0.18 + py * o)
+    b2 = (a[0] + (b[0] - a[0]) * 0.78 + px * o, a[1] + (b[1] - a[1]) * 0.78 + py * o)
+    return capsule(a2, b2, max(w * 0.28, 1.4), 3)
 
 
 def dots_ring(cx, cy, r, n, rad, col, trail=False):
@@ -295,7 +350,9 @@ def hair_parts(style, head, hair, skin, f, shirt=(0.5, 0.5, 0.5, 1)):
             a = k * 2 * math.pi / 3
             front.append((circle(hx + math.cos(a) * 18, hy + y0 + math.sin(a) * 8, 2.0, 8), (0.7, 0.9, 1, 0.8), "orb_%d" % k))
     if f and style not in ("luchamask", "headwrap"):
-        front.append((rect(hx + 5, hy + 0.3, 2.5, 1.4), (0.05, 0.05, 0.05, 1)))  # cílios
+        # cílios na borda de cima do olho (o olho tem branco e pupila: ver build_parts)
+        front.append(([(hx + 3.4, hy - 2.9), (hx + 8.2, hy - 3.6), (hx + 9.4, hy - 4.9), (hx + 8.0, hy - 2.4), (hx + 3.6, hy - 2.0)],
+                      (0.05, 0.05, 0.05, 1)))
     return back, front
 
 
@@ -596,16 +653,89 @@ def build_parts(c, j):
     for i, item in enumerate(back):
         add("hair_back_%d" % i, item[2] if len(item) > 2 else "head", 4, item[1], item[0])
     add("neck", "head", 5, skin, capsule(sh, head, 6.0, 3))
-    add("head_hair", "head", 5, skin if c["hat"] == "bald" else hair, circle(head[0], head[1], 10.0))
+    head_col = skin if c["hat"] == "bald" else hair
+    add("head_hair", "head", 5, head_col, circle(head[0], head[1], 10.0))
     add("face", "head", 5, skin, circle(head[0] + 2, head[1] + 2, 8.5))
-    add("eye", "head", 5, (0.05, 0.05, 0.05, 1), rect(head[0] + 4, head[1] - 2, 3, 3))
     for i, item in enumerate(front):
         add("hair_%d" % i, item[2] if len(item) > 2 else "head", 6, item[1], item[0])
     # braço da frente
     add("arm_f_up", "arm_f_up", 7, skin, capsule(j["sh_f"], j["el_f"], 6.5))
     add("arm_f_lo", "arm_f_lo", 7, skin, capsule(j["el_f"], j["hf"], 6.5))
     add("hand_f", "arm_f_lo", 9, skin, circle(j["hf"][0], j["hf"][1], 5.5, 12))
-    return parts
+    add_details(parts, c, j, head_col)
+    return add_outlines(parts)
+
+
+# ---------------------------------------------------------------------------
+# Acabamento: rosto, luz e sombra, contorno.
+# Peças "dt_*" (detalhes) e "ol_*" (contornos) ficam dentro da silhueta ou só 1,3 px fora dela:
+# hitboxes.py as ignora, então hurtboxes e hitboxes continuam exatamente as mesmas.
+
+OUTLINE_PX = 1.3
+
+
+def add_details(parts, c, j, head_col):
+    """Detalhes desenhados logo depois da peça-base, na mesma camada (z + 0,2) e no mesmo osso."""
+    skin, hair, shirt, pants, shoes = c["skin"], c["hair"], c["shirt"], c["pants"], c["shoes"]
+    hip, sh, head = j["hip"], j["shoulder"], j["head"]
+    hx, hy = head
+    sw = 9.0 if c["f"] else 11.0
+    add = lambda nm, bone, z, col, poly: parts.append(("dt_" + nm, bone, z + 0.2, col, poly))  # noqa: E731
+    pants_d, shoe_d, skin_d = darken(pants, 0.3), darken(shoes, 0.2), darken(skin, 0.2)
+    # membros: reflexo de luz do lado da frente (o de trás, já na sombra, mais fraco)
+    add("arm_b_up", "arm_b_up", 0, lighten(skin_d, 0.1), limb_shine(j["sh_b"], j["el_b"], 6.5))
+    add("arm_b_lo", "arm_b_lo", 0, lighten(skin_d, 0.1), limb_shine(j["el_b"], j["hb"], 6.5))
+    add("leg_b_up", "leg_b_up", 1, lighten(pants_d, 0.1), limb_shine(j["hip_b"], j["kn_b"], 9.0))
+    add("leg_b_lo", "leg_b_lo", 1, lighten(pants_d, 0.1), limb_shine(j["kn_b"], j["bf"], 9.0))
+    add("sole_b", "foot_b", 1, darken(shoe_d, 0.45), rect(j["bf"][0] - 4, j["bf"][1] - 1.6, 12, 1.6))
+    add("leg_f_up", "leg_f_up", 2, lighten(pants, 0.2), limb_shine(j["hip_f"], j["kn_f"], 9.0))
+    add("leg_f_lo", "leg_f_lo", 2, lighten(pants, 0.2), limb_shine(j["kn_f"], j["ff"], 9.0))
+    add("knee_f", "leg_f_lo", 2, darken(pants, 0.22), line((j["kn_f"][0] - 2.5, j["kn_f"][1] + 0.5), (j["kn_f"][0] + 2.5, j["kn_f"][1] - 0.5), 1.2))
+    add("sole_f", "foot_f", 2, darken(shoes, 0.45), rect(j["ff"][0] - 4, j["ff"][1] - 1.6, 13, 1.6))
+    add("lace_f", "foot_f", 2, lighten(shoes, 0.45), rect(j["ff"][0] + 1, j["ff"][1] - 4, 4, 1.2))
+    # tronco: sombra nas costas, gola, dobra e reflexo no peito; fivela do cinto
+    add("torso_shade", "spine", 3, darken(shirt, 0.13),
+        [(hip[0] - 9, hip[1] + 2), (hip[0] - 6, hip[1] + 2), (sh[0] - sw * 0.7, sh[1]), (sh[0] - sw, sh[1])])
+    add("collar", "spine", 3, darken(shirt, 0.3), [(sh[0] - 4.5, sh[1]), (sh[0] + 4.5, sh[1]), (sh[0] + 0.5, sh[1] + 5.0)])
+    add("buckle", "pelvis", 3, (0.86, 0.7, 0.3, 1), rect(hip[0] + 2.5, hip[1] - 1.8, 4, 3.6))
+    add("buckle_hole", "pelvis", 3, (0.4, 0.3, 0.12, 1), rect(hip[0] + 3.7, hip[1] - 0.6, 1.6, 1.2))
+    # cabeça: brilho do cabelo, orelha, olho (branco + pupila + brilho), sobrancelha, nariz, boca
+    add("hair_shine", "head", 5, lighten(head_col, 0.28), line((hx - 5, hy - 7), (hx + 1.5, hy - 9.2), 1.8))
+    add("ear", "head", 5, darken(skin, 0.06), ellipse(hx - 2.2, hy + 1.8, 2.0, 2.7, 10))
+    add("ear_in", "head", 5, darken(skin, 0.3), line((hx - 2.0, hy + 0.8), (hx - 1.6, hy + 3.0), 0.9))
+    add("eye_white", "head", 5, (0.97, 0.97, 0.95, 1), ellipse(hx + 6.2, hy - 0.4, 1.9, 2.3, 12))
+    add("pupil", "head", 5, (0.08, 0.06, 0.05, 1), ellipse(hx + 6.9, hy - 0.2, 1.1, 1.5, 10))
+    add("eye_glint", "head", 5, (1, 1, 1, 1), circle(hx + 7.2, hy - 0.9, 0.45, 6))
+    brow = darken(hair, 0.35) if c["hat"] != "bald" else darken(skin, 0.5)
+    add("brow", "head", 5, brow, line((hx + 3.4, hy - 4.0), (hx + 8.6, hy - 4.6), 1.5 if c["f"] else 1.9))
+    add("nose", "head", 5, darken(skin, 0.14), [(hx + 9.2, hy - 0.2), (hx + 11.6, hy + 3.0), (hx + 9.0, hy + 3.6)])
+    add("mouth", "head", 5, darken(skin, 0.55), line((hx + 6.4, hy + 6.0), (hx + 9.4, hy + 5.6), 1.0))
+    # mãos: dobra dos dedos do punho fechado
+    add("knuckle_b", "arm_b_lo", 0, darken(skin_d, 0.25), line((j["hb"][0] + 1.5, j["hb"][1] - 2.5), (j["hb"][0] + 1.5, j["hb"][1] + 2.5), 0.9))
+    add("arm_f_up", "arm_f_up", 7, lighten(skin, 0.2), limb_shine(j["sh_f"], j["el_f"], 6.5))
+    add("arm_f_lo", "arm_f_lo", 7, lighten(skin, 0.2), limb_shine(j["el_f"], j["hf"], 6.5))
+    add("knuckle_f", "arm_f_lo", 9, darken(skin, 0.25), line((j["hf"][0] + 1.8, j["hf"][1] - 3), (j["hf"][0] + 1.8, j["hf"][1] + 3), 1.0))
+    add("hand_shine", "arm_f_lo", 9, lighten(skin, 0.25), circle(j["hf"][0] - 1.5, j["hf"][1] - 2.0, 1.4, 8))
+    # sem os detalhes que o chapéu/máscara cobre por inteiro, nada muda; mas robôs não têm boca nem orelha
+    if c["hat"] in ("visor", "robot", "greathelm", "ninja", "luchamask"):
+        parts[:] = [p for p in parts if p[0] not in ("dt_mouth", "dt_nose", "dt_ear", "dt_ear_in", "dt_brow")]
+
+
+def add_outlines(parts):
+    """Contorno de cada peça: cópia escura 1,3 px maior, desenhada antes de todas as peças da mesma
+    camada (z - 0,5). Assim cada camada (braço, perna, tronco, cabeça) tem silhueta própria, sem riscos
+    nas juntas entre as peças dela. Peças translúcidas, efeitos pequenos e detalhes não têm contorno."""
+    out = list(parts)
+    for p in parts:
+        nm, bone, z, col, poly = p[:5]
+        if nm.startswith("dt_") or col[3] < 1.0 or len(poly) < 3:
+            continue
+        xs, ys = [q[0] for q in poly], [q[1] for q in poly]
+        if max(xs) - min(xs) < 3.0 and max(ys) - min(ys) < 3.0:
+            continue  # pontinhos (anéis, orbes): o contorno os engoliria
+        item = ("ol_" + nm, bone, z - 0.5, ink(col), offset_poly(poly, OUTLINE_PX))
+        out.append(item + tuple(p[5:]))  # a capa leva junto os pesos por vértice
+    return out
 
 
 def make_part_objects(arm, parts, name):

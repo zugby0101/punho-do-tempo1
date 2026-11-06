@@ -93,9 +93,11 @@ var _v_held := false
 var _p_held := false
 var _b_held := false
 var _f3_held := false
+var _esc_held := false
+var _esc_just := false   # ESC acabou de ser apertado (segurar não conta de novo na tela seguinte)
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
-static var model_detail := true  # rig definitivo (contorno, sombreado, rosto, detalhes) ou simples (só as peças)
+static var model_detail := true  # rig definitivo (contorno, luz e sombra, rosto, detalhes de estilo) ou simples
 static var fx_enabled := true    # partículas dos golpes (P no título)
 static var blood_enabled := true # sangue e manchas no chão (Y no título); desligado vira poeira
 static var shake_level := 2      # tremor da câmera (E no título): 2 = 100%, 1 = 50%, 0 = desligado
@@ -356,6 +358,9 @@ func _confirm() -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	var esc := Input.is_physical_key_pressed(KEY_ESCAPE)
+	_esc_just = esc and not _esc_held
+	_esc_held = esc
 	if net_client:
 		_client_tick(delta)
 		return
@@ -365,7 +370,7 @@ func _physics_process(delta: float) -> void:
 	mode_time += delta
 	match mode:
 		"join_input":
-			if Input.is_physical_key_pressed(KEY_ESCAPE):
+			if _esc_just:
 				_close_ip_edit()
 				_set_mode("online_menu")
 			return
@@ -374,7 +379,7 @@ func _physics_process(delta: float) -> void:
 				Net.fetch_ranking("survival" if Net.ranking_board == "story" else "story")
 				sfx.play("whoosh", 0.0)
 				return
-			if mode_time > 0.4 and (Input.is_physical_key_pressed(KEY_ESCAPE) or _confirm() or Input.is_action_just_pressed("ranking")):
+			if mode_time > 0.4 and (_esc_just or _confirm() or Input.is_action_just_pressed("ranking")):
 				_set_mode(ranking_return)
 				mode_time = 2.0  # volta direto, sem esperar a animação
 			return
@@ -386,11 +391,11 @@ func _physics_process(delta: float) -> void:
 			elif Input.is_action_just_pressed("move_left"):
 				ach_page = posmod(ach_page - 1, pages)
 				sfx.play("whoosh", 0.0)
-			elif mode_time > 0.4 and (Input.is_physical_key_pressed(KEY_ESCAPE) or _confirm() or Input.is_action_just_pressed("achievements")):
+			elif mode_time > 0.4 and (_esc_just or _confirm() or Input.is_action_just_pressed("achievements")):
 				_set_mode("title")
 			return
 		"name_entry":
-			if Input.is_physical_key_pressed(KEY_ESCAPE):
+			if _esc_just:
 				_close_ip_edit()
 				_set_mode(ranking_return)
 				mode_time = 2.0
@@ -400,7 +405,7 @@ func _physics_process(delta: float) -> void:
 			return
 		"connecting":
 			# anfitrião esperando o servidor criar a sala
-			if Input.is_physical_key_pressed(KEY_ESCAPE):
+			if _esc_just:
 				Net.close()
 				_set_mode("title")
 			return
@@ -496,6 +501,12 @@ func _physics_process(delta: float) -> void:
 		"stageclear":
 			if mode_time > 1.5 and _confirm():
 				_save_party()
+				# Quem terminou a era fora (sem vidas) volta na próxima como num "continuar":
+				# vidas cheias e pontuação zerada (senão entraria com 0 vidas, morrendo de vez no 1º nocaute)
+				for i in players.size():
+					if players[i].out:
+						party[i].lives = 3
+						party[i].score = 0
 				stage_idx += 1
 				skip_title = true
 				get_tree().reload_current_scene()
@@ -503,7 +514,6 @@ func _physics_process(delta: float) -> void:
 		"gameover":
 			if Input.is_action_just_pressed("ranking") and not score_sent and not versus:
 				_start_score_entry("gameover")
-				Net.ranking_board = "survival" if survival else "story"
 				return
 			if mode_time > 1.0 and _confirm():
 				# Continua na mesma fase, com vidas cheias (na sobrevivência, recomeça da onda 1)
@@ -1206,7 +1216,9 @@ func player_died(p) -> void:
 		p.state_time = -999.0
 		p.out = true
 		sfx.play("ko", 0.0)
-		if active_players().is_empty():
+		# Só acaba quando todos estão fora: quem ainda tem vidas pode estar caído com 0 de vida,
+		# esperando renascer (active_players() não conta esse jogador)
+		if players.all(func(q): return q.out):
 			if survival:
 				for pl in players:
 					Ach.best(pl, "score", pl.score)
@@ -1542,7 +1554,7 @@ func _versus_champion():
 
 # =================== Online ===================
 func _update_online_menu() -> void:
-	if Input.is_physical_key_pressed(KEY_ESCAPE) and mode_time > 0.2:
+	if _esc_just and mode_time > 0.2:
 		_set_mode("title")
 		return
 	if Input.is_action_just_pressed("move_down"):
@@ -1651,7 +1663,7 @@ func leave_online() -> void:
 func _client_tick(delta: float) -> void:
 	mode_time += delta
 	Net.client_tick()
-	if Input.is_physical_key_pressed(KEY_ESCAPE) and mode in ["connecting", "title"]:
+	if _esc_just and mode in ["connecting", "title"]:
 		Net.close()
 		leave_online()
 		return
@@ -1921,6 +1933,8 @@ func _open_ranking(back_to: String) -> void:
 ## Fim de partida: cada jogador com pontos digita o nome; depois envia tudo.
 func _start_score_entry(back_to: String) -> void:
 	ranking_return = back_to
+	# depois de enviar, mostra o quadro deste modo (no final da História também, não o último aberto)
+	Net.ranking_board = "survival" if survival else "story"
 	name_queue = []
 	name_entries = []
 	for p in players:
