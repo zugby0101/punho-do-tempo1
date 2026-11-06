@@ -243,6 +243,9 @@ func _ready() -> void:
 		music.play("title", 0)
 	music.prefetch(stage.style, stage_idx, false)
 	music.prefetch(stage.style, stage_idx, true)
+	# agente de teste (tools/test): só existe com "-- --test-bot" na linha de comando
+	if "--test-bot" in OS.get_cmdline_user_args():
+		add_child(load("res://scripts/test_bot.gd").new())
 
 
 # ---------- Jogadores ----------

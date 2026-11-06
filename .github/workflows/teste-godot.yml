@@ -1,0 +1,54 @@
+# Agente de teste do Punho do Tempo: a cada push e PR, abre o jogo no Godot 4.3 e joga.
+# Resumo na aba "Summary" da execução; capturas de tela, relatorio.json e o log em "Artifacts".
+name: Teste no Godot
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      rapido:
+        description: "Só 3 partidas curtas"
+        type: boolean
+        default: false
+
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GODOT_VERSION: 4.3-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar vídeo virtual (xvfb + OpenGL por software)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libglu1-mesa mesa-utils > /dev/null
+
+      - name: Baixar o Godot ${{ env.GODOT_VERSION }}
+        run: |
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}_linux.x86_64" godot
+          chmod +x godot
+          rm godot.zip
+          ./godot --version
+
+      - name: Agente de teste (verificações + importação + partidas)
+        env:
+          GODOT: ${{ github.workspace }}/godot
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: python tools/test/run_game_tests.py ${{ inputs.rapido && '--quick' || '' }}
+
+      - name: Guardar capturas, relatório e log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teste-godot
+          path: test_output/
+          if-no-files-found: warn

@@ -440,6 +440,28 @@ As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
 
+## Agente de teste
+
+O jogo tem um **agente que joga sozinho** e confere se nada quebrou (`scripts/test_bot.gd`, ativado só com
+`-- --test-bot`): primeiro abre os 79 rigs e toca cada animação; depois joga 14 partidas — cada lutador numa
+era, passando pelas 13 — com um controle virtual (anda até os inimigos, soca, faz combos, gancho, voadora,
+bloqueia, esquiva, usa o especial, pega e arremessa armas, passa os diálogos), conferindo a cada quadro as
+regras do jogo (posições no chão e na fase, vida, estados, animações do rig, hurtbox, câmera) e exigindo
+golpes no ar, acertos e passos. Tira capturas de tela e grava um relatório.
+
+```bash
+python tools/test/run_game_tests.py            # tudo: Python + importação no Godot + o agente jogando
+python tools/test/run_game_tests.py --quick    # 3 partidas curtas
+python tools/test/run_game_tests.py --sem-godot
+```
+
+O Godot é achado pela variável `GODOT`, pelo `PATH` (`godot4`/`godot`) ou por `--godot /caminho`.
+Capturas, `relatorio.json` e `godot.log` ficam em `test_output/`. No GitHub, o workflow
+**Teste no Godot** (`.github/workflows/teste-godot.yml`) faz o mesmo a cada push e PR (Godot 4.3 com vídeo
+virtual) e publica o resumo na execução e as capturas nos artefatos. No Claude Code, o agente
+**testador-godot** (`.claude/agents/testador-godot.md`) roda o teste (ou lê a última execução do CI) e
+explica cada falha com arquivo:linha e a correção sugerida.
+
 ## Estrutura
 
 ```
@@ -462,6 +484,7 @@ scripts/dialogs.gd      falas dos chefes, sub-chefes e respostas de cada lutador
 scripts/fx.gd           partículas dos golpes (fx_ring.gd: anel de choque)
 scripts/trail.gd        rastro de movimento dos especiais (imagens residuais + fitas de luz)
 scripts/hitbox_view.gd  depuração das hitboxes sincronizadas com a animação (F3)
+scripts/test_bot.gd     agente de teste que joga sozinho (só com -- --test-bot; tools/test)
 audio/voices/           vozes e gritos (gerados por tools/audio/voices.py)
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante

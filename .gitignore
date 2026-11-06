@@ -5,3 +5,4 @@
 *.blend1
 __pycache__/
 art/rigs/json/
+test_output/
