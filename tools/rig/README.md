@@ -9,7 +9,7 @@ No jogo, o rig substitui o desenho procedural (tecla **V** no título alterna en
 ## Como gerar
 
 ```bash
-pip install bpy                    # Blender 5.1 como módulo Python (ou use o Blender instalado)
+pip install bpy                    # Blender 5.1+ como módulo Python (testado também no 5.2) (ou use o Blender instalado)
 python tools/rig/build.py          # ou: blender --background --python tools/rig/build.py
 ```
 
@@ -50,6 +50,21 @@ do rig (`WeaponSlot`), como no desenho original.
   IK e o resultado é amostrado quadro a quadro. Lutadores têm 21 animações e inimigos 16.
 - O script descobre sozinho as convenções de eixo do Blender e escolhe o ângulo de polo de
   cada membro testando qual reproduz a pose de repouso (erro 0 px).
+
+## Acabamento das peças (rosto, luz e sombra, contorno)
+
+Além das peças-base, `build_parts` gera:
+
+- **Rosto:** olho com branco, pupila e brilho; sobrancelha na cor do cabelo; nariz, boca e orelha.
+  Máscaras e capacetes que cobrem o rosto (visor, robô, elmo, ninja, luchador) escondem esses detalhes.
+- **Luz e sombra:** sombra nas costas do tronco, gola, reflexo de luz ao longo de braços e pernas,
+  brilho no cabelo e na mão, dobra do joelho, sola e cadarço dos sapatos e fivela do cinto (peças `dt_*`).
+- **Contorno:** cada peça ganha uma cópia escura 1,3 px maior (peças `ol_*`), desenhada antes de
+  todas as peças da mesma camada. Cada camada (braço, perna, tronco, cabeça) fica com silhueta
+  própria, sem riscos nas juntas. A cor do contorno é a da peça bem escurecida.
+
+As peças `dt_*` e `ol_*` ficam presas aos mesmos ossos e são ignoradas por `hitboxes.py`, então
+hurtboxes e hitboxes não mudam com o acabamento.
 
 ## Animações de combate (`moves.py`)
 
