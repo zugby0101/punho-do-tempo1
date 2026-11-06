@@ -186,7 +186,7 @@ com interpolação linear (a mesma do Godot) e, em cada golpe (`jab`, `cross`, `
 | `peak`, `r` | avanço da ponta no impacto e raio da hitbox (punho 10, pé 12, tronco 16, cabeça 14) |
 | `wpn`, `won`, `woff` | golpes armados (`swing`, `slam`): base e ângulo da arma e a janela da ponta da arma |
 
-No jogo (`fighter.gd` → `hitbox_now`), em golpes normais e na voadora:
+No jogo (`fighter.gd` → `hitbox_now`), em golpes normais, na voadora e nos especiais:
 
 - a hitbox só existe enquanto a animação está na janela de contato (`on`..`off`), além da janela do jogo;
 - vai de 15 px atrás até `reach × (avanço atual da ponta / peak)` à frente, ou seja, o alcance de
@@ -195,7 +195,21 @@ No jogo (`fighter.gd` → `hitbox_now`), em golpes normais e na voadora:
   (16 × 100 px, vezes a escala do corpo, a partir da altura do pulo dele);
 - armado, a ponta é a base da arma + `len` da arma no ângulo do osso `weapon`.
 
-Especiais e golpes giratórios (`radial`) continuam com as regras próprias de `player.gd`.
+**Especiais.** Os 12 especiais corpo a corpo dos lutadores usam a mesma hitbox: o tempo de cada um
+continua o de `player.gd` (giros, rajadas, investidas, subidas e mergulhos), mas a área que acerta vem
+da animação que está na tela.
+
+| Especial | Como a animação manda na hitbox |
+|---|---|
+| giros (Mateus, Dmitri), Tornado de Chutes (Luca), especial básico | acerta dos dois lados (o lutador vira), na altura do pé/punho |
+| rajadas (Valentina, Amélie) | só acerta enquanto o punho/pé está esticado; na volta (fase 0,3) não |
+| Esmagador Texano (Jake) | onda de choque dos dois lados, só em quem está no chão |
+| Tope Suicida (Itzel) | corpo deitado (`BODY_ROT`, 0,45π): os braços esticados viram a ponta que acerta à frente |
+| Chute da Fênix (Mei), Joelhada Voadora (Kirra) | a voadora aparece com a perna esticada (u = 1) e acerta na altura do pé |
+| Chute do Hopak (Oksana), Punho do Trovão (Kofi), Investida Haka (Tama) | na altura do pé/punho/ombro enquanto sobe ou avança |
+
+Onda Ki (Kai) e Onda Sísmica (Amara) são projéteis (`energy.gd`) e não usam hitbox de membro.
+O `--check` também simula cada especial (lido de `characters.gd`) no quadro em que o jogo confere o acerto.
 
 O `--check` confere em todos os 79 rigs que o impacto da animação cai no começo da janela de acerto
 do jogo (u = 0,30) e simula os golpes do jogo (alcances e armas reais): cada um precisa ainda acertar

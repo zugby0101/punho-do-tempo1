@@ -52,7 +52,10 @@ STRIKES = {
 WEAPON_ANIMS = ("swing", "slam")  # golpes armados (Weapons.player_combo / enemy_combo)
 RADIUS = {"arm": 10.0, "foot": 12.0, "spine": 16.0, "head": 14.0}
 # jumpkick no jogo vai de 0 a 1 em 0,16 s e fica parado no fim: a janela é a perna esticada
-OPEN_ENDED = ("jumpkick", "dive")
+OPEN_ENDED = ("jumpkick",)
+# Rotação do corpo inteiro que o jogo aplica por cima da animação (fighter.gd -> body_rot):
+# no mergulho (TOPE SUICIDA) o lutador voa deitado, e os braços "para cima" apontam para a frente.
+BODY_ROT = {"dive": math.pi * 0.45}
 
 NUM = r"-?[\d.]+(?:e-?\d+)?"
 
@@ -184,14 +187,20 @@ def strike_data(bones, anim, an):
     us = [i * STEP for i in range(int(round(1.0 / STEP)) + 1)]
     poses = [pose_at(bones, anim, u) for u in us]
     cands = [b for b in STRIKES[an] if b in bones]
-    bone, on, off, ref = contact_window(us, poses, cands, lambda b, p: tip(bones, p, b), an)
+    rot = BODY_ROT.get(an, 0.0)
+
+    def ltip(b, p):
+        x, y = tip(bones, p, b)
+        return x * math.cos(rot) - y * math.sin(rot), x * math.sin(rot) + y * math.cos(rot)
+
+    bone, on, off, ref = contact_window(us, poses, cands, ltip, an)
     pts = []
     for u, p in zip(us, poses):
         x, y = tip(bones, p, bone)
         pts += [round(u, 4), round(x, 2), round(y, 2)]
     kind = "arm" if bone.startswith("arm") else "foot" if bone.startswith("foot") else bone
     d = {"bone": bone, "r": RADIUS.get(kind, 10.0), "on": round(on, 4), "off": round(off, 4),
-         "peak": round(ref[0], 2), "pts": pts}
+         "peak": round(ref[0], 2), "pts": pts}  # pts sem a rotação do corpo; peak já com ela
     if an in WEAPON_ANIMS and "weapon" in bones:
         def wtip(_b, p):
             x, y, ang = p["weapon"]
@@ -217,13 +226,15 @@ def _interp(arr, stride, u):
     return [arr[i * stride + j] + (arr[(i + 1) * stride + j] - arr[i * stride + j]) * k for j in range(1, stride)]
 
 
-def simulate(d, u, reach, wlen=None, scale=1.0, height=0.0):
-    """Mesmo cálculo de fighter.gd -> hitbox_now. None = fora da janela de contato."""
+def simulate(d, u, reach, wlen=None, scale=1.0, height=0.0, rot=0.0, both=False):
+    """Mesmo cálculo de fighter.gd -> hitbox_now. None = fora da janela de contato.
+    rot = rotação do corpo (mergulho); both = golpe giratório, acerta dos dois lados."""
     armed = wlen is not None and "wpn" in d
     on, off = (d["won"], d["woff"]) if armed else (d["on"], d["off"])
     if u < on - 0.001 or u > off + 0.001:
         return None
     x, y = _interp(d["pts"], 3, u)
+    x, y = x * math.cos(rot) - y * math.sin(rot), x * math.sin(rot) + y * math.cos(rot)
     r, peak = d["r"], max(d["peak"], 1.0)
     if armed:
         wx, wy, ang = _interp(d["wpn"], 4, u)
@@ -232,7 +243,7 @@ def simulate(d, u, reach, wlen=None, scale=1.0, height=0.0):
         peak, r = max(px + math.cos(pa) * wlen, 1.0), 14.0
     far = reach * min(max(x / peak, 0.2), 1.15) * scale
     h = height - y * scale
-    return (-15.0, far, h - r * scale, h + r * scale)
+    return (-far if both else -15.0, far, h - r * scale, h + r * scale)
 
 
 def hits(box, dx, tg_h=0.0, tg_s=1.0):
@@ -254,6 +265,52 @@ def gameplay_check(name, hb):
         us = [lo + (hi - lo) * i / 24.0 for i in range(25)]
         if not any(hits(simulate(hb[an], u, reach, wlen, 1.0, height), reach * 0.9) for u in us):
             bad.append("%s/%s (alcance %d%s)" % (name, an, reach, ", arma %d" % wlen if wlen else ""))
+    # especial básico giratório (ATK_SPECIAL do jogador e o giro dos chefes): acerta na frente e atrás
+    if "special" in hb:
+        us = [U_HIT + (U_HOLD - U_HIT) * i / 24.0 for i in range(25)]
+        for dx in (90.0, -90.0):
+            if not any(hits(simulate(hb["special"], u, 100.0, both=True), dx) for u in us):
+                bad.append("%s/special giratório (alvo a %+d px)" % (name, dx))
+    return bad
+
+
+def player_specials():
+    """(slug, especial) dos 14 lutadores, lidos de scripts/characters.gd (mesma ordem das duas listas)."""
+    text = (ROOT / "scripts" / "characters.gd").read_text(encoding="utf-8")
+    sps = []
+    for line in re.findall(r'^\t\t\{"name": "[^"]+", "type": .*$', text, re.M):
+        sp = {k: v for k, v in re.findall(r'"(type|pose|pose_a|pose_b)": "(\w+)"', line)}
+        sp["name"] = re.search(r'"name": "([^"]+)"', line).group(1)
+        sp["reach"] = float(re.search(r'"reach": (' + NUM + ')', line).group(1)) if '"reach"' in line else 0.0
+        sp["spin"] = '"spin": true' in line or sp["type"] == "spin"
+        sps.append(sp)
+    names = re.findall(r'^\t\t\{"name": "([^"]+)", "region"', text, re.M)
+    slug = lambda n: n.lower().translate(str.maketrans("áàâãéêíóôõúç", "aaaaeeiooouc"))
+    return [(slug(n), sp) for n, sp in zip(names, sps)]
+
+
+# Como cada tipo de especial dirige a animação no jogo (player.gd -> _process_special, fighter.gd -> rig_anim):
+# fase 1 = golpeando -> u 0,36 (voadora: 1,0, perna esticada); altura do lutador quando acerta.
+SPECIAL_HEIGHT = {"dive": 32.0, "rise": 20.0}
+
+
+def special_check(slug, hb):
+    """Cada especial corpo a corpo do lutador acerta um alvo no chão a 90% do alcance
+    (e, nos giratórios, também atrás dele) no quadro em que o jogo confere o acerto."""
+    bad = []
+    for sl, sp in player_specials():
+        if sl != slug or sp["type"] in ("projectile", "quake"):
+            continue
+        poses = [sp.get("pose_a"), sp.get("pose_b"), "upper"] if sp["type"] == "flurry" else \
+            ["slam"] if sp["type"] == "slam" else [sp.get("pose", "dive" if sp["type"] == "dive" else "special")]
+        for an in poses:
+            u = 1.0 if an == "jumpkick" else 0.36
+            box = simulate(hb[an], u, sp["reach"], height=SPECIAL_HEIGHT.get(sp["type"], 0.0),
+                           rot=BODY_ROT.get(an, 0.0) if sp["type"] == "dive" else 0.0,
+                           both=sp["spin"] or sp["type"] == "slam")
+            ok = hits(box, sp["reach"] * 0.9) and (not (sp["spin"] or sp["type"] == "slam") or hits(box, -sp["reach"] * 0.9))
+            if not ok:
+                bad.append("%s/especial %s (%s, alcance %d)" % (slug, sp["name"], an, sp["reach"]))
     return bad
 
 
@@ -295,7 +352,7 @@ def main():
             for k0, k1 in (("on", "off"), ("won", "woff")):
                 if k0 in d and an not in OPEN_ENDED and not (U_HIT - 0.04 <= d[k0] <= U_HOLD and d[k1] >= U_HIT):
                     late.append("%s/%s %s=%.3f %s=%.3f" % (fp.stem, an, k0, d[k0], k1, d[k1]))
-        late += gameplay_check(fp.stem, hb)
+        late += gameplay_check(fp.stem, hb) + special_check(fp.stem, hb)
         if not only_check:
             fp.write_text(write_meta(text, hb), encoding="utf-8")
         summary = "  ".join("%s:%s %.2f-%.2f" % (an, d["bone"].replace("arm_", "").replace("_lo", ""), d["on"], d["off"])
