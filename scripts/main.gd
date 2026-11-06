@@ -503,7 +503,6 @@ func _physics_process(delta: float) -> void:
 		"gameover":
 			if Input.is_action_just_pressed("ranking") and not score_sent and not versus:
 				_start_score_entry("gameover")
-				Net.ranking_board = "survival" if survival else "story"
 				return
 			if mode_time > 1.0 and _confirm():
 				# Continua na mesma fase, com vidas cheias (na sobrevivência, recomeça da onda 1)
@@ -1923,6 +1922,8 @@ func _open_ranking(back_to: String) -> void:
 ## Fim de partida: cada jogador com pontos digita o nome; depois envia tudo.
 func _start_score_entry(back_to: String) -> void:
 	ranking_return = back_to
+	# depois de enviar, mostra o quadro deste modo (no final da História também, não o último aberto)
+	Net.ranking_board = "survival" if survival else "story"
 	name_queue = []
 	name_entries = []
 	for p in players:

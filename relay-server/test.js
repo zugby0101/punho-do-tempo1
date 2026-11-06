@@ -47,6 +47,14 @@ const nextBin = (ws) => new Promise((r) => ws.once("message", (d) => r(d)));
   g2.send(JSON.stringify({ op: "join", room: "ZZZZ" }));
   assert.equal((await nextText(g2)).op, "error");
 
+  // mensagens de controle que não são objetos são ignoradas (não derrubam o servidor)
+  const g3 = new WebSocket(URL);
+  await open(g3);
+  for (const junk of ["null", "42", "\"x\"", "[]"]) g3.send(junk);
+  g3.send(JSON.stringify({ op: "join", room: "ZZZZ" }));
+  assert.equal((await nextText(g3)).op, "error");
+  g3.close();
+
   // anfitrião sai -> convidado recebe room_closed
   const closed = nextText(guest);
   host.close();
@@ -65,6 +73,10 @@ const nextBin = (ws) => new Promise((r) => ws.once("message", (d) => r(d)));
   assert.equal(r.ok, false); // assinatura não confere após alterar a pontuação
   r = await (await fetch(`${base}/scores?limit=5`)).json();
   assert.deepEqual(r.scores.map((x) => [x.name, x.score]), [["BIA", 9000], ["ANA", 5000]]);
+  // fase secreta (ÉON) é a 13ª: aceita; 14 não existe
+  const secret = (name, stage) => { const e = { name, char: "KAI", score: 100, stage, players: 1, done: true, ts }; return { ...e, sig: sign(e) }; };
+  r = await (await fetch(`${base}/scores`, { method: "POST", body: JSON.stringify({ entries: [secret("Eon", 13), secret("Nada", 14)] }) })).json();
+  assert.deepEqual(r.results.map((x) => x.ok), [true, false]);
 
   // quadro de sobrevivência (formato novo de assinatura) e quadro antigo intactos
   const mkS = (name, score, wave) => { const e = { name, char: "MEI", score, stage: 3, players: 2, done: false, ts, board: "survival", wave }; return { ...e, sig: sign(e) }; };
@@ -73,7 +85,7 @@ const nextBin = (ws) => new Promise((r) => ws.once("message", (d) => r(d)));
   r = await (await fetch(`${base}/scores?board=survival`)).json();
   assert.deepEqual(r.scores.map((x) => [x.name, x.wave]), [["CAIO", 12]]);
   r = await (await fetch(`${base}/scores`)).json();
-  assert.equal(r.scores.length, 2); // o quadro da História não mudou
+  assert.equal(r.scores.length, 3); // o quadro da História não mudou (BIA, ANA, EON)
 
   console.log("OK: todos os testes do relay passaram");
   g2.close();
