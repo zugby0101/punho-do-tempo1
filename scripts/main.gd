@@ -1554,7 +1554,7 @@ func net_apply(snap: Array) -> void:
 		stage_idx = new_stage
 		stage = stages[stage_idx]
 		bg.stage = stage
-	_apply_stage_bounds()
+		_apply_stage_bounds()
 	mode = snap[0]
 	mode_time = snap[1]
 	paused = snap[3]
@@ -1901,7 +1901,7 @@ func _survival_wave_cleared() -> void:
 		stage_idx = (stage_idx + 1) % SECRET_IDX
 		stage = stages[stage_idx]
 		bg.stage = stage
-	_apply_stage_bounds()
+		_apply_stage_bounds()
 		_play_stage_music(false)
 		surv_break = 4.5
 		hud.show_message("VIAGEM NO TEMPO: %s" % stage.name, 3.0)
