@@ -359,6 +359,21 @@ func hurtbox() -> Rect2:
 	return Rect2(-HURT_W * s, -height - HURT_H * s, HURT_W * 2.0 * s, HURT_H * s)
 
 
+## Área de pegar armas do chão (relativa aos pés, y para baixo): do corpo até a mão da frente na
+## guarda (primeiro quadro do jab do rig), da altura da mão até o chão.
+func grab_box() -> Rect2:
+	var s := body_scale
+	var hand := Vector2(26.0, -57.0)
+	if use_anim_hitboxes and hitboxes.has("jab"):
+		hand = _hb_point(hitboxes.jab.pts, 3, 0.0)
+	var back := -HURT_W * s
+	var front := (hand.x + 4.0) * s
+	var top := (hand.y - 10.0) * s - height
+	var x0 := back if facing > 0 else -front
+	var x1 := front if facing > 0 else -back
+	return Rect2(x0, top, x1 - x0, -top - height + 4.0)
+
+
 func hitbox_debug_on() -> bool:
 	return show_hitboxes
 
