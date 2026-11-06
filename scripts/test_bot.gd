@@ -46,6 +46,16 @@ var plan_t := 0.0
 var prev_enemies := {}
 var shots_taken := 0
 var orig_hook: Callable
+var only := 0                 # --only=N: joga só a partida N (sem a varredura dos rigs)
+var trace := 0                # --trace=N: linha do tempo da partida N no log, a cada 0,5 s
+var trace_t := 0.0
+var branch := ""              # o que o robô está fazendo: luta, arma, defesa, caixa, sem_alvo
+var last_target_desc := ""
+var enemy_hp := {}
+var enemy_state := {}
+var item_speed := {}
+var had_weapon := false
+var my_hp := -1
 
 
 static func wanted() -> bool:
@@ -59,6 +69,10 @@ func _ready() -> void:
 			quick = true
 		elif a.begins_with("--out="):
 			out_dir = a.substr(6)
+		elif a.begins_with("--only="):
+			only = int(a.substr(7))
+		elif a.begins_with("--trace="):
+			trace = int(a.substr(8))
 	DirAccess.make_dir_recursive_absolute(_abs(out_dir))
 	if not FileAccess.file_exists(_abs(out_dir + "/.gdignore")):
 		var gi := FileAccess.open(_abs(out_dir + "/.gdignore"), FileAccess.WRITE)  # o Godot não importa as capturas
@@ -70,7 +84,11 @@ func _ready() -> void:
 	rng.seed = 1234 + run_idx
 	process_physics_priority = 100  # depois do jogo: os comandos valem no próximo quadro
 	if run_idx < 0:
-		call_deferred("_rig_sweep")
+		if only > 0:
+			run_idx = only - 2  # pula a varredura dos rigs e as partidas antes da pedida
+			call_deferred("_next")
+		else:
+			call_deferred("_rig_sweep")
 		return
 	if run_idx >= _scenarios().size():
 		_finish()
@@ -178,7 +196,7 @@ func _rig_sweep() -> void:
 func _next() -> void:
 	run_idx += 1
 	var sc := _scenarios()
-	if run_idx >= sc.size():
+	if run_idx >= sc.size() or (only > 0 and run_idx != only - 1):
 		_finish()
 		return
 	var S = game.get_script()
@@ -271,6 +289,12 @@ func _play_policy(delta: float) -> Array:
 	for e in game._alive_enemies():
 		if e.state == "attack" and e.state_time < float(e.attack.get("startup", 0.2)) and absf(e.position.x - p.position.x) < 95.0 and absf(e.position.y - p.position.y) < 24.0:
 			threat = true
+	branch = "defesa" if plan != "" and plan_t > 0.0 else ("arma" if item != null else ("sem_alvo" if target == null else ("caixa" if target.get("drop") != null else "luta")))
+	if target != null:
+		last_target_desc = "%s(hp %d) a dx=%.0f dy=%.0f" % [String(target.get("kind")) if target.get("kind") != null else "caixa", target.hp, target.position.x - p.position.x, target.position.y - p.position.y]
+	else:
+		last_target_desc = "-"
+	counts["t_" + branch] = snappedf(float(counts.get("t_" + branch, 0.0)) + delta, 0.01)
 	if threat and plan == "" and rng.randf() < 0.5:
 		plan = "dodge" if rng.randf() < 0.35 else "block"
 		plan_t = 0.35
@@ -358,6 +382,49 @@ func _check_rules() -> void:
 		if not alive.has(id):
 			counts["inimigos_derrubados"] = int(counts.get("inimigos_derrubados", 0)) + 1
 	prev_enemies = alive
+	_diary()
+
+
+## Diário da partida: dano causado e recebido, defesa dos inimigos, armas pegas e chutadas, tipos vistos.
+func _diary() -> void:
+	var p = game.players[0] if not game.players.is_empty() else null
+	for e in game._alive_enemies():
+		var id: int = e.get_instance_id()
+		if not enemy_hp.has(id):
+			counts["vistos_" + String(e.kind)] = int(counts.get("vistos_" + String(e.kind), 0)) + 1
+		elif e.hp < int(enemy_hp[id]):
+			counts["dano_causado"] = int(counts.get("dano_causado", 0)) + int(enemy_hp[id]) - e.hp
+		if e.state != String(enemy_state.get(id, "")):
+			if e.state == "block":
+				counts["inimigo_bloqueou"] = int(counts.get("inimigo_bloqueou", 0)) + 1
+			elif e.state == "dodge":
+				counts["inimigo_esquivou"] = int(counts.get("inimigo_esquivou", 0)) + 1
+		enemy_hp[id] = e.hp
+		enemy_state[id] = e.state
+	for w in get_tree().get_nodes_in_group("weapons"):
+		var id2: int = w.get_instance_id()
+		var sp: float = w.vel.length()
+		if sp > 200.0 and float(item_speed.get(id2, 0.0)) < 60.0:
+			counts["armas_chutadas"] = int(counts.get("armas_chutadas", 0)) + 1
+		item_speed[id2] = sp
+	if p != null and is_instance_valid(p):
+		var has: bool = not p.weapon.is_empty()
+		if has and not had_weapon:
+			counts["armas_pegas"] = int(counts.get("armas_pegas", 0)) + 1
+		had_weapon = has
+		if my_hp >= 0 and p.hp < my_hp:
+			counts["dano_recebido"] = int(counts.get("dano_recebido", 0)) + my_hp - p.hp
+		my_hp = p.hp
+		if trace == run_idx + 1:
+			trace_t -= get_physics_process_delta_time()
+			if trace_t <= 0.0:
+				trace_t = 0.5
+				var near_item := INF
+				for w in get_tree().get_nodes_in_group("weapons"):
+					near_item = minf(near_item, w.position.distance_to(p.position))
+				_log("trace t=%.1f eu=(%.0f,%.0f) %s ramo=%s alvo=%s arma=%s item_mais_perto=%s inimigos=%d" % [
+					t_play, p.position.x, p.position.y, p.state, branch, last_target_desc,
+					p.weapon.get("name", "-"), "%.0f" % near_item if near_item < INF else "-", game._alive_enemies().size()])
 
 
 func _maybe_shot() -> void:
