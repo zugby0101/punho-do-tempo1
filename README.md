@@ -342,7 +342,9 @@ desenhado (a lança com a ponta, o remo com a pá), ao alcance da mão da guarda
 agarrar uma arma que ainda está quicando quando ela passa na altura da mão. As caixas quebráveis
 apanham no tamanho em que são desenhadas, racham com o dano e se desmontam em tábuas na direção do
 golpe final, e a comida salta para fora junto com as tábuas e é pega quando o corpo encosta no
-desenho dela. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
+desenho dela. Os inimigos apanham no corpo da animação que está na tela (encolhem na dor, o braço
+esticado também apanha, o ÉON flutua) e só soltam um golpe que alcançaria o jogador de verdade.
+As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
 

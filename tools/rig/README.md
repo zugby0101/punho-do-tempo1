@@ -244,3 +244,18 @@ prato 40 × 28 px, maçã 20 × 28 px), subindo e descendo com o balanço. A com
 do lutador encosta nela (antes: ±30 px do centro e só com o lutador a até 10 px do chão). Ao aparecer
 — de uma caixa quebrada ou no meio da fase — ela salta 34 px para fora (0,35 s), junto com as tábuas,
 e a área acompanha o salto. F3 mostra a área em azul-claro.
+
+**Inimigos.** Além dos golpes, os 65 rigs de inimigos têm hurtbox animada (`metadata/hurtboxes`, gravada
+pelo `hitboxes.py`): a caixa em volta dos ossos do corpo (membros com 5 px de espessura, cabeça com raio
+10) em cada 1/30 da animação de `idle`, `walk`, `hurt` e de cada golpe. No jogo (`fighter.gd` →
+`hurt_rect`), ela segue a animação que está na tela: encolhe na dor, cresce quando o braço ou o pé
+estica e sobe quando o ÉON flutua. O corpo real tem ~80 px de altura (a caixa fixa tinha 100).
+
+- **Gancho:** no quadro de impacto o punho já passou do queixo, então a hitbox do `upper` cobre o
+  caminho da ponta nos últimos 0,04 da animação (`SWEPT`). Sem isso, 733 combinações de
+  inimigo × lutador × escala errariam o gancho.
+- **IA:** o inimigo só solta um golpe que alcançaria o alvo de verdade (`would_hit`: a hitbox da animação
+  em 3 quadros da janela de acerto, mais o avanço do lunge, contra a hurtbox do alvo). Antes: 70 px de
+  distância e alvo a menos de 40 px do chão.
+- O `--check` confere que jab, cross, gancho, chute, voadora e golpe armado de cada lutador acertam
+  cada inimigo parado, nas escalas 1,0, 1,3 e 1,6.

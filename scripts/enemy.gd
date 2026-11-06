@@ -162,6 +162,7 @@ func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 	# Rig 2D da era e do tipo (gerado por tools/rig a partir do Blender)
 	if stage.has("style"):
 		attach_rig("res://rigs/enemies/%s_%s.tscn" % [stage.style, kind])
+		anim_hurtbox = not hurtboxes.is_empty()  # hurtbox do corpo quadro a quadro
 
 
 func _update(delta: float) -> void:
@@ -199,9 +200,12 @@ func _update(delta: float) -> void:
 				special_cd = randf_range(4.0, 6.0)
 				start_attack(special_attack)
 				game.sfx.play("roar", 0.08, game.sfx.body_pitch(body_scale))
-			elif aggressive and attack_cd <= 0.0 and dx < 70.0 * body_scale and dy < 18.0 and target.height < 40.0:
-				start_attack(attacks[randi() % attacks.size()])
-				attack_cd = randf_range(0.4, 0.9) if is_boss() else randf_range(0.7, 1.5)
+			elif aggressive and attack_cd <= 0.0:
+				# só solta um golpe que alcançaria o alvo de verdade (hitbox da animação x hurtbox do alvo)
+				var able := attacks.filter(func(a): return would_hit(a, target))
+				if not able.is_empty():
+					start_attack(able[randi() % able.size()])
+					attack_cd = randf_range(0.4, 0.9) if is_boss() else randf_range(0.7, 1.5)
 		"attack":
 			if _process_attack(delta, game.active_players()):
 				attack = {}
