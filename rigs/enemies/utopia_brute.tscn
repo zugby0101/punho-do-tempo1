@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3]
+[gd_scene load_steps=61 format=3]
 
 [ext_resource type="Script" path="res://scripts/rig_weapon.gd" id="1_weapon"]
 
@@ -2396,6 +2396,558 @@ tracks/14/keys = {
 "values": [-1.92334, -2.00858, -2.07271, -2.12206, -2.16003, -2.18876, -2.21789, -2.2393, -2.23796, -2.2313, -2.20249, -2.07576, -2.03853, -2.01652, -2.00751, -2.02221]
 }
 
+[sub_resource type="Animation" id="Animation_block"]
+resource_name = "block"
+length = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Skeleton2D/root/pelvis:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0, 0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Skeleton2D/root/pelvis:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.18333, 0.75, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(31, 0.00011), Vector2(26.00001, -1.9999), Vector2(25.00001, -1.99991), Vector2(31, 0.00011)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Skeleton2D/root/pelvis/spine:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.18333, 0.75, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [0.22054, 0.12533, 0.1569, 0.22054]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Skeleton2D/root/pelvis/spine/head:rotation")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.18333, 0.75, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [0.07377, 0.24803, 0.21025, 0.07377]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Skeleton2D/root/pelvis/spine/arm_b_up:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.11667, 0.15, 0.16667, 0.18333, 0.75, 0.76667, 0.83333, 0.85, 0.86667, 0.88333, 0.9, 0.91667, 0.93333, 0.95, 0.96667, 0.98333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.82273, -2.82087, -2.83903, -2.88139, -2.9529, -3.05819, -3.19921, -3.37207, -3.76369, -3.95347, -4.12759, -4.02245, -3.89756, -3.36874, -3.24967, -3.14419, -3.05442, -2.98096, -2.92324, -2.88002, -2.84979, -2.83105, -2.82242, -2.82273]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Skeleton2D/root/pelvis/spine/arm_b_up/arm_b_lo:rotation")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.15, 0.16667, 0.18333, 0.75, 0.76667, 0.78333, 0.8, 0.81667, 0.83333, 0.85, 0.86667, 0.88333, 0.9, 0.91667, 0.95, 0.96667, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-1.93529, -2.05759, -2.16908, -2.26885, -2.355, -2.42461, -2.47394, -2.49922, -2.49801, -2.47038, -2.41884, -2.34714, -2.38563, -2.42739, -2.45919, -2.47989, -2.48862, -2.48499, -2.46918, -2.44191, -2.40423, -2.35735, -2.30244, -2.17234, -2.09854, -1.93529]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up:rotation")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.13333, 0.15, 0.16667, 0.18333, 0.75, 0.76667, 0.78333, 0.8, 0.85, 0.86667, 0.88333, 0.9, 0.91667, 0.93333, 0.95, 0.96667, 0.98333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [3.41808, 3.40797, 3.37214, 3.3039, 3.19593, 3.0433, 2.84901, 2.40336, 2.19334, 2.00619, 1.84165, 1.92536, 2.04709, 2.17977, 2.3232, 2.78521, 2.92871, 3.05571, 3.1625, 3.2481, 3.31356, 3.36099, 3.39276, 3.41114, 3.41808]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo:rotation")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.15, 0.16667, 0.18333, 0.75, 0.76667, 0.78333, 0.8, 0.81667, 0.83333, 0.85, 0.86667, 0.88333, 0.9, 0.91667, 0.95, 0.96667, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.06536, -2.18653, -2.29612, -2.39215, -2.47122, -2.52854, -2.55886, -2.55845, -2.52731, -2.4691, -2.38905, -2.29186, -2.35071, -2.4121, -2.46476, -2.50709, -2.53736, -2.55401, -2.55604, -2.54333, -2.51668, -2.47757, -2.42771, -2.30214, -2.22892, -2.06536]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo/weapon:rotation")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.05, 0.06667, 0.08333, 0.11667, 0.13333, 0.15, 0.16667, 0.18333, 0.75, 0.76667, 0.78333, 0.8, 0.81667, 0.83333, 0.88333, 0.9, 0.91667, 0.93333, 0.95, 0.96667, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-1.05246, -0.91252, -0.75844, -0.58552, -0.38983, -0.17122, 0.29116, 0.49345, 0.65392, 0.76967, 0.84568, 0.78925, 0.72466, 0.6404, 0.53506, 0.40898, 0.26513, -0.20907, -0.35921, -0.49892, -0.62756, -0.74585, -0.85509, -1.05246]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("Skeleton2D/root/pelvis/leg_b_up:rotation")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 0.08333, 0.18333, 0.75, 0.88333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.6511, 2.60943, 2.57385, 2.5556, 2.59745, 2.6511]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("Skeleton2D/root/pelvis/leg_b_up/leg_b_lo:rotation")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 0.08333, 0.18333, 0.75, 0.88333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.42516, 1.57213, 1.7325, 1.7914, 1.60596, 1.42516]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("Skeleton2D/root/pelvis/leg_b_up/leg_b_lo/foot_b:rotation")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0, 0.18333, 0.75, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [-2.50546, -2.73554, -2.7762, -2.50546]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("Skeleton2D/root/pelvis/leg_f_up:rotation")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0, 0.18333, 0.75, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 0,
+"values": [2.18507, 1.97685, 1.93619, 2.18507]
+}
+tracks/13/type = "value"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("Skeleton2D/root/pelvis/leg_f_up/leg_f_lo:rotation")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = {
+"times": PackedFloat32Array(0, 0.08333, 0.18333, 0.75, 0.88333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.40794, 1.56257, 1.7325, 1.7914, 1.5966, 1.40794]
+}
+tracks/14/type = "value"
+tracks/14/imported = false
+tracks/14/enabled = true
+tracks/14/path = NodePath("Skeleton2D/root/pelvis/leg_f_up/leg_f_lo/foot_f:rotation")
+tracks/14/interp = 1
+tracks/14/loop_wrap = true
+tracks/14/keys = {
+"times": PackedFloat32Array(0, 0.08333, 0.18333, 0.75, 0.88333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.02222, -2.08049, -2.13856, -2.1568, -2.09268, -2.02222]
+}
+
+[sub_resource type="Animation" id="Animation_dodge"]
+resource_name = "dodge"
+length = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Skeleton2D/root/pelvis:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0, 0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Skeleton2D/root/pelvis:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.4, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(31, 0.00011), Vector2(23, 0.00008), Vector2(34.00002, -5.99988), Vector2(22.00001, -1.99992), Vector2(31, 0.00011)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Skeleton2D/root/pelvis/spine:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.4, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.22054, 0.35091, -0.09388, 0.31783, 0.22054]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Skeleton2D/root/pelvis/spine/head:rotation")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.4, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.07377, -0.00452, 0.09922, 0.01587, 0.07377]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Skeleton2D/root/pelvis/spine/arm_b_up:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.15, 0.16667, 0.18333, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.38333, 0.4, 0.41667, 0.46667, 0.48333, 0.5, 0.51667, 0.53333, 0.55, 0.56667, 0.58333, 0.6, 0.61667, 0.63333, 0.66667, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.82273, -2.89558, -2.81382, -2.78161, -2.75648, -2.73987, -2.73363, -2.74021, -2.76269, -2.80478, -2.87054, -2.96345, -3.08471, -3.23098, -3.71788, -3.86169, -3.7356, -3.32295, -3.19578, -3.08501, -2.99408, -2.9236, -2.8723, -2.83792, -2.81801, -2.81022, -2.81256, -2.82336, -2.86524, -2.92816, -2.82273]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Skeleton2D/root/pelvis/spine/arm_b_up/arm_b_lo:rotation")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.15, 0.18333, 0.21667, 0.25, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.36667, 0.38333, 0.4, 0.41667, 0.43333, 0.45, 0.46667, 0.48333, 0.5, 0.51667, 0.55, 0.56667, 0.6, 0.65, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-1.93529, -1.84594, -2.01712, -2.17793, -2.32761, -2.4626, -2.57464, -2.61753, -2.64833, -2.66446, -2.66403, -2.6466, -2.61323, -2.56601, -2.60364, -2.63047, -2.6453, -2.64749, -2.6372, -2.61541, -2.58366, -2.49685, -2.4447, -2.32822, -2.13193, -1.91598, -1.93529]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up:rotation")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.15, 0.16667, 0.18333, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.36667, 0.38333, 0.4, 0.41667, 0.43333, 0.48333, 0.5, 0.51667, 0.53333, 0.55, 0.56667, 0.58333, 0.6, 0.61667, 0.63333, 0.66667, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [3.41808, 3.36607, 3.42542, 3.44531, 3.457, 3.45877, 3.44848, 3.42355, 3.38104, 3.31797, 3.23206, 3.12298, 2.99364, 2.5608, 2.42864, 2.30977, 2.41501, 2.5289, 2.89179, 3.00325, 3.1017, 3.18436, 3.25033, 3.3002, 3.33536, 3.3576, 3.3687, 3.37031, 3.35052, 3.30702, 3.41808]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo:rotation")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.15, 0.18333, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.36667, 0.38333, 0.4, 0.41667, 0.43333, 0.45, 0.46667, 0.48333, 0.5, 0.51667, 0.53333, 0.56667, 0.6, 0.65, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.06536, -2.02621, -2.17025, -2.30564, -2.42993, -2.53772, -2.58252, -2.61901, -2.64518, -2.65907, -2.65927, -2.6453, -2.61777, -2.57807, -2.52789, -2.56798, -2.59974, -2.62216, -2.63444, -2.63621, -2.62766, -2.60953, -2.58292, -2.50926, -2.41576, -2.25171, -2.0685, -2.06536]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo/weapon:rotation")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.15, 0.16667, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.33333, 0.35, 0.36667, 0.38333, 0.4, 0.41667, 0.43333, 0.45, 0.46667, 0.51667, 0.53333, 0.55, 0.56667, 0.58333, 0.6, 0.63333, 0.66667, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-1.05246, -1.16997, -1.03294, -0.9578, -0.78864, -0.69168, -0.58413, -0.46411, -0.33008, -0.18152, -0.0201, 0.31853, 0.47795, 0.61932, 0.73794, 0.8328, 0.74478, 0.63978, 0.51904, 0.38571, -0.03759, -0.16974, -0.29242, -0.40498, -0.50776, -0.60163, -0.76696, -0.90934, -1.03554, -1.05246]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("Skeleton2D/root/pelvis/leg_b_up:rotation")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.11667, 0.26667, 0.4, 0.55, 0.7, 0.85, 0.93333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.6511, 2.5635, 2.47569, 2.54442, 2.62345, 2.52971, 2.46084, 2.54005, 2.59758, 2.6511]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("Skeleton2D/root/pelvis/leg_b_up/leg_b_lo:rotation")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.08333, 0.11667, 0.26667, 0.4, 0.53333, 0.7, 0.78333, 0.86667, 0.93333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.42516, 1.65345, 1.79214, 1.92269, 1.70704, 1.49476, 1.72296, 1.97762, 1.83785, 1.68899, 1.56173, 1.42516]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("Skeleton2D/root/pelvis/leg_b_up/leg_b_lo/foot_b:rotation")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.4, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.50546, -2.82758, -2.54741, -2.86766, -2.50546]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("Skeleton2D/root/pelvis/leg_f_up:rotation")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0, 0.11667, 0.4, 0.7, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.18507, 1.85455, 1.92879, 1.75725, 2.18507]
+}
+tracks/13/type = "value"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("Skeleton2D/root/pelvis/leg_f_up/leg_f_lo:rotation")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.08333, 0.11667, 0.4, 0.7, 0.78333, 0.85, 0.93333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.40794, 1.63639, 1.77474, 1.90463, 1.69127, 1.91545, 1.79088, 1.68299, 1.53643, 1.40794]
+}
+tracks/14/type = "value"
+tracks/14/imported = false
+tracks/14/enabled = true
+tracks/14/path = NodePath("Skeleton2D/root/pelvis/leg_f_up/leg_f_lo/foot_f:rotation")
+tracks/14/interp = 1
+tracks/14/loop_wrap = true
+tracks/14/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.08333, 0.11667, 0.4, 0.63333, 0.7, 0.75, 0.86667, 0.93333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.02222, -2.1066, -2.15176, -2.18838, -2.04927, -2.09279, -2.1019, -2.10157, -2.08015, -2.05567, -2.02222]
+}
+
+[sub_resource type="Animation" id="Animation_finisher"]
+resource_name = "finisher"
+length = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Skeleton2D/root/pelvis:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0, 0]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Skeleton2D/root/pelvis:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(31, 0.00011), Vector2(23.00001, -2.99992), Vector2(23.08776, -2.88292), Vector2(23.36901, -2.50791), Vector2(24.494, -1.00791), Vector2(28.99998, 5.00011), Vector2(28.44443, 5.27788), Vector2(28.11109, 5.44455), Vector2(27.99998, 5.5001), Vector2(27.99998, 5.5001), Vector2(29, 0.00011), Vector2(31, 0.00011)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Skeleton2D/root/pelvis/spine:rotation")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.22054, -0.03125, -0.02033, 0.01469, 0.15477, 0.71584, 0.73929, 0.75336, 0.75804, 0.75804, 0.35091, 0.22054]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Skeleton2D/root/pelvis/spine/head:rotation")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.33333, 0.35, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.07377, 0.09459, 0.0912, 0.08034, 0.0369, -0.1371, -0.15711, -0.15962, -0.15962, -0.00452, 0.07377]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Skeleton2D/root/pelvis/spine/arm_b_up:rotation")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.15, 0.16667, 0.18333, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.43333, 0.45, 0.46667, 0.5, 0.55, 0.6, 0.65, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.82273, -2.54071, -2.38438, -2.20003, -1.95074, -4.43198, -3.69024, -2.90791, -2.49942, -2.25435, -2.07061, -1.91313, -1.7672, -1.77209, -1.79127, -1.85816, -1.78285, -4.73206, -4.81689, -4.88005, -4.90438, -4.90438, -4.73902, -4.59781, -4.46862, -4.22962, -3.89549, -3.57648, -3.2702, -3.07549, -2.82273]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Skeleton2D/root/pelvis/spine/arm_b_up/arm_b_lo:rotation")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.15, 0.16667, 0.18333, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.43333, 0.45, 0.46667, 0.48333, 0.5, 0.51667, 0.53333, 0.55, 0.58333, 0.61667, 0.65, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-1.93529, -2.12056, -2.29611, -2.62401, -2.77455, -3.37937, -3.31943, -3.38603, -3.51856, -3.67212, -3.83617, -4.00888, -4.19106, -4.1817, -4.14435, -4.00032, -3.51636, -0.86277, -0.69783, -0.57604, -0.52916, -0.52916, -0.74015, -0.89886, -1.02933, -1.14089, -1.23827, -1.3242, -1.40041, -1.46803, -1.58029, -1.66473, -1.72318, -1.75673, -1.93529]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up:rotation")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.15, 0.16667, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.43333, 0.46667, 0.5, 0.55, 0.61667, 0.65, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [3.41808, 3.68999, 3.84076, 4.02985, 4.37634, 2.76195, 3.75173, 4.02776, 4.2028, 4.35, 4.76481, 4.75998, 4.74107, 4.67487, 4.62299, 1.48909, 1.4355, 1.39859, 1.38536, 1.38536, 1.51469, 1.75369, 1.97817, 2.29968, 2.70429, 2.89291, 3.069, 3.41808]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo:rotation")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.16667, 0.18333, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.43333, 0.45, 0.46667, 0.48333, 0.5, 0.51667, 0.55, 0.56667, 0.6, 0.63333, 0.65, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.06536, -2.26122, -2.44839, -2.80426, -2.97048, -3.22403, -3.3561, -3.52701, -3.89082, -4.08403, -4.28809, -4.50736, -4.49766, -4.45904, -4.31227, -3.83591, -1.13231, -1.01935, -0.944, -0.91734, -0.91734, -1.04939, -1.16201, -1.25999, -1.34606, -1.42196, -1.48884, -1.59834, -1.64189, -1.70809, -1.7478, -1.75817, -1.76094, -2.06536]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath("Skeleton2D/root/pelvis/spine/arm_f_up/arm_f_lo/weapon:rotation")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 0.01667, 0.03333, 0.05, 0.06667, 0.08333, 0.1, 0.11667, 0.13333, 0.15, 0.16667, 0.18333, 0.2, 0.21667, 0.23333, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.43333, 0.45, 0.46667, 0.48333, 0.51667, 0.55, 0.56667, 0.6, 0.63333, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-1.05246, -0.97135, -0.9026, -0.8533, -0.84785, -1.00876, 0.87856, 0.0402, -0.04554, -0.02256, 0.03477, 0.10935, 0.19618, 0.2946, 0.28755, 0.2591, 0.14351, -0.42105, -0.55181, -0.63464, -0.68714, -0.70526, -0.70526, -0.6771, -0.66098, -0.65461, -0.65664, -0.68278, -0.73502, -0.76993, -0.85537, -0.95865, -1.13817, -1.05246]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("Skeleton2D/root/pelvis/leg_b_up:rotation")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.11667, 0.21667, 0.26667, 0.28333, 0.3, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.6511, 2.61078, 2.56739, 2.52402, 2.52074, 2.51151, 2.48602, 2.48759, 2.59758, 2.6511]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("Skeleton2D/root/pelvis/leg_b_up/leg_b_lo:rotation")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.1, 0.21667, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.42516, 1.54786, 1.66233, 1.90463, 1.89676, 1.87216, 1.76475, 1.79392, 1.81109, 1.81675, 1.81675, 1.56173, 1.42516]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("Skeleton2D/root/pelvis/leg_b_up/leg_b_lo/foot_b:rotation")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.50546, -2.85785, -2.85519, -2.84669, -2.81287, -2.67997, -2.70965, -2.72756, -2.73354, -2.73354, -2.58851, -2.50546]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("Skeleton2D/root/pelvis/leg_f_up:rotation")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.33333, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [2.18507, 1.77701, 1.78152, 1.79594, 1.85316, 2.07796, 2.05023, 2.04687, 2.10007, 2.18507]
+}
+tracks/13/type = "value"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("Skeleton2D/root/pelvis/leg_f_up/leg_f_lo:rotation")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = {
+"times": PackedFloat32Array(0, 0.05, 0.1, 0.15, 0.21667, 0.25, 0.26667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.41667, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.40794, 1.52145, 1.62549, 1.72121, 1.83697, 1.83297, 1.82006, 1.76678, 1.52543, 1.56721, 1.59185, 1.59999, 1.59999, 1.54472, 1.40794]
+}
+tracks/14/type = "value"
+tracks/14/imported = false
+tracks/14/enabled = true
+tracks/14/path = NodePath("Skeleton2D/root/pelvis/leg_f_up/leg_f_lo/foot_f:rotation")
+tracks/14/interp = 1
+tracks/14/loop_wrap = true
+tracks/14/keys = {
+"times": PackedFloat32Array(0, 0.06667, 0.13333, 0.21667, 0.28333, 0.3, 0.31667, 0.33333, 0.35, 0.68333, 1),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [-2.02222, -2.04633, -2.05486, -2.04318, -2.04915, -2.0326, -2.05687, -2.07129, -2.07607, -2.074, -2.02222]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_rig"]
 _data = {
 "idle": SubResource("Animation_idle"),
@@ -2410,7 +2962,10 @@ _data = {
 "hurt": SubResource("Animation_hurt"),
 "fall": SubResource("Animation_fall"),
 "down": SubResource("Animation_down"),
-"getup": SubResource("Animation_getup")
+"getup": SubResource("Animation_getup"),
+"block": SubResource("Animation_block"),
+"dodge": SubResource("Animation_dodge"),
+"finisher": SubResource("Animation_finisher")
 }
 
 [sub_resource type="AnimationNodeAnimation" id="TreeAnim_idle"]
@@ -2603,8 +3158,8 @@ transitions = ["locomotion", "strike", SubResource("TreeTrans_locomotion_strike"
 
 [node name="Rig_utopia_brute" type="Node2D"]
 metadata/character = "SENTINELA"
-metadata/hitboxes = {"jab": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.5333, "peak": 56.5, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 19.85, -40.15, 0.0333, 18.69, -40.11, 0.05, 17.54, -40.1, 0.0667, 16.4, -40.12, 0.0833, 15.24, -40.06, 0.1, 14.09, -40.03, 0.1167, 12.93, -40.03, 0.1333, 11.76, -39.97, 0.15, 10.63, -39.95, 0.1667, 9.5, -39.95, 0.1833, 8.34, -39.91, 0.2, 7.18, -39.89, 0.2167, 6.02, -39.9, 0.2333, 6.16, -39.91, 0.25, 6.67, -40.14, 0.2667, 8.83, -41.05, 0.2833, 17.47, -44.69, 0.3, 52, -59.24, 0.3167, 54.39, -58.63, 0.3333, 55.94, -57.94, 0.35, 56.5, -57.77, 0.3667, 56.5, -57.77, 0.3833, 56.5, -57.77, 0.4, 56.5, -57.77, 0.4167, 56.5, -57.77, 0.4333, 54.66, -56.55, 0.45, 52.81, -55.14, 0.4667, 50.97, -53.86, 0.4833, 49.12, -52.51, 0.5, 47.29, -51.25, 0.5167, 45.46, -49.96, 0.5333, 43.62, -48.65, 0.55, 41.78, -47.33, 0.5667, 39.93, -45.98, 0.5833, 38.06, -44.61, 0.6, 36.26, -43.35, 0.6167, 34.42, -42.04, 0.6333, 32.53, -40.66, 0.65, 30.73, -39.39, 0.6667, 28.84, -38.03, 0.6833, 27, -36.71, 0.7, 26.68, -36.87, 0.7167, 26.36, -37.04, 0.7333, 26.04, -37.21, 0.75, 25.72, -37.39, 0.7667, 25.4, -37.56, 0.7833, 25.08, -37.74, 0.8, 24.76, -37.92, 0.8167, 24.44, -38.1, 0.8333, 24.13, -38.28, 0.85, 23.81, -38.47, 0.8667, 23.49, -38.65, 0.8833, 23.18, -38.84, 0.9, 22.86, -39.03, 0.9167, 22.55, -39.23, 0.9333, 22.24, -39.42, 0.95, 21.93, -39.62, 0.9667, 21.62, -39.82, 0.9833, 21.31, -40.02, 1, 21, -40.23)}, "kick": {"bone": "foot_f", "r": 12, "on": 0.3, "off": 0.6, "peak": 52.12, "pts": PackedFloat32Array(0, 20, 0, 0.0167, 20.51, -1.14, 0.0333, 20.95, -2.32, 0.05, 21.5, -3.47, 0.0667, 21.97, -4.66, 0.0833, 22.38, -5.79, 0.1, 22.89, -6.94, 0.1167, 23.32, -8.11, 0.1333, 23.69, -9.22, 0.15, 24.25, -10.43, 0.1667, 24.74, -11.61, 0.1833, 25.14, -12.75, 0.2, 25.61, -13.9, 0.2167, 25.99, -15, 0.2333, 26.18, -15.05, 0.25, 26.49, -15.22, 0.2667, 28.22, -15.92, 0.2833, 34.98, -18.74, 0.3, 51.99, -30.19, 0.3167, 52, -31.52, 0.3333, 51.98, -32.3, 0.35, 51.97, -32.55, 0.3667, 51.97, -32.55, 0.3833, 51.97, -32.56, 0.4, 51.97, -32.56, 0.4167, 51.97, -32.56, 0.4333, 52.12, -31.54, 0.45, 52.25, -30.53, 0.4667, 52.35, -29.51, 0.4833, 52.41, -28.22, 0.5, 52.43, -26.94, 0.5167, 50.5, -25.69, 0.5333, 48.25, -24.47, 0.55, 46, -23.25, 0.5667, 43.78, -22.16, 0.5833, 41.51, -20.81, 0.6, 39.25, -19.59, 0.6167, 37, -18.39, 0.6333, 34.75, -17.18, 0.65, 32.5, -15.96, 0.6667, 30.25, -14.73, 0.6833, 28, -13.5, 0.7, 27.61, -12.79, 0.7167, 27.18, -12.09, 0.7333, 26.8, -11.41, 0.75, 26.39, -10.71, 0.7667, 25.96, -10.01, 0.7833, 25.56, -9.29, 0.8, 25.13, -8.58, 0.8167, 24.75, -7.87, 0.8333, 24.33, -7.18, 0.85, 23.88, -6.46, 0.8667, 23.48, -5.75, 0.8833, 23.05, -5.02, 0.9, 22.59, -4.3, 0.9167, 22.17, -3.59, 0.9333, 21.73, -2.86, 0.95, 21.34, -2.13, 0.9667, 20.92, -1.43, 0.9833, 20.47, -0.7, 1, 20, 0)}, "swing": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.55, "peak": 52, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 18.26, -43.99, 0.0333, 15.46, -47.73, 0.05, 12.68, -51.42, 0.0667, 9.92, -55.23, 0.0833, 7.15, -58.99, 0.1, 4.38, -62.74, 0.1167, 1.62, -66.48, 0.1333, -1.21, -70.27, 0.15, -3.91, -73.99, 0.1667, -6.69, -77.73, 0.1833, -9.46, -81.48, 0.2, -12.23, -85.23, 0.2167, -15, -88.98, 0.2333, -12.81, -89.05, 0.25, -6.25, -89.23, 0.2667, 4.69, -89.55, 0.2833, 20, -89.98, 0.3, 52, -51.71, 0.3167, 49.78, -42.49, 0.3333, 48.44, -36.95, 0.35, 48, -35.11, 0.3667, 48, -35.11, 0.3833, 48, -35.11, 0.4, 48, -35.11, 0.4167, 48, -35.11, 0.4333, 46.93, -36.68, 0.45, 45.79, -38.22, 0.4667, 44.64, -39.61, 0.4833, 43.54, -41.17, 0.5, 42.37, -42.7, 0.5167, 41.3, -44.22, 0.5333, 40.15, -45.69, 0.55, 39.02, -47.3, 0.5667, 37.89, -48.75, 0.5833, 36.76, -50.34, 0.6, 35.65, -51.79, 0.6167, 34.51, -53.38, 0.6333, 33.4, -54.82, 0.65, 32.25, -56.42, 0.6667, 31.16, -57.86, 0.6833, 30, -59.4, 0.7, 29.56, -58.37, 0.7167, 29.05, -57.39, 0.7333, 28.61, -56.37, 0.75, 28.11, -55.38, 0.7667, 27.66, -54.33, 0.7833, 27.16, -53.36, 0.8, 26.71, -52.31, 0.8167, 26.22, -51.35, 0.8333, 25.76, -50.29, 0.85, 25.28, -49.34, 0.8667, 24.81, -48.27, 0.8833, 24.34, -47.32, 0.9, 23.85, -46.25, 0.9167, 23.4, -45.3, 0.9333, 22.9, -44.24, 0.95, 22.45, -43.28, 0.9667, 21.95, -42.2, 0.9833, 21.51, -41.21, 1, 21, -40.23), "won": 0.3, "woff": 0.65, "wpn": PackedFloat32Array(0, 21, -40.23, -1.05, 0.0167, 18.26, -43.99, -1.1741, 0.0333, 15.46, -47.73, -1.2882, 0.05, 12.68, -51.42, -1.4022, 0.0667, 9.92, -55.23, -1.5269, 0.0833, 7.15, -58.99, -1.6468, 0.1, 4.38, -62.74, -1.766, 0.1167, 1.62, -66.48, -1.8846, 0.1333, -1.21, -70.27, -2.0074, 0.15, -3.91, -73.99, -2.1192, 0.1667, -6.69, -77.73, -2.2423, 0.1833, -9.46, -81.48, -2.3616, 0.2, -12.23, -85.23, -2.4808, 0.2167, -15, -88.98, -2.6022, 0.2333, -12.81, -89.05, -2.5187, 0.25, -6.25, -89.23, -2.275, 0.2667, 4.69, -89.55, -1.8688, 0.2833, 20, -89.98, -1.2996, 0.3, 52, -51.71, 0.35, 0.3167, 49.78, -42.49, 0.5999, 0.3333, 48.44, -36.95, 0.75, 0.35, 48, -35.11, 0.8, 0.3667, 48, -35.11, 0.8, 0.3833, 48, -35.11, 0.8, 0.4, 48, -35.11, 0.8, 0.4167, 48, -35.11, 0.8, 0.4333, 46.93, -36.68, 0.7118, 0.45, 45.79, -38.22, 0.6235, 0.4667, 44.64, -39.61, 0.5418, 0.4833, 43.54, -41.17, 0.4521, 0.5, 42.37, -42.7, 0.3625, 0.5167, 41.3, -44.22, 0.2778, 0.5333, 40.15, -45.69, 0.193, 0.55, 39.02, -47.3, 0.1004, 0.5667, 37.89, -48.75, 0.0138, 0.5833, 36.76, -50.34, -0.0763, 0.6, 35.65, -51.79, -0.1611, 0.6167, 34.51, -53.38, -0.2515, 0.6333, 33.4, -54.82, -0.3359, 0.65, 32.25, -56.42, -0.4257, 0.6667, 31.16, -57.86, -0.5084, 0.6833, 30, -59.4, -0.6, 0.7, 29.56, -58.37, -0.6239, 0.7167, 29.05, -57.39, -0.6477, 0.7333, 28.61, -56.37, -0.6717, 0.75, 28.11, -55.38, -0.6957, 0.7667, 27.66, -54.33, -0.7195, 0.7833, 27.16, -53.36, -0.747, 0.8, 26.71, -52.31, -0.7673, 0.8167, 26.22, -51.35, -0.793, 0.8333, 25.76, -50.29, -0.8117, 0.85, 25.28, -49.34, -0.8377, 0.8667, 24.81, -48.27, -0.8571, 0.8833, 24.34, -47.32, -0.8847, 0.9, 23.85, -46.25, -0.9065, 0.9167, 23.4, -45.3, -0.9321, 0.9333, 22.9, -44.24, -0.9524, 0.95, 22.45, -43.28, -0.9809, 0.9667, 21.95, -42.2, -0.9989, 0.9833, 21.51, -41.21, -1.0245, 1, 21, -40.23, -1.05)}, "slam": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.6167, "peak": 51, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 20.69, -39.78, 0.0333, 20.35, -39.33, 0.05, 20, -38.88, 0.0667, 19.69, -38.46, 0.0833, 19.36, -38.04, 0.1, 19, -37.61, 0.1167, 15.36, -54.38, 0.1333, 12.14, -68.65, 0.15, 9.57, -80.29, 0.1667, 4.02, -89.48, 0.1833, 6.14, -95.81, 0.2, 5.45, -99.68, 0.2167, 5, -100.98, 0.2333, 5.3, -100.69, 0.25, 5.67, -99.85, 0.2667, 7.83, -96.21, 0.2833, 16.48, -81.66, 0.3, 51, -23.46, 0.3167, 51, -19.17, 0.3333, 51, -16.6, 0.35, 51, -15.75, 0.3667, 51, -15.75, 0.3833, 51, -15.75, 0.4, 51, -15.75, 0.4167, 51, -15.75, 0.4333, 49.94, -17.43, 0.45, 48.88, -19.11, 0.4667, 47.87, -20.86, 0.4833, 46.75, -22.48, 0.5, 45.72, -24.15, 0.5167, 44.63, -25.84, 0.5333, 43.59, -27.52, 0.55, 42.5, -29.21, 0.5667, 41.47, -30.86, 0.5833, 40.39, -32.52, 0.6, 39.33, -34.28, 0.6167, 38.26, -35.91, 0.6333, 37.21, -37.65, 0.65, 36.14, -39.26, 0.6667, 35.1, -40.98, 0.6833, 34, -42.66, 0.7, 33.34, -42.52, 0.7167, 32.66, -42.39, 0.7333, 31.97, -42.27, 0.75, 31.28, -42.17, 0.7667, 30.6, -42, 0.7833, 29.92, -41.84, 0.8, 29.24, -41.72, 0.8167, 28.56, -41.62, 0.8333, 27.86, -41.53, 0.85, 27.18, -41.36, 0.8667, 26.49, -41.2, 0.8833, 25.82, -41.08, 0.9, 25.13, -40.98, 0.9167, 24.44, -40.88, 0.9333, 23.74, -40.7, 0.95, 23.08, -40.57, 0.9667, 22.4, -40.45, 0.9833, 21.71, -40.33, 1, 21, -40.23), "won": 0.3, "woff": 0.6833, "wpn": PackedFloat32Array(0, 21, -40.23, -1.05, 0.0167, 20.69, -39.78, -1.0483, 0.0333, 20.35, -39.33, -1.0466, 0.05, 20, -38.88, -1.0449, 0.0667, 19.69, -38.46, -1.0466, 0.0833, 19.36, -38.04, -1.0483, 0.1, 19, -37.61, -1.05, 0.1167, 15.36, -54.38, -1.0475, 0.1333, 12.14, -68.65, -1.05, 0.15, 9.57, -80.29, -1.05, 0.1667, 4.02, -89.48, -1.1853, 0.1833, 6.14, -95.81, -1.05, 0.2, 5.45, -99.68, -1.0474, 0.2167, 5, -100.98, -1.05, 0.2333, 5.3, -100.69, -1.0475, 0.25, 5.67, -99.85, -1.05, 0.2667, 7.83, -96.21, -1.05, 0.2833, 16.48, -81.66, -1.05, 0.3, 51, -23.46, -1.05, 0.3167, 51, -19.17, -1.05, 0.3333, 51, -16.6, -1.05, 0.35, 51, -15.75, -1.05, 0.3667, 51, -15.75, -1.05, 0.3833, 51, -15.75, -1.05, 0.4, 51, -15.75, -1.05, 0.4167, 51, -15.75, -1.05, 0.4333, 49.94, -17.43, -1.0534, 0.45, 48.88, -19.11, -1.05, 0.4667, 47.87, -20.86, -1.0539, 0.4833, 46.75, -22.48, -1.05, 0.5, 45.72, -24.15, -1.0507, 0.5167, 44.63, -25.84, -1.0513, 0.5333, 43.59, -27.52, -1.0496, 0.55, 42.5, -29.21, -1.0502, 0.5667, 41.47, -30.86, -1.0486, 0.5833, 40.39, -32.52, -1.047, 0.6, 39.33, -34.28, -1.0505, 0.6167, 38.26, -35.91, -1.0482, 0.6333, 37.21, -37.65, -1.0514, 0.65, 36.14, -39.26, -1.0469, 0.6667, 35.1, -40.98, -1.0484, 0.6833, 34, -42.66, -1.05, 0.7, 33.34, -42.52, -1.0503, 0.7167, 32.66, -42.39, -1.0505, 0.7333, 31.97, -42.27, -1.0508, 0.75, 31.28, -42.17, -1.0511, 0.7667, 30.6, -42, -1.0497, 0.7833, 29.92, -41.84, -1.0483, 0.8, 29.24, -41.72, -1.049, 0.8167, 28.56, -41.62, -1.0496, 0.8333, 27.86, -41.53, -1.0528, 0.85, 27.18, -41.36, -1.0515, 0.8667, 26.49, -41.2, -1.0502, 0.8833, 25.82, -41.08, -1.0514, 0.9, 25.13, -40.98, -1.0526, 0.9167, 24.44, -40.88, -1.0538, 0.9333, 23.74, -40.7, -1.0509, 0.95, 23.08, -40.57, -1.0506, 0.9667, 22.4, -40.45, -1.0504, 0.9833, 21.71, -40.33, -1.0502, 1, 21, -40.23, -1.05)}, "charge": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.5167, "peak": 54, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 18.96, -40.22, 0.0333, 17, -40.34, 0.05, 14.95, -40.33, 0.0667, 13, -40.46, 0.0833, 10.94, -40.44, 0.1, 9, -40.58, 0.1167, 6.94, -40.56, 0.1333, 5.01, -40.7, 0.15, 3, -40.75, 0.1667, 0.96, -40.82, 0.1833, -1, -40.87, 0.2, -3, -40.93, 0.2167, -5, -40.98, 0.2333, -4.78, -41.03, 0.25, -4.16, -41.03, 0.2667, -1.49, -41.18, 0.2833, 9.21, -41.79, 0.3, 52, -44.24, 0.3167, 53.11, -42.53, 0.3333, 53.78, -41.58, 0.35, 54, -41.25, 0.3667, 54, -41.25, 0.3833, 54, -41.25, 0.4, 54, -41.25, 0.4167, 54, -41.25, 0.4333, 51.82, -40.86, 0.45, 49.62, -40.42, 0.4667, 47.45, -40.04, 0.4833, 45.3, -39.56, 0.5, 43.06, -39.17, 0.5167, 40.89, -38.78, 0.5333, 38.71, -38.29, 0.55, 36.51, -37.95, 0.5667, 34.31, -37.51, 0.5833, 32.18, -37.1, 0.6, 29.98, -36.73, 0.6167, 27.76, -36.24, 0.6333, 25.59, -35.87, 0.65, 23.38, -35.41, 0.6667, 21.21, -35.04, 0.6833, 19, -34.61, 0.7, 19.11, -34.9, 0.7167, 19.21, -35.2, 0.7333, 19.32, -35.5, 0.75, 19.42, -35.8, 0.7667, 19.53, -36.1, 0.7833, 19.64, -36.39, 0.8, 19.74, -36.69, 0.8167, 19.85, -36.99, 0.8333, 19.95, -37.28, 0.85, 20.06, -37.58, 0.8667, 20.16, -37.87, 0.8833, 20.27, -38.17, 0.9, 20.37, -38.46, 0.9167, 20.48, -38.76, 0.9333, 20.58, -39.05, 0.95, 20.69, -39.35, 0.9667, 20.79, -39.64, 0.9833, 20.9, -39.93, 1, 21, -40.23)}, "throw": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.55, "peak": 57, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 17.77, -43.05, 0.0333, 14.54, -45.88, 0.05, 11.31, -48.71, 0.0667, 8.08, -51.53, 0.0833, 4.85, -54.36, 0.1, 1.62, -57.19, 0.1167, -1.61, -60.02, 0.1333, -4.84, -62.85, 0.15, -8.07, -65.67, 0.1667, -11.3, -68.5, 0.1833, -14.53, -71.33, 0.2, -17.77, -74.15, 0.2167, -20.99, -76.98, 0.2333, -20.67, -76.97, 0.25, -19.8, -76.69, 0.2667, -16.2, -75.74, 0.2833, -1.55, -71.92, 0.3, 57, -56.71, 0.3167, 54.78, -48.6, 0.3333, 53.44, -43.73, 0.35, 52.99, -42.16, 0.3667, 52.99, -42.14, 0.3833, 52.99, -42.13, 0.4, 53, -42.12, 0.4167, 53, -42.11, 0.4333, 51.85, -42.84, 0.45, 50.67, -43.56, 0.4667, 49.46, -44.28, 0.4833, 48.27, -44.9, 0.5, 47.1, -45.64, 0.5167, 45.92, -46.37, 0.5333, 44.7, -47.1, 0.55, 43.52, -47.73, 0.5667, 42.35, -48.47, 0.5833, 41.16, -49.2, 0.6, 39.95, -49.92, 0.6167, 38.77, -50.55, 0.6333, 37.61, -51.29, 0.65, 36.43, -52.02, 0.6667, 35.22, -52.72, 0.6833, 34, -53.4, 0.7, 33.35, -52.68, 0.7167, 32.66, -51.99, 0.7333, 31.95, -51.33, 0.75, 31.29, -50.63, 0.7667, 30.59, -49.95, 0.7833, 29.92, -49.23, 0.8, 29.21, -48.54, 0.8167, 28.55, -47.86, 0.8333, 27.87, -47.19, 0.85, 27.19, -46.47, 0.8667, 26.47, -45.77, 0.8833, 25.84, -45.07, 0.9, 25.17, -44.39, 0.9167, 24.46, -43.73, 0.9333, 23.74, -42.98, 0.95, 23.07, -42.32, 0.9667, 22.37, -41.57, 0.9833, 21.71, -40.89, 1, 21, -40.23)}, "special": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.6, "peak": 50, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 20.57, -40.56, 0.0333, 20.13, -40.89, 0.05, 19.68, -41.23, 0.0667, 19.21, -41.57, 0.0833, 18.73, -41.91, 0.1, 18.23, -42.25, 0.1167, 17.81, -42.58, 0.1333, 17.37, -42.92, 0.15, 16.91, -43.25, 0.1667, 16.43, -43.57, 0.1833, 15.93, -43.9, 0.2, 15.48, -44.26, 0.2167, 15, -44.61, 0.2333, 15.14, -44.62, 0.25, 15.55, -44.85, 0.2667, 17.15, -45.51, 0.2833, 23.73, -48.25, 0.3, 50, -59.23, 0.3167, 49.44, -56.45, 0.3333, 49.11, -54.78, 0.35, 49, -54.23, 0.3667, 49, -54.23, 0.3833, 49, -54.23, 0.4, 49, -54.23, 0.4167, 49, -54.23, 0.4333, 48, -54.11, 0.45, 47.03, -53.79, 0.4667, 46, -53.7, 0.4833, 45.03, -53.44, 0.5, 44, -53.37, 0.5167, 43.03, -53.19, 0.5333, 42.01, -53.04, 0.55, 41.03, -52.81, 0.5667, 40.01, -52.62, 0.5833, 39.02, -52.38, 0.6, 38, -52.18, 0.6167, 37.01, -51.95, 0.6333, 35.99, -51.76, 0.65, 35.02, -51.54, 0.6667, 34.02, -51.36, 0.6833, 33, -51.23, 0.7, 32.4, -50.61, 0.7167, 31.76, -50.03, 0.7333, 31.11, -49.49, 0.75, 30.49, -48.91, 0.7667, 29.86, -48.36, 0.7833, 29.26, -47.76, 0.8, 28.63, -47.19, 0.8167, 27.98, -46.65, 0.8333, 27.36, -46.04, 0.85, 26.71, -45.47, 0.8667, 26.06, -44.83, 0.8833, 25.45, -44.31, 0.9, 24.84, -43.72, 0.9167, 24.19, -43.15, 0.9333, 23.53, -42.52, 0.95, 22.94, -42, 0.9667, 22.34, -41.39, 0.9833, 21.69, -40.79, 1, 21, -40.23)}}
-metadata/hurtboxes = {"idle": {"len": 1.6, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -99.8, 26.5, 0, 0.0667, -15.5, -99.8, 26.5, 0, 0.1, -15.5, -99.8, 26.5, 0, 0.1333, -15.5, -99.8, 26.5, 0, 0.1667, -15.5, -99.8, 26.5, 0, 0.2, -15.5, -99.8, 26.5, 0, 0.2333, -15.5, -99.6, 26.9, 0, 0.2667, -15.5, -98.7, 28.5, 0, 0.3, -15.5, -98.7, 28.5, 0, 0.3333, -15.5, -98.7, 28.5, 0, 0.3667, -15.5, -98.7, 28.5, 0, 0.4, -15.5, -98.7, 28.5, 0, 0.4333, -15.5, -98.7, 28.5, 0, 0.4667, -15.5, -98.7, 28.5, 0, 0.5, -15.5, -99.8, 26.5, 0, 0.5333, -15.5, -99.8, 26.5, 0, 0.5667, -15.5, -99.8, 26.5, 0, 0.6, -15.5, -99.8, 26.5, 0, 0.6333, -15.5, -99.8, 26.5, 0, 0.6667, -15.5, -99.8, 26.5, 0, 0.7, -15.5, -99.8, 26.5, 0, 0.7333, -15.5, -99.8, 26.5, 0, 0.7667, -15.5, -99.8, 26.5, 0, 0.8, -15.5, -99.8, 26.5, 0, 0.8333, -15.5, -99.8, 26.5, 0, 0.8667, -15.5, -99.8, 26.5, 0, 0.9, -15.5, -99.8, 26.5, 0, 0.9333, -15.5, -99.8, 26.5, 0, 0.9667, -15.5, -99.8, 26.5, 0, 1, -15.5, -99.8, 26.5, 0)}, "walk": {"len": 0.5236, "box": PackedFloat32Array(0, -20, -99.3, 26.8, 0, 0.0333, -19.3, -98.8, 27, 0, 0.0667, -18.6, -98.3, 27.1, 0, 0.1, -17.9, -97.8, 27.3, 0, 0.1333, -16.7, -97.5, 27.3, 0, 0.1667, -13.2, -98.1, 26.9, 0, 0.2, -10.1, -98.8, 26.5, 0, 0.2333, -10.6, -99.4, 26.2, 0, 0.2667, -11.1, -100, 26.7, 0, 0.3, -11.6, -100.4, 27.2, 0, 0.3333, -12, -100.8, 27.7, 0, 0.3667, -12.5, -101.2, 28.2, 0, 0.4, -12.9, -101.1, 28.8, 0, 0.4333, -13.3, -100.5, 29.3, 0, 0.4667, -13.7, -100, 29.8, 0, 0.5, -14.1, -99.5, 30.3, 0, 0.5333, -13.9, -99, 30.1, 0, 0.5667, -13.5, -98.4, 29.6, 0, 0.6, -13, -97.9, 29.1, 0, 0.6333, -12.7, -97.4, 28.5, 0, 0.6667, -13.4, -97.9, 28, 0, 0.7, -14.1, -98.6, 27.5, 0, 0.7333, -14.8, -99.2, 27, 0, 0.7667, -15.5, -99.9, 26.4, 0, 0.8, -16.5, -100.4, 26, 0, 0.8333, -17.4, -100.9, 26.6, 0, 0.8667, -18.3, -101.2, 26.8, 0, 0.9, -18.8, -100.7, 26.8, 0, 0.9333, -19.3, -100.2, 26.8, 0, 0.9667, -19.7, -99.7, 26.8, 0, 1, -20, -99.3, 26.8, 0)}, "hurt": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -29, -95.2, 24.5, 0, 0.0667, -35.1, -93.3, 24.3, 0, 0.1, -35.8, -93, 24.3, 0, 0.1333, -36, -92.8, 24.3, 0, 0.1667, -35.7, -93, 24.3, 0, 0.2, -34.7, -93.5, 24.4, 0, 0.2333, -33.2, -94, 24.6, 0, 0.2667, -30.9, -94.7, 24.7, 0, 0.3, -28.2, -95.3, 24.9, 0, 0.3333, -22.5, -95.8, 25.1, 0, 0.3667, -17.7, -96.1, 25.2, 0, 0.4, -16.3, -96.4, 25.3, 0, 0.4333, -15.5, -96.5, 25.4, 0, 0.4667, -29.7, -97.1, 25.5, 0, 0.5, -25.1, -98.1, 25.6, 0, 0.5333, -21.4, -98.8, 25.6, 0, 0.5667, -18.2, -99.2, 25.7, 0, 0.6, -15.7, -99.5, 25.7, 0, 0.6333, -15.5, -99.7, 25.7, 0, 0.6667, -15.5, -99.8, 25.7, 0, 0.7, -15.4, -99.8, 26.5, 0, 0.7333, -15.4, -99.9, 27, 0, 0.7667, -15.4, -99.9, 27.3, 0, 0.8, -15.5, -99.9, 27.4, 0, 0.8333, -15.5, -99.9, 27.2, 0, 0.8667, -15.5, -99.9, 27.1, 0, 0.9, -15.5, -99.9, 27, 0, 0.9333, -15.5, -99.9, 26.8, 0, 0.9667, -15.5, -99.8, 26.6, 0, 1, -15.5, -99.8, 26.5, 0)}, "jab": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 25.5, 0, 0.0667, -15.5, -100.1, 25.4, 0, 0.1, -15.5, -100.2, 25.3, 0, 0.1333, -15.5, -100.3, 25.2, 0, 0.1667, -15.5, -100.3, 25.1, 0, 0.2, -16.4, -100.4, 24.9, 0, 0.2333, -17.1, -100.4, 24.9, 0, 0.2667, -15.5, -100.3, 25.1, 0, 0.3, -15.5, -97.4, 57.4, 0, 0.3333, -15.6, -96.9, 61.4, 0, 0.3667, -15.5, -96.8, 62, 0, 0.4, -15.5, -96.8, 62, 0, 0.4333, -15.5, -97, 60.2, 0, 0.4667, -15.5, -97.4, 56.5, 0, 0.5, -15.5, -97.8, 52.8, 0, 0.5333, -15.5, -98.1, 49.1, 0, 0.5667, -15.5, -98.4, 45.4, 0, 0.6, -15.5, -98.7, 41.6, 0, 0.6333, -15.5, -98.9, 38, 0, 0.6667, -15.5, -99.2, 34.3, 0, 0.7, -15.5, -99.3, 32.2, 0, 0.7333, -15.5, -99.4, 31.5, 0, 0.7667, -15.5, -99.5, 30.9, 0, 0.8, -15.5, -99.5, 30.2, 0, 0.8333, -15.5, -99.6, 29.6, 0, 0.8667, -15.5, -99.6, 29, 0, 0.9, -15.5, -99.7, 28.4, 0, 0.9333, -15.5, -99.7, 27.7, 0, 0.9667, -15.5, -99.8, 27.1, 0, 1, -15.5, -99.8, 26.5, 0)}, "kick": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 27, 0, 0.0667, -15.4, -100.1, 28, 0, 0.1, -17.1, -100.2, 28.8, 0, 0.1333, -18.8, -100.3, 29.3, 0, 0.1667, -20.5, -100.4, 29.5, 0, 0.2, -21.9, -100.4, 29.3, 0, 0.2333, -22.6, -100.5, 29, 0, 0.2667, -25.4, -100.5, 29.2, 0, 0.3, -26, -100.2, 53, 0, 0.3333, -28.6, -100.1, 53, 0, 0.3667, -29, -100, 53, 0, 0.4, -29, -100, 53, 0, 0.4333, -27.4, -100.1, 53.1, 0, 0.4667, -24.1, -100.3, 53.3, 0, 0.5, -20.9, -100.4, 53.4, 0, 0.5333, -17.6, -100.5, 49.2, 0, 0.5667, -15.5, -100.5, 44.8, 0, 0.6, -15.5, -100.6, 40.2, 0, 0.6333, -28.1, -100.6, 35.8, 0, 0.6667, -19.3, -100.5, 31.3, 0, 0.7, -17.3, -100.5, 29.4, 0, 0.7333, -18.6, -100.5, 29.5, 0, 0.7667, -18.5, -100.4, 29.5, 0, 0.8, -17.9, -100.4, 29.3, 0, 0.8333, -17.1, -100.3, 29, 0, 0.8667, -16.2, -100.2, 28.6, 0, 0.9, -15.5, -100.2, 28, 0, 0.9333, -15.5, -100.1, 27.4, 0, 0.9667, -15.5, -100, 26.6, 0, 1, -15.5, -99.8, 26.5, 0)}, "swing": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 25.4, 0, 0.0667, -17.7, -100.2, 25.2, 0, 0.1, -18.5, -100.3, 24.9, 0, 0.1333, -19.4, -100.3, 24.7, 0, 0.1667, -27.5, -100.3, 24.5, 0, 0.2, -28.6, -100.3, 24.2, 0, 0.2333, -28.3, -100.2, 24.2, 0, 0.2667, -21.7, -100.2, 25, 0, 0.3, -15.5, -94.5, 57.5, 0, 0.3333, -15.5, -92, 53.8, 0, 0.3667, -15.5, -91.7, 53.4, 0, 0.4, -15.5, -91.7, 53.4, 0, 0.4333, -15.5, -92.2, 52.3, 0, 0.4667, -15.6, -93.2, 50, 0, 0.5, -15.6, -94.3, 47.9, 0, 0.5333, -15.6, -95.2, 45.7, 0, 0.5667, -15.6, -96.1, 43.3, 0, 0.6, -15.6, -97, 41, 0, 0.6333, -15.5, -97.8, 38.9, 0, 0.6667, -15.5, -98.6, 36.7, 0, 0.7, -15.6, -99, 35, 0, 0.7333, -15.6, -99.1, 34.1, 0, 0.7667, -15.6, -99.2, 33.1, 0, 0.8, -15.5, -99.3, 32.1, 0, 0.8333, -15.5, -99.4, 31.2, 0, 0.8667, -15.5, -99.5, 30.3, 0, 0.9, -15.5, -99.6, 29.2, 0, 0.9333, -15.5, -99.7, 28.3, 0, 0.9667, -15.5, -99.8, 27.4, 0, 1, -15.5, -99.8, 26.5, 0)}, "slam": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -97.7, 26.7, 0, 0.0667, -15.5, -95.4, 27.7, 0, 0.1, -15.4, -93.2, 28.4, 0, 0.1333, -15.5, -98.7, 30, 0, 0.1667, -23.7, -102.1, 24.5, 0, 0.2, -20, -105.1, 23.2, 0, 0.2333, -19.7, -106.1, 23.1, 0, 0.2667, -19.9, -103.3, 23.6, 0, 0.3, -15.4, -85.7, 56.4, 0, 0.3333, -15.4, -82.1, 56.4, 0, 0.3667, -15.4, -81.7, 56.4, 0, 0.4, -15.4, -81.7, 56.4, 0, 0.4333, -15.4, -82.6, 55.3, 0, 0.4667, -15.4, -84.3, 53.3, 0, 0.5, -15.4, -86, 51.2, 0, 0.5333, -15.4, -87.6, 49.1, 0, 0.5667, -15.4, -89.1, 46.9, 0, 0.6, -15.5, -90.6, 44.7, 0, 0.6333, -15.5, -92.1, 42.6, 0, 0.6667, -15.5, -93.5, 40.6, 0, 0.7, -15.5, -94.5, 38.8, 0, 0.7333, -15.5, -95.1, 37.4, 0, 0.7667, -15.6, -95.7, 36, 0, 0.8, -15.6, -96.4, 34.6, 0, 0.8333, -15.6, -97, 33.2, 0, 0.8667, -15.6, -97.6, 31.9, 0, 0.9, -15.6, -98.2, 30.6, 0, 0.9333, -15.5, -98.7, 29.2, 0, 0.9667, -15.5, -99.3, 27.9, 0, 1, -15.5, -99.8, 26.5, 0)}, "charge": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -16.1, -98.8, 26.3, 0, 0.0667, -18.4, -97.7, 27, 0, 0.1, -21.9, -96.6, 27.5, 0, 0.1333, -24.6, -95.5, 28, 0, 0.1667, -18.5, -94.4, 28.4, 0, 0.2, -19.1, -93.2, 28.8, 0, 0.2333, -19.5, -92.6, 28.9, 0, 0.2667, -19.6, -92.8, 28.9, 0, 0.3, -22.5, -86.8, 57.4, 0, 0.3333, -17.1, -85.7, 59.2, 0, 0.3667, -16.5, -85.6, 59.5, 0, 0.4, -16.5, -85.6, 59.5, 0, 0.4333, -16.6, -86.5, 57.3, 0, 0.4667, -16.7, -88.3, 52.9, 0, 0.5, -16.9, -89.8, 48.6, 0, 0.5333, -17, -91.1, 44.2, 0, 0.5667, -17.1, -92.2, 39.7, 0, 0.6, -17.2, -93.1, 35.4, 0, 0.6333, -17.3, -93.7, 31.1, 0, 0.6667, -17.4, -94.1, 28.8, 0, 0.7, -17.4, -94.5, 28.7, 0, 0.7333, -17.2, -95.1, 28.5, 0, 0.7667, -16.9, -95.7, 28.2, 0, 0.8, -16.8, -96.3, 28, 0, 0.8333, -16.6, -96.9, 27.7, 0, 0.8667, -16.4, -97.5, 27.3, 0, 0.9, -16.1, -98.1, 27, 0, 0.9333, -15.9, -98.7, 26.6, 0, 0.9667, -15.7, -99.3, 26.3, 0, 1, -15.5, -99.8, 26.5, 0)}, "throw": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 25.6, 0, 0.0667, -16.8, -100.2, 25.6, 0, 0.1, -15.5, -100.3, 25.6, 0, 0.1333, -15.5, -100.3, 25.6, 0, 0.1667, -16.8, -100.3, 25.6, 0, 0.2, -23.3, -100.3, 25.6, 0, 0.2333, -26.1, -100.2, 25.6, 0, 0.2667, -21.7, -100.3, 25.8, 0, 0.3, -11.5, -95.5, 62.5, 0, 0.3333, -11.5, -94.7, 58.8, 0, 0.3667, -11.5, -94.7, 58.3, 0, 0.4, -11.5, -94.7, 58.3, 0, 0.4333, -11.7, -95, 57.2, 0, 0.4667, -12.2, -95.7, 54.9, 0, 0.5, -12.7, -96.3, 52.6, 0, 0.5333, -13.2, -96.9, 50.2, 0, 0.5667, -13.7, -97.4, 47.9, 0, 0.6, -14.2, -97.9, 45.4, 0, 0.6333, -14.7, -98.4, 43.1, 0, 0.6667, -15.2, -98.8, 40.6, 0, 0.7, -15.5, -99, 38.7, 0, 0.7333, -15.5, -99.1, 37.4, 0, 0.7667, -15.5, -99.2, 36.1, 0, 0.8, -15.5, -99.3, 34.7, 0, 0.8333, -15.5, -99.4, 33.3, 0, 0.8667, -15.5, -99.5, 31.9, 0, 0.9, -15.5, -99.6, 30.5, 0, 0.9333, -15.5, -99.7, 29.2, 0, 0.9667, -15.5, -99.8, 27.9, 0, 1, -15.5, -99.8, 26.5, 0)}, "special": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -99, 26.1, 0, 0.0667, -15.5, -98.1, 26.5, 0, 0.1, -15.5, -97.3, 26.9, 0, 0.1333, -15.5, -96.4, 27.3, 0, 0.1667, -15.5, -95.5, 27.6, 0, 0.2, -15.5, -94.7, 28, 0, 0.2333, -15.5, -94.3, 28.1, 0, 0.2667, -16, -94.3, 28.1, 0, 0.3, -40.9, -95.8, 55.5, 0, 0.3333, -40, -95, 54.6, 0, 0.3667, -39.9, -94.8, 54.5, 0, 0.4, -39.9, -94.8, 54.5, 0, 0.4333, -37.8, -95, 53.5, 0, 0.4667, -34, -95.2, 51.5, 0, 0.5, -30, -95.5, 49.5, 0, 0.5333, -26, -95.7, 47.5, 0, 0.5667, -22, -96, 45.5, 0, 0.6, -18, -96.2, 43.4, 0, 0.6333, -16.6, -96.5, 41.4, 0, 0.6667, -15.9, -96.7, 39.4, 0, 0.7, -15.5, -97, 37.8, 0, 0.7333, -15.5, -97.3, 36.6, 0, 0.7667, -21.6, -97.6, 35.3, 0, 0.8, -20.8, -97.9, 34.1, 0, 0.8333, -19.6, -98.3, 32.8, 0, 0.8667, -18.1, -98.6, 31.5, 0, 0.9, -16.3, -98.9, 30.2, 0, 0.9333, -15.5, -99.2, 29, 0, 0.9667, -15.5, -99.5, 27.8, 0, 1, -15.5, -99.8, 26.5, 0)}}
+metadata/hitboxes = {"jab": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.5333, "peak": 56.5, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 19.85, -40.15, 0.0333, 18.69, -40.11, 0.05, 17.54, -40.1, 0.0667, 16.4, -40.12, 0.0833, 15.24, -40.06, 0.1, 14.09, -40.03, 0.1167, 12.93, -40.03, 0.1333, 11.76, -39.97, 0.15, 10.63, -39.95, 0.1667, 9.5, -39.95, 0.1833, 8.34, -39.91, 0.2, 7.18, -39.89, 0.2167, 6.02, -39.9, 0.2333, 6.16, -39.91, 0.25, 6.67, -40.14, 0.2667, 8.83, -41.05, 0.2833, 17.47, -44.69, 0.3, 52, -59.24, 0.3167, 54.39, -58.63, 0.3333, 55.94, -57.94, 0.35, 56.5, -57.77, 0.3667, 56.5, -57.77, 0.3833, 56.5, -57.77, 0.4, 56.5, -57.77, 0.4167, 56.5, -57.77, 0.4333, 54.66, -56.55, 0.45, 52.81, -55.14, 0.4667, 50.97, -53.86, 0.4833, 49.12, -52.51, 0.5, 47.29, -51.25, 0.5167, 45.46, -49.96, 0.5333, 43.62, -48.65, 0.55, 41.78, -47.33, 0.5667, 39.93, -45.98, 0.5833, 38.06, -44.61, 0.6, 36.26, -43.35, 0.6167, 34.42, -42.04, 0.6333, 32.53, -40.66, 0.65, 30.73, -39.39, 0.6667, 28.84, -38.03, 0.6833, 27, -36.71, 0.7, 26.68, -36.87, 0.7167, 26.36, -37.04, 0.7333, 26.04, -37.21, 0.75, 25.72, -37.39, 0.7667, 25.4, -37.56, 0.7833, 25.08, -37.74, 0.8, 24.76, -37.92, 0.8167, 24.44, -38.1, 0.8333, 24.13, -38.28, 0.85, 23.81, -38.47, 0.8667, 23.49, -38.65, 0.8833, 23.18, -38.84, 0.9, 22.86, -39.03, 0.9167, 22.55, -39.23, 0.9333, 22.24, -39.42, 0.95, 21.93, -39.62, 0.9667, 21.62, -39.82, 0.9833, 21.31, -40.02, 1, 21, -40.23)}, "kick": {"bone": "foot_f", "r": 12, "on": 0.3, "off": 0.6, "peak": 52.12, "pts": PackedFloat32Array(0, 20, 0, 0.0167, 20.51, -1.14, 0.0333, 20.95, -2.32, 0.05, 21.5, -3.47, 0.0667, 21.97, -4.66, 0.0833, 22.38, -5.79, 0.1, 22.89, -6.94, 0.1167, 23.32, -8.11, 0.1333, 23.69, -9.22, 0.15, 24.25, -10.43, 0.1667, 24.74, -11.61, 0.1833, 25.14, -12.75, 0.2, 25.61, -13.9, 0.2167, 25.99, -15, 0.2333, 26.18, -15.05, 0.25, 26.49, -15.22, 0.2667, 28.22, -15.92, 0.2833, 34.98, -18.74, 0.3, 51.99, -30.19, 0.3167, 52, -31.52, 0.3333, 51.98, -32.3, 0.35, 51.97, -32.55, 0.3667, 51.97, -32.55, 0.3833, 51.97, -32.56, 0.4, 51.97, -32.56, 0.4167, 51.97, -32.56, 0.4333, 52.12, -31.54, 0.45, 52.25, -30.53, 0.4667, 52.35, -29.51, 0.4833, 52.41, -28.22, 0.5, 52.43, -26.94, 0.5167, 50.5, -25.69, 0.5333, 48.25, -24.47, 0.55, 46, -23.25, 0.5667, 43.78, -22.16, 0.5833, 41.51, -20.81, 0.6, 39.25, -19.59, 0.6167, 37, -18.39, 0.6333, 34.75, -17.18, 0.65, 32.5, -15.96, 0.6667, 30.25, -14.73, 0.6833, 28, -13.5, 0.7, 27.61, -12.79, 0.7167, 27.18, -12.09, 0.7333, 26.8, -11.41, 0.75, 26.39, -10.71, 0.7667, 25.96, -10.01, 0.7833, 25.56, -9.29, 0.8, 25.13, -8.58, 0.8167, 24.75, -7.87, 0.8333, 24.33, -7.18, 0.85, 23.88, -6.46, 0.8667, 23.48, -5.75, 0.8833, 23.05, -5.02, 0.9, 22.59, -4.3, 0.9167, 22.17, -3.59, 0.9333, 21.73, -2.86, 0.95, 21.34, -2.13, 0.9667, 20.92, -1.43, 0.9833, 20.47, -0.7, 1, 20, 0)}, "swing": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.55, "peak": 52, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 18.26, -43.99, 0.0333, 15.46, -47.73, 0.05, 12.68, -51.42, 0.0667, 9.92, -55.23, 0.0833, 7.15, -58.99, 0.1, 4.38, -62.74, 0.1167, 1.62, -66.48, 0.1333, -1.21, -70.27, 0.15, -3.91, -73.99, 0.1667, -6.69, -77.73, 0.1833, -9.46, -81.48, 0.2, -12.23, -85.23, 0.2167, -15, -88.98, 0.2333, -12.81, -89.05, 0.25, -6.25, -89.23, 0.2667, 4.69, -89.55, 0.2833, 20, -89.98, 0.3, 52, -51.71, 0.3167, 49.78, -42.49, 0.3333, 48.44, -36.95, 0.35, 48, -35.11, 0.3667, 48, -35.11, 0.3833, 48, -35.11, 0.4, 48, -35.11, 0.4167, 48, -35.11, 0.4333, 46.93, -36.68, 0.45, 45.79, -38.22, 0.4667, 44.64, -39.61, 0.4833, 43.54, -41.17, 0.5, 42.37, -42.7, 0.5167, 41.3, -44.22, 0.5333, 40.15, -45.69, 0.55, 39.02, -47.3, 0.5667, 37.89, -48.75, 0.5833, 36.76, -50.34, 0.6, 35.65, -51.79, 0.6167, 34.51, -53.38, 0.6333, 33.4, -54.82, 0.65, 32.25, -56.42, 0.6667, 31.16, -57.86, 0.6833, 30, -59.4, 0.7, 29.56, -58.37, 0.7167, 29.05, -57.39, 0.7333, 28.61, -56.37, 0.75, 28.11, -55.38, 0.7667, 27.66, -54.33, 0.7833, 27.16, -53.36, 0.8, 26.71, -52.31, 0.8167, 26.22, -51.35, 0.8333, 25.76, -50.29, 0.85, 25.28, -49.34, 0.8667, 24.81, -48.27, 0.8833, 24.34, -47.32, 0.9, 23.85, -46.25, 0.9167, 23.4, -45.3, 0.9333, 22.9, -44.24, 0.95, 22.45, -43.28, 0.9667, 21.95, -42.2, 0.9833, 21.51, -41.21, 1, 21, -40.23), "won": 0.3, "woff": 0.65, "wpn": PackedFloat32Array(0, 21, -40.23, -1.05, 0.0167, 18.26, -43.99, -1.1741, 0.0333, 15.46, -47.73, -1.2882, 0.05, 12.68, -51.42, -1.4022, 0.0667, 9.92, -55.23, -1.5269, 0.0833, 7.15, -58.99, -1.6468, 0.1, 4.38, -62.74, -1.766, 0.1167, 1.62, -66.48, -1.8846, 0.1333, -1.21, -70.27, -2.0074, 0.15, -3.91, -73.99, -2.1192, 0.1667, -6.69, -77.73, -2.2423, 0.1833, -9.46, -81.48, -2.3616, 0.2, -12.23, -85.23, -2.4808, 0.2167, -15, -88.98, -2.6022, 0.2333, -12.81, -89.05, -2.5187, 0.25, -6.25, -89.23, -2.275, 0.2667, 4.69, -89.55, -1.8688, 0.2833, 20, -89.98, -1.2996, 0.3, 52, -51.71, 0.35, 0.3167, 49.78, -42.49, 0.5999, 0.3333, 48.44, -36.95, 0.75, 0.35, 48, -35.11, 0.8, 0.3667, 48, -35.11, 0.8, 0.3833, 48, -35.11, 0.8, 0.4, 48, -35.11, 0.8, 0.4167, 48, -35.11, 0.8, 0.4333, 46.93, -36.68, 0.7118, 0.45, 45.79, -38.22, 0.6235, 0.4667, 44.64, -39.61, 0.5418, 0.4833, 43.54, -41.17, 0.4521, 0.5, 42.37, -42.7, 0.3625, 0.5167, 41.3, -44.22, 0.2778, 0.5333, 40.15, -45.69, 0.193, 0.55, 39.02, -47.3, 0.1004, 0.5667, 37.89, -48.75, 0.0138, 0.5833, 36.76, -50.34, -0.0763, 0.6, 35.65, -51.79, -0.1611, 0.6167, 34.51, -53.38, -0.2515, 0.6333, 33.4, -54.82, -0.3359, 0.65, 32.25, -56.42, -0.4257, 0.6667, 31.16, -57.86, -0.5084, 0.6833, 30, -59.4, -0.6, 0.7, 29.56, -58.37, -0.6239, 0.7167, 29.05, -57.39, -0.6477, 0.7333, 28.61, -56.37, -0.6717, 0.75, 28.11, -55.38, -0.6957, 0.7667, 27.66, -54.33, -0.7195, 0.7833, 27.16, -53.36, -0.747, 0.8, 26.71, -52.31, -0.7673, 0.8167, 26.22, -51.35, -0.793, 0.8333, 25.76, -50.29, -0.8117, 0.85, 25.28, -49.34, -0.8377, 0.8667, 24.81, -48.27, -0.8571, 0.8833, 24.34, -47.32, -0.8847, 0.9, 23.85, -46.25, -0.9065, 0.9167, 23.4, -45.3, -0.9321, 0.9333, 22.9, -44.24, -0.9524, 0.95, 22.45, -43.28, -0.9809, 0.9667, 21.95, -42.2, -0.9989, 0.9833, 21.51, -41.21, -1.0245, 1, 21, -40.23, -1.05)}, "slam": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.6167, "peak": 51, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 20.69, -39.78, 0.0333, 20.35, -39.33, 0.05, 20, -38.88, 0.0667, 19.69, -38.46, 0.0833, 19.36, -38.04, 0.1, 19, -37.61, 0.1167, 15.36, -54.38, 0.1333, 12.14, -68.65, 0.15, 9.57, -80.29, 0.1667, 4.02, -89.48, 0.1833, 6.14, -95.81, 0.2, 5.45, -99.68, 0.2167, 5, -100.98, 0.2333, 5.3, -100.69, 0.25, 5.67, -99.85, 0.2667, 7.83, -96.21, 0.2833, 16.48, -81.66, 0.3, 51, -23.46, 0.3167, 51, -19.17, 0.3333, 51, -16.6, 0.35, 51, -15.75, 0.3667, 51, -15.75, 0.3833, 51, -15.75, 0.4, 51, -15.75, 0.4167, 51, -15.75, 0.4333, 49.94, -17.43, 0.45, 48.88, -19.11, 0.4667, 47.87, -20.86, 0.4833, 46.75, -22.48, 0.5, 45.72, -24.15, 0.5167, 44.63, -25.84, 0.5333, 43.59, -27.52, 0.55, 42.5, -29.21, 0.5667, 41.47, -30.86, 0.5833, 40.39, -32.52, 0.6, 39.33, -34.28, 0.6167, 38.26, -35.91, 0.6333, 37.21, -37.65, 0.65, 36.14, -39.26, 0.6667, 35.1, -40.98, 0.6833, 34, -42.66, 0.7, 33.34, -42.52, 0.7167, 32.66, -42.39, 0.7333, 31.97, -42.27, 0.75, 31.28, -42.17, 0.7667, 30.6, -42, 0.7833, 29.92, -41.84, 0.8, 29.24, -41.72, 0.8167, 28.56, -41.62, 0.8333, 27.86, -41.53, 0.85, 27.18, -41.36, 0.8667, 26.49, -41.2, 0.8833, 25.82, -41.08, 0.9, 25.13, -40.98, 0.9167, 24.44, -40.88, 0.9333, 23.74, -40.7, 0.95, 23.08, -40.57, 0.9667, 22.4, -40.45, 0.9833, 21.71, -40.33, 1, 21, -40.23), "won": 0.3, "woff": 0.6833, "wpn": PackedFloat32Array(0, 21, -40.23, -1.05, 0.0167, 20.69, -39.78, -1.0483, 0.0333, 20.35, -39.33, -1.0466, 0.05, 20, -38.88, -1.0449, 0.0667, 19.69, -38.46, -1.0466, 0.0833, 19.36, -38.04, -1.0483, 0.1, 19, -37.61, -1.05, 0.1167, 15.36, -54.38, -1.0475, 0.1333, 12.14, -68.65, -1.05, 0.15, 9.57, -80.29, -1.05, 0.1667, 4.02, -89.48, -1.1853, 0.1833, 6.14, -95.81, -1.05, 0.2, 5.45, -99.68, -1.0474, 0.2167, 5, -100.98, -1.05, 0.2333, 5.3, -100.69, -1.0475, 0.25, 5.67, -99.85, -1.05, 0.2667, 7.83, -96.21, -1.05, 0.2833, 16.48, -81.66, -1.05, 0.3, 51, -23.46, -1.05, 0.3167, 51, -19.17, -1.05, 0.3333, 51, -16.6, -1.05, 0.35, 51, -15.75, -1.05, 0.3667, 51, -15.75, -1.05, 0.3833, 51, -15.75, -1.05, 0.4, 51, -15.75, -1.05, 0.4167, 51, -15.75, -1.05, 0.4333, 49.94, -17.43, -1.0534, 0.45, 48.88, -19.11, -1.05, 0.4667, 47.87, -20.86, -1.0539, 0.4833, 46.75, -22.48, -1.05, 0.5, 45.72, -24.15, -1.0507, 0.5167, 44.63, -25.84, -1.0513, 0.5333, 43.59, -27.52, -1.0496, 0.55, 42.5, -29.21, -1.0502, 0.5667, 41.47, -30.86, -1.0486, 0.5833, 40.39, -32.52, -1.047, 0.6, 39.33, -34.28, -1.0505, 0.6167, 38.26, -35.91, -1.0482, 0.6333, 37.21, -37.65, -1.0514, 0.65, 36.14, -39.26, -1.0469, 0.6667, 35.1, -40.98, -1.0484, 0.6833, 34, -42.66, -1.05, 0.7, 33.34, -42.52, -1.0503, 0.7167, 32.66, -42.39, -1.0505, 0.7333, 31.97, -42.27, -1.0508, 0.75, 31.28, -42.17, -1.0511, 0.7667, 30.6, -42, -1.0497, 0.7833, 29.92, -41.84, -1.0483, 0.8, 29.24, -41.72, -1.049, 0.8167, 28.56, -41.62, -1.0496, 0.8333, 27.86, -41.53, -1.0528, 0.85, 27.18, -41.36, -1.0515, 0.8667, 26.49, -41.2, -1.0502, 0.8833, 25.82, -41.08, -1.0514, 0.9, 25.13, -40.98, -1.0526, 0.9167, 24.44, -40.88, -1.0538, 0.9333, 23.74, -40.7, -1.0509, 0.95, 23.08, -40.57, -1.0506, 0.9667, 22.4, -40.45, -1.0504, 0.9833, 21.71, -40.33, -1.0502, 1, 21, -40.23, -1.05)}, "charge": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.5167, "peak": 54, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 18.96, -40.22, 0.0333, 17, -40.34, 0.05, 14.95, -40.33, 0.0667, 13, -40.46, 0.0833, 10.94, -40.44, 0.1, 9, -40.58, 0.1167, 6.94, -40.56, 0.1333, 5.01, -40.7, 0.15, 3, -40.75, 0.1667, 0.96, -40.82, 0.1833, -1, -40.87, 0.2, -3, -40.93, 0.2167, -5, -40.98, 0.2333, -4.78, -41.03, 0.25, -4.16, -41.03, 0.2667, -1.49, -41.18, 0.2833, 9.21, -41.79, 0.3, 52, -44.24, 0.3167, 53.11, -42.53, 0.3333, 53.78, -41.58, 0.35, 54, -41.25, 0.3667, 54, -41.25, 0.3833, 54, -41.25, 0.4, 54, -41.25, 0.4167, 54, -41.25, 0.4333, 51.82, -40.86, 0.45, 49.62, -40.42, 0.4667, 47.45, -40.04, 0.4833, 45.3, -39.56, 0.5, 43.06, -39.17, 0.5167, 40.89, -38.78, 0.5333, 38.71, -38.29, 0.55, 36.51, -37.95, 0.5667, 34.31, -37.51, 0.5833, 32.18, -37.1, 0.6, 29.98, -36.73, 0.6167, 27.76, -36.24, 0.6333, 25.59, -35.87, 0.65, 23.38, -35.41, 0.6667, 21.21, -35.04, 0.6833, 19, -34.61, 0.7, 19.11, -34.9, 0.7167, 19.21, -35.2, 0.7333, 19.32, -35.5, 0.75, 19.42, -35.8, 0.7667, 19.53, -36.1, 0.7833, 19.64, -36.39, 0.8, 19.74, -36.69, 0.8167, 19.85, -36.99, 0.8333, 19.95, -37.28, 0.85, 20.06, -37.58, 0.8667, 20.16, -37.87, 0.8833, 20.27, -38.17, 0.9, 20.37, -38.46, 0.9167, 20.48, -38.76, 0.9333, 20.58, -39.05, 0.95, 20.69, -39.35, 0.9667, 20.79, -39.64, 0.9833, 20.9, -39.93, 1, 21, -40.23)}, "throw": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.55, "peak": 57, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 17.77, -43.05, 0.0333, 14.54, -45.88, 0.05, 11.31, -48.71, 0.0667, 8.08, -51.53, 0.0833, 4.85, -54.36, 0.1, 1.62, -57.19, 0.1167, -1.61, -60.02, 0.1333, -4.84, -62.85, 0.15, -8.07, -65.67, 0.1667, -11.3, -68.5, 0.1833, -14.53, -71.33, 0.2, -17.77, -74.15, 0.2167, -20.99, -76.98, 0.2333, -20.67, -76.97, 0.25, -19.8, -76.69, 0.2667, -16.2, -75.74, 0.2833, -1.55, -71.92, 0.3, 57, -56.71, 0.3167, 54.78, -48.6, 0.3333, 53.44, -43.73, 0.35, 52.99, -42.16, 0.3667, 52.99, -42.14, 0.3833, 52.99, -42.13, 0.4, 53, -42.12, 0.4167, 53, -42.11, 0.4333, 51.85, -42.84, 0.45, 50.67, -43.56, 0.4667, 49.46, -44.28, 0.4833, 48.27, -44.9, 0.5, 47.1, -45.64, 0.5167, 45.92, -46.37, 0.5333, 44.7, -47.1, 0.55, 43.52, -47.73, 0.5667, 42.35, -48.47, 0.5833, 41.16, -49.2, 0.6, 39.95, -49.92, 0.6167, 38.77, -50.55, 0.6333, 37.61, -51.29, 0.65, 36.43, -52.02, 0.6667, 35.22, -52.72, 0.6833, 34, -53.4, 0.7, 33.35, -52.68, 0.7167, 32.66, -51.99, 0.7333, 31.95, -51.33, 0.75, 31.29, -50.63, 0.7667, 30.59, -49.95, 0.7833, 29.92, -49.23, 0.8, 29.21, -48.54, 0.8167, 28.55, -47.86, 0.8333, 27.87, -47.19, 0.85, 27.19, -46.47, 0.8667, 26.47, -45.77, 0.8833, 25.84, -45.07, 0.9, 25.17, -44.39, 0.9167, 24.46, -43.73, 0.9333, 23.74, -42.98, 0.95, 23.07, -42.32, 0.9667, 22.37, -41.57, 0.9833, 21.71, -40.89, 1, 21, -40.23)}, "special": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.6, "peak": 50, "pts": PackedFloat32Array(0, 21, -40.23, 0.0167, 20.57, -40.56, 0.0333, 20.13, -40.89, 0.05, 19.68, -41.23, 0.0667, 19.21, -41.57, 0.0833, 18.73, -41.91, 0.1, 18.23, -42.25, 0.1167, 17.81, -42.58, 0.1333, 17.37, -42.92, 0.15, 16.91, -43.25, 0.1667, 16.43, -43.57, 0.1833, 15.93, -43.9, 0.2, 15.48, -44.26, 0.2167, 15, -44.61, 0.2333, 15.14, -44.62, 0.25, 15.55, -44.85, 0.2667, 17.15, -45.51, 0.2833, 23.73, -48.25, 0.3, 50, -59.23, 0.3167, 49.44, -56.45, 0.3333, 49.11, -54.78, 0.35, 49, -54.23, 0.3667, 49, -54.23, 0.3833, 49, -54.23, 0.4, 49, -54.23, 0.4167, 49, -54.23, 0.4333, 48, -54.11, 0.45, 47.03, -53.79, 0.4667, 46, -53.7, 0.4833, 45.03, -53.44, 0.5, 44, -53.37, 0.5167, 43.03, -53.19, 0.5333, 42.01, -53.04, 0.55, 41.03, -52.81, 0.5667, 40.01, -52.62, 0.5833, 39.02, -52.38, 0.6, 38, -52.18, 0.6167, 37.01, -51.95, 0.6333, 35.99, -51.76, 0.65, 35.02, -51.54, 0.6667, 34.02, -51.36, 0.6833, 33, -51.23, 0.7, 32.4, -50.61, 0.7167, 31.76, -50.03, 0.7333, 31.11, -49.49, 0.75, 30.49, -48.91, 0.7667, 29.86, -48.36, 0.7833, 29.26, -47.76, 0.8, 28.63, -47.19, 0.8167, 27.98, -46.65, 0.8333, 27.36, -46.04, 0.85, 26.71, -45.47, 0.8667, 26.06, -44.83, 0.8833, 25.45, -44.31, 0.9, 24.84, -43.72, 0.9167, 24.19, -43.15, 0.9333, 23.53, -42.52, 0.95, 22.94, -42, 0.9667, 22.34, -41.39, 0.9833, 21.69, -40.79, 1, 21, -40.23)}, "finisher": {"bone": "arm_f_lo", "r": 10, "on": 0.3, "off": 0.5333, "peak": 67.5, "pts": PackedFloat32Array(0, 21, -40.22, 0.0167, 17.97, -42.88, 0.0333, 15, -45.57, 0.05, 12.01, -48.19, 0.0667, 9, -50.92, 0.0833, 6, -53.6, 0.1, 3, -56.27, 0.1167, 0, -58.94, 0.1333, -3, -61.62, 0.15, -6.06, -64.33, 0.1667, -9, -66.96, 0.1833, -12, -69.64, 0.2, -14.96, -72.34, 0.2167, -18, -74.98, 0.2333, -17.56, -74.98, 0.25, -16.8, -74.58, 0.2667, -12.96, -73.27, 0.2833, 2.42, -68.04, 0.3, 64, -47.15, 0.3167, 65.94, -44.98, 0.3333, 67.11, -43.67, 0.35, 67.5, -43.24, 0.3667, 67.5, -43.24, 0.3833, 67.5, -43.24, 0.4, 67.5, -43.24, 0.4167, 67.5, -43.24, 0.4333, 65.09, -42.6, 0.45, 62.7, -42.05, 0.4667, 60.28, -41.33, 0.4833, 57.89, -40.73, 0.5, 55.47, -40.05, 0.5167, 53.08, -39.47, 0.5333, 50.71, -38.75, 0.55, 48.25, -38.14, 0.5667, 45.89, -37.58, 0.5833, 43.52, -36.89, 0.6, 41.08, -36.3, 0.6167, 38.64, -35.53, 0.6333, 36.25, -34.99, 0.65, 33.81, -34.32, 0.6667, 31.44, -33.65, 0.6833, 29, -33.05, 0.7, 28.58, -33.41, 0.7167, 28.16, -33.78, 0.7333, 27.74, -34.15, 0.75, 27.31, -34.52, 0.7667, 26.89, -34.89, 0.7833, 26.47, -35.26, 0.8, 26.05, -35.63, 0.8167, 25.63, -36.01, 0.8333, 25.21, -36.39, 0.85, 24.78, -36.76, 0.8667, 24.36, -37.14, 0.8833, 23.94, -37.52, 0.9, 23.52, -37.91, 0.9167, 23.1, -38.29, 0.9333, 22.68, -38.67, 0.95, 22.26, -39.06, 0.9667, 21.84, -39.45, 0.9833, 21.42, -39.84, 1, 21, -40.22)}}
+metadata/hurtboxes = {"idle": {"len": 1.6, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -99.8, 26.5, 0, 0.0667, -15.5, -99.8, 26.5, 0, 0.1, -15.5, -99.8, 26.5, 0, 0.1333, -15.5, -99.8, 26.5, 0, 0.1667, -15.5, -99.8, 26.5, 0, 0.2, -15.5, -99.8, 26.5, 0, 0.2333, -15.5, -99.6, 26.9, 0, 0.2667, -15.5, -98.7, 28.5, 0, 0.3, -15.5, -98.7, 28.5, 0, 0.3333, -15.5, -98.7, 28.5, 0, 0.3667, -15.5, -98.7, 28.5, 0, 0.4, -15.5, -98.7, 28.5, 0, 0.4333, -15.5, -98.7, 28.5, 0, 0.4667, -15.5, -98.7, 28.5, 0, 0.5, -15.5, -99.8, 26.5, 0, 0.5333, -15.5, -99.8, 26.5, 0, 0.5667, -15.5, -99.8, 26.5, 0, 0.6, -15.5, -99.8, 26.5, 0, 0.6333, -15.5, -99.8, 26.5, 0, 0.6667, -15.5, -99.8, 26.5, 0, 0.7, -15.5, -99.8, 26.5, 0, 0.7333, -15.5, -99.8, 26.5, 0, 0.7667, -15.5, -99.8, 26.5, 0, 0.8, -15.5, -99.8, 26.5, 0, 0.8333, -15.5, -99.8, 26.5, 0, 0.8667, -15.5, -99.8, 26.5, 0, 0.9, -15.5, -99.8, 26.5, 0, 0.9333, -15.5, -99.8, 26.5, 0, 0.9667, -15.5, -99.8, 26.5, 0, 1, -15.5, -99.8, 26.5, 0)}, "walk": {"len": 0.5236, "box": PackedFloat32Array(0, -20, -99.3, 26.8, 0, 0.0333, -19.3, -98.8, 27, 0, 0.0667, -18.6, -98.3, 27.1, 0, 0.1, -17.9, -97.8, 27.3, 0, 0.1333, -16.7, -97.5, 27.3, 0, 0.1667, -13.2, -98.1, 26.9, 0, 0.2, -10.1, -98.8, 26.5, 0, 0.2333, -10.6, -99.4, 26.2, 0, 0.2667, -11.1, -100, 26.7, 0, 0.3, -11.6, -100.4, 27.2, 0, 0.3333, -12, -100.8, 27.7, 0, 0.3667, -12.5, -101.2, 28.2, 0, 0.4, -12.9, -101.1, 28.8, 0, 0.4333, -13.3, -100.5, 29.3, 0, 0.4667, -13.7, -100, 29.8, 0, 0.5, -14.1, -99.5, 30.3, 0, 0.5333, -13.9, -99, 30.1, 0, 0.5667, -13.5, -98.4, 29.6, 0, 0.6, -13, -97.9, 29.1, 0, 0.6333, -12.7, -97.4, 28.5, 0, 0.6667, -13.4, -97.9, 28, 0, 0.7, -14.1, -98.6, 27.5, 0, 0.7333, -14.8, -99.2, 27, 0, 0.7667, -15.5, -99.9, 26.4, 0, 0.8, -16.5, -100.4, 26, 0, 0.8333, -17.4, -100.9, 26.6, 0, 0.8667, -18.3, -101.2, 26.8, 0, 0.9, -18.8, -100.7, 26.8, 0, 0.9333, -19.3, -100.2, 26.8, 0, 0.9667, -19.7, -99.7, 26.8, 0, 1, -20, -99.3, 26.8, 0)}, "hurt": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -29, -95.2, 24.5, 0, 0.0667, -35.1, -93.3, 24.3, 0, 0.1, -35.8, -93, 24.3, 0, 0.1333, -36, -92.8, 24.3, 0, 0.1667, -35.7, -93, 24.3, 0, 0.2, -34.7, -93.5, 24.4, 0, 0.2333, -33.2, -94, 24.6, 0, 0.2667, -30.9, -94.7, 24.7, 0, 0.3, -28.2, -95.3, 24.9, 0, 0.3333, -22.5, -95.8, 25.1, 0, 0.3667, -17.7, -96.1, 25.2, 0, 0.4, -16.3, -96.4, 25.3, 0, 0.4333, -15.5, -96.5, 25.4, 0, 0.4667, -29.7, -97.1, 25.5, 0, 0.5, -25.1, -98.1, 25.6, 0, 0.5333, -21.4, -98.8, 25.6, 0, 0.5667, -18.2, -99.2, 25.7, 0, 0.6, -15.7, -99.5, 25.7, 0, 0.6333, -15.5, -99.7, 25.7, 0, 0.6667, -15.5, -99.8, 25.7, 0, 0.7, -15.4, -99.8, 26.5, 0, 0.7333, -15.4, -99.9, 27, 0, 0.7667, -15.4, -99.9, 27.3, 0, 0.8, -15.5, -99.9, 27.4, 0, 0.8333, -15.5, -99.9, 27.2, 0, 0.8667, -15.5, -99.9, 27.1, 0, 0.9, -15.5, -99.9, 27, 0, 0.9333, -15.5, -99.9, 26.8, 0, 0.9667, -15.5, -99.8, 26.6, 0, 1, -15.5, -99.8, 26.5, 0)}, "jab": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 25.5, 0, 0.0667, -15.5, -100.1, 25.4, 0, 0.1, -15.5, -100.2, 25.3, 0, 0.1333, -15.5, -100.3, 25.2, 0, 0.1667, -15.5, -100.3, 25.1, 0, 0.2, -16.4, -100.4, 24.9, 0, 0.2333, -17.1, -100.4, 24.9, 0, 0.2667, -15.5, -100.3, 25.1, 0, 0.3, -15.5, -97.4, 57.4, 0, 0.3333, -15.6, -96.9, 61.4, 0, 0.3667, -15.5, -96.8, 62, 0, 0.4, -15.5, -96.8, 62, 0, 0.4333, -15.5, -97, 60.2, 0, 0.4667, -15.5, -97.4, 56.5, 0, 0.5, -15.5, -97.8, 52.8, 0, 0.5333, -15.5, -98.1, 49.1, 0, 0.5667, -15.5, -98.4, 45.4, 0, 0.6, -15.5, -98.7, 41.6, 0, 0.6333, -15.5, -98.9, 38, 0, 0.6667, -15.5, -99.2, 34.3, 0, 0.7, -15.5, -99.3, 32.2, 0, 0.7333, -15.5, -99.4, 31.5, 0, 0.7667, -15.5, -99.5, 30.9, 0, 0.8, -15.5, -99.5, 30.2, 0, 0.8333, -15.5, -99.6, 29.6, 0, 0.8667, -15.5, -99.6, 29, 0, 0.9, -15.5, -99.7, 28.4, 0, 0.9333, -15.5, -99.7, 27.7, 0, 0.9667, -15.5, -99.8, 27.1, 0, 1, -15.5, -99.8, 26.5, 0)}, "kick": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 27, 0, 0.0667, -15.4, -100.1, 28, 0, 0.1, -17.1, -100.2, 28.8, 0, 0.1333, -18.8, -100.3, 29.3, 0, 0.1667, -20.5, -100.4, 29.5, 0, 0.2, -21.9, -100.4, 29.3, 0, 0.2333, -22.6, -100.5, 29, 0, 0.2667, -25.4, -100.5, 29.2, 0, 0.3, -26, -100.2, 53, 0, 0.3333, -28.6, -100.1, 53, 0, 0.3667, -29, -100, 53, 0, 0.4, -29, -100, 53, 0, 0.4333, -27.4, -100.1, 53.1, 0, 0.4667, -24.1, -100.3, 53.3, 0, 0.5, -20.9, -100.4, 53.4, 0, 0.5333, -17.6, -100.5, 49.2, 0, 0.5667, -15.5, -100.5, 44.8, 0, 0.6, -15.5, -100.6, 40.2, 0, 0.6333, -28.1, -100.6, 35.8, 0, 0.6667, -19.3, -100.5, 31.3, 0, 0.7, -17.3, -100.5, 29.4, 0, 0.7333, -18.6, -100.5, 29.5, 0, 0.7667, -18.5, -100.4, 29.5, 0, 0.8, -17.9, -100.4, 29.3, 0, 0.8333, -17.1, -100.3, 29, 0, 0.8667, -16.2, -100.2, 28.6, 0, 0.9, -15.5, -100.2, 28, 0, 0.9333, -15.5, -100.1, 27.4, 0, 0.9667, -15.5, -100, 26.6, 0, 1, -15.5, -99.8, 26.5, 0)}, "swing": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 25.4, 0, 0.0667, -17.7, -100.2, 25.2, 0, 0.1, -18.5, -100.3, 24.9, 0, 0.1333, -19.4, -100.3, 24.7, 0, 0.1667, -27.5, -100.3, 24.5, 0, 0.2, -28.6, -100.3, 24.2, 0, 0.2333, -28.3, -100.2, 24.2, 0, 0.2667, -21.7, -100.2, 25, 0, 0.3, -15.5, -94.5, 57.5, 0, 0.3333, -15.5, -92, 53.8, 0, 0.3667, -15.5, -91.7, 53.4, 0, 0.4, -15.5, -91.7, 53.4, 0, 0.4333, -15.5, -92.2, 52.3, 0, 0.4667, -15.6, -93.2, 50, 0, 0.5, -15.6, -94.3, 47.9, 0, 0.5333, -15.6, -95.2, 45.7, 0, 0.5667, -15.6, -96.1, 43.3, 0, 0.6, -15.6, -97, 41, 0, 0.6333, -15.5, -97.8, 38.9, 0, 0.6667, -15.5, -98.6, 36.7, 0, 0.7, -15.6, -99, 35, 0, 0.7333, -15.6, -99.1, 34.1, 0, 0.7667, -15.6, -99.2, 33.1, 0, 0.8, -15.5, -99.3, 32.1, 0, 0.8333, -15.5, -99.4, 31.2, 0, 0.8667, -15.5, -99.5, 30.3, 0, 0.9, -15.5, -99.6, 29.2, 0, 0.9333, -15.5, -99.7, 28.3, 0, 0.9667, -15.5, -99.8, 27.4, 0, 1, -15.5, -99.8, 26.5, 0)}, "slam": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -97.7, 26.7, 0, 0.0667, -15.5, -95.4, 27.7, 0, 0.1, -15.4, -93.2, 28.4, 0, 0.1333, -15.5, -98.7, 30, 0, 0.1667, -23.7, -102.1, 24.5, 0, 0.2, -20, -105.1, 23.2, 0, 0.2333, -19.7, -106.1, 23.1, 0, 0.2667, -19.9, -103.3, 23.6, 0, 0.3, -15.4, -85.7, 56.4, 0, 0.3333, -15.4, -82.1, 56.4, 0, 0.3667, -15.4, -81.7, 56.4, 0, 0.4, -15.4, -81.7, 56.4, 0, 0.4333, -15.4, -82.6, 55.3, 0, 0.4667, -15.4, -84.3, 53.3, 0, 0.5, -15.4, -86, 51.2, 0, 0.5333, -15.4, -87.6, 49.1, 0, 0.5667, -15.4, -89.1, 46.9, 0, 0.6, -15.5, -90.6, 44.7, 0, 0.6333, -15.5, -92.1, 42.6, 0, 0.6667, -15.5, -93.5, 40.6, 0, 0.7, -15.5, -94.5, 38.8, 0, 0.7333, -15.5, -95.1, 37.4, 0, 0.7667, -15.6, -95.7, 36, 0, 0.8, -15.6, -96.4, 34.6, 0, 0.8333, -15.6, -97, 33.2, 0, 0.8667, -15.6, -97.6, 31.9, 0, 0.9, -15.6, -98.2, 30.6, 0, 0.9333, -15.5, -98.7, 29.2, 0, 0.9667, -15.5, -99.3, 27.9, 0, 1, -15.5, -99.8, 26.5, 0)}, "charge": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -16.1, -98.8, 26.3, 0, 0.0667, -18.4, -97.7, 27, 0, 0.1, -21.9, -96.6, 27.5, 0, 0.1333, -24.6, -95.5, 28, 0, 0.1667, -18.5, -94.4, 28.4, 0, 0.2, -19.1, -93.2, 28.8, 0, 0.2333, -19.5, -92.6, 28.9, 0, 0.2667, -19.6, -92.8, 28.9, 0, 0.3, -22.5, -86.8, 57.4, 0, 0.3333, -17.1, -85.7, 59.2, 0, 0.3667, -16.5, -85.6, 59.5, 0, 0.4, -16.5, -85.6, 59.5, 0, 0.4333, -16.6, -86.5, 57.3, 0, 0.4667, -16.7, -88.3, 52.9, 0, 0.5, -16.9, -89.8, 48.6, 0, 0.5333, -17, -91.1, 44.2, 0, 0.5667, -17.1, -92.2, 39.7, 0, 0.6, -17.2, -93.1, 35.4, 0, 0.6333, -17.3, -93.7, 31.1, 0, 0.6667, -17.4, -94.1, 28.8, 0, 0.7, -17.4, -94.5, 28.7, 0, 0.7333, -17.2, -95.1, 28.5, 0, 0.7667, -16.9, -95.7, 28.2, 0, 0.8, -16.8, -96.3, 28, 0, 0.8333, -16.6, -96.9, 27.7, 0, 0.8667, -16.4, -97.5, 27.3, 0, 0.9, -16.1, -98.1, 27, 0, 0.9333, -15.9, -98.7, 26.6, 0, 0.9667, -15.7, -99.3, 26.3, 0, 1, -15.5, -99.8, 26.5, 0)}, "throw": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -100, 25.6, 0, 0.0667, -16.8, -100.2, 25.6, 0, 0.1, -15.5, -100.3, 25.6, 0, 0.1333, -15.5, -100.3, 25.6, 0, 0.1667, -16.8, -100.3, 25.6, 0, 0.2, -23.3, -100.3, 25.6, 0, 0.2333, -26.1, -100.2, 25.6, 0, 0.2667, -21.7, -100.3, 25.8, 0, 0.3, -11.5, -95.5, 62.5, 0, 0.3333, -11.5, -94.7, 58.8, 0, 0.3667, -11.5, -94.7, 58.3, 0, 0.4, -11.5, -94.7, 58.3, 0, 0.4333, -11.7, -95, 57.2, 0, 0.4667, -12.2, -95.7, 54.9, 0, 0.5, -12.7, -96.3, 52.6, 0, 0.5333, -13.2, -96.9, 50.2, 0, 0.5667, -13.7, -97.4, 47.9, 0, 0.6, -14.2, -97.9, 45.4, 0, 0.6333, -14.7, -98.4, 43.1, 0, 0.6667, -15.2, -98.8, 40.6, 0, 0.7, -15.5, -99, 38.7, 0, 0.7333, -15.5, -99.1, 37.4, 0, 0.7667, -15.5, -99.2, 36.1, 0, 0.8, -15.5, -99.3, 34.7, 0, 0.8333, -15.5, -99.4, 33.3, 0, 0.8667, -15.5, -99.5, 31.9, 0, 0.9, -15.5, -99.6, 30.5, 0, 0.9333, -15.5, -99.7, 29.2, 0, 0.9667, -15.5, -99.8, 27.9, 0, 1, -15.5, -99.8, 26.5, 0)}, "special": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -99, 26.1, 0, 0.0667, -15.5, -98.1, 26.5, 0, 0.1, -15.5, -97.3, 26.9, 0, 0.1333, -15.5, -96.4, 27.3, 0, 0.1667, -15.5, -95.5, 27.6, 0, 0.2, -15.5, -94.7, 28, 0, 0.2333, -15.5, -94.3, 28.1, 0, 0.2667, -16, -94.3, 28.1, 0, 0.3, -40.9, -95.8, 55.5, 0, 0.3333, -40, -95, 54.6, 0, 0.3667, -39.9, -94.8, 54.5, 0, 0.4, -39.9, -94.8, 54.5, 0, 0.4333, -37.8, -95, 53.5, 0, 0.4667, -34, -95.2, 51.5, 0, 0.5, -30, -95.5, 49.5, 0, 0.5333, -26, -95.7, 47.5, 0, 0.5667, -22, -96, 45.5, 0, 0.6, -18, -96.2, 43.4, 0, 0.6333, -16.6, -96.5, 41.4, 0, 0.6667, -15.9, -96.7, 39.4, 0, 0.7, -15.5, -97, 37.8, 0, 0.7333, -15.5, -97.3, 36.6, 0, 0.7667, -21.6, -97.6, 35.3, 0, 0.8, -20.8, -97.9, 34.1, 0, 0.8333, -19.6, -98.3, 32.8, 0, 0.8667, -18.1, -98.6, 31.5, 0, 0.9, -16.3, -98.9, 30.2, 0, 0.9333, -15.5, -99.2, 29, 0, 0.9667, -15.5, -99.5, 27.8, 0, 1, -15.5, -99.8, 26.5, 0)}, "block": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -16.1, -99, 25.8, 0, 0.0667, -16.6, -98.2, 25.8, 0, 0.1, -17.2, -97.4, 25.8, 0, 0.1333, -17.7, -96.5, 25.8, 0, 0.1667, -18.2, -95.6, 26.9, 0, 0.2, -18.5, -95.2, 28.2, 0, 0.2333, -18.5, -95.1, 28.2, 0, 0.2667, -18.5, -95, 28.2, 0, 0.3, -18.5, -95, 28.2, 0, 0.3333, -18.5, -94.9, 28.2, 0, 0.3667, -18.5, -94.8, 28.2, 0, 0.4, -18.5, -94.8, 28.2, 0, 0.4333, -18.5, -94.7, 28.2, 0, 0.4667, -18.5, -94.6, 28.2, 0, 0.5, -18.5, -94.6, 28.2, 0, 0.5333, -18.5, -94.5, 28.2, 0, 0.5667, -18.5, -94.4, 28.2, 0, 0.6, -18.5, -94.4, 28.2, 0, 0.6333, -18.5, -94.3, 28.1, 0, 0.6667, -18.5, -94.2, 28.1, 0, 0.7, -18.4, -94.2, 28.1, 0, 0.7333, -18.4, -94.1, 28.1, 0, 0.7667, -18.3, -94.5, 26.8, 0, 0.8, -17.9, -95.3, 26.1, 0, 0.8333, -17.5, -96, 26.1, 0, 0.8667, -17.1, -96.8, 26, 0, 0.9, -16.7, -97.6, 26, 0, 0.9333, -16.3, -98.3, 25.9, 0, 0.9667, -15.9, -99.1, 26.2, 0, 1, -15.5, -99.8, 26.5, 0)}, "dodge": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -15.5, -97.3, 27.1, 0, 0.0667, -15.6, -94.6, 27.7, 0, 0.1, -15.5, -91.9, 29.1, 0, 0.1333, -15.8, -91.5, 28.3, 0, 0.1667, -16.5, -93.4, 27.5, 0, 0.2, -17.3, -95.1, 26.8, 0, 0.2333, -18, -96.6, 26, 0, 0.2667, -18.7, -98, 25.2, 0, 0.3, -19.4, -99.2, 24.5, 0, 0.3333, -20.1, -100.3, 23.7, 0, 0.3667, -20.8, -101.3, 22.9, 0, 0.4, -22, -102.1, 22.2, 0, 0.4333, -21.1, -101.2, 22.7, 0, 0.4667, -20.7, -100.2, 23.3, 0, 0.5, -20.2, -99.1, 23.9, 0, 0.5333, -19.7, -97.9, 24.4, 0, 0.5667, -19.3, -96.5, 25, 0, 0.6, -18.8, -95, 25.5, 0, 0.6333, -18.4, -93.5, 26.1, 0, 0.6667, -17.9, -91.8, 26.6, 0, 0.7, -17.4, -90, 27.5, 0, 0.7333, -17.2, -91.1, 27.4, 0, 0.7667, -17.1, -92.2, 27.3, 0, 0.8, -16.9, -93.3, 27.2, 0, 0.8333, -16.6, -94.4, 27.1, 0, 0.8667, -16.4, -95.5, 27, 0, 0.9, -16.2, -96.6, 26.8, 0, 0.9333, -15.9, -97.7, 26.7, 0, 0.9667, -15.7, -98.8, 26.6, 0, 1, -15.5, -99.8, 26.5, 0)}, "finisher": {"len": 1, "box": PackedFloat32Array(0, -15.5, -99.8, 26.5, 0, 0.0333, -16.7, -98.9, 25.9, 0, 0.0667, -22.3, -97.8, 26.1, 0, 0.1, -17.4, -96.6, 26.2, 0, 0.1333, -18.1, -95.3, 26.3, 0, 0.1667, -25.1, -94, 26.2, 0, 0.2, -30, -92.5, 26.1, 0, 0.2333, -31.3, -91.8, 26.1, 0, 0.2667, -29.5, -92.4, 26.5, 0, 0.3, -9.5, -89.1, 69.5, 0, 0.3333, -9.5, -87.2, 72.5, 0, 0.3667, -9.5, -87, 72.9, 0, 0.4, -9.5, -87, 72.9, 0, 0.4333, -9.9, -87.7, 70.5, 0, 0.4667, -10.6, -89.3, 65.7, 0, 0.5, -11.4, -90.7, 60.9, 0, 0.5333, -12.1, -92, 56.1, 0, 0.5667, -12.9, -93.2, 51.2, 0, 0.6, -13.7, -94.3, 46.5, 0, 0.6333, -14.4, -95.3, 41.7, 0, 0.6667, -15.1, -96.2, 36.9, 0, 0.7, -15.5, -96.8, 34, 0, 0.7333, -15.5, -97.1, 33.2, 0, 0.7667, -15.5, -97.5, 32.4, 0, 0.8, -15.5, -97.9, 31.5, 0, 0.8333, -15.5, -98.2, 30.7, 0, 0.8667, -15.5, -98.5, 29.8, 0, 0.9, -15.5, -98.9, 29, 0, 0.9333, -15.5, -99.2, 28.2, 0, 0.9667, -15.5, -99.5, 27.3, 0, 1, -15.5, -99.8, 26.5, 0)}}
 
 [node name="Skeleton2D" type="Skeleton2D" parent="."]
 

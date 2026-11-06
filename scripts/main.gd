@@ -1014,6 +1014,12 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 			Ach.track(attacker, "crates")
 		if "last_hitter" in target:
 			target.last_hitter = attacker
+	# finalização que derruba de vez: câmera lenta (os chefes já têm a deles ao cair)
+	if atk.get("finisher", false) and target.get("hp") != null and target.hp <= 0 and not versus:
+		var boss_ko: bool = target.get("kind") in ["boss", "subboss", "secret_boss"]
+		if not boss_ko and target.has_method("hurt_rect"):
+			start_slowmo(target.position + target.hurt_rect().get_center(), false)
+		shake(9.0, hit_dir)
 
 
 func on_enemy_killed(e) -> void:

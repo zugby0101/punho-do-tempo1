@@ -15,6 +15,8 @@ const ATK_SPECIAL := {"pose": "special", "dmg": 14, "reach": 100, "startup": 0.0
 
 const KI_RELEASE := 0.16     # Onda Ki: tempo até o soco chegar ao impacto e soltar a bola
 const QUAKE_RELEASE := 0.3   # Onda Sísmica: tempo até os punhos baterem no chão
+# Finalização: sai no lugar do golpe do combo quando ele derrubaria de vez um inimigo à frente
+const ATK_FINISHER := {"pose": "finisher", "dmg": 22, "reach": 72, "startup": 0.14, "active": 0.1, "recovery": 0.32, "knock": true, "lunge": 90.0, "heavy": true, "finisher": true}
 const ATK_THROW := {"pose": "throw", "dmg": 0, "reach": -99, "startup": 0.05, "active": 0.05, "recovery": 0.2, "knock": false}
 const BASE_COMBO := [ATK_JAB, ATK_JAB2, ATK_CROSS, ATK_KICK]
 
@@ -91,7 +93,9 @@ func _update(delta: float) -> void:
 
 			var atk_pressed := Controls.just(sets, "attack")
 			var item = game.weapon_near(self) if weapon.is_empty() and atk_pressed else null
-			if item != null:
+			if Controls.pressed(sets, "block"):
+				start_block()  # segurar BLOQUEIO: guarda alta, para golpes de frente
+			elif item != null:
 				# Pegar a arma do chão
 				equip_weapon(item.weapon)
 				Ach.track(self, "weapons")
@@ -146,6 +150,18 @@ func _update(delta: float) -> void:
 					_check_hits(_targets())
 		"special":
 			_process_special(delta)
+		"block":
+			var bx := Controls.vector(sets).x
+			if absf(bx) > 0.5 and block_release < 0.0:
+				facing = 1 if bx > 0.0 else -1  # vira a guarda sem sair do lugar
+			if Controls.just(sets, "jump") and block_release < 0.0:
+				start_dodge(-facing)  # BLOQUEIO + PULO: esquiva, passo rápido para trás
+				game.sfx.voice(self, "jump", 0.35)
+			elif not Controls.pressed(sets, "block"):
+				release_block()
+			_update_defense(delta)
+		"dodge":
+			_update_defense(delta)
 		"attack":
 			if Controls.just(sets, "attack"):
 				buffered = true
@@ -353,7 +369,22 @@ func _on_release() -> void:
 func _do_attack(a: Dictionary) -> void:
 	buffered = false
 	combo_timer = 0.45
+	if (a in combo or a == ATK_UPPER) and _finisher_target() != null:
+		combo_step = 0
+		start_attack(ATK_FINISHER)
+		game.popup("FINALIZAÇÃO!", position + Vector2(0, -120.0 * body_scale), Color(1, 0.85, 0.3))
+		game.sfx.voice(self, "heavy", 0.9)
+		return
 	start_attack(a)
+
+
+## Inimigo à frente que a finalização alcançaria (hitbox da animação) e derrubaria de vez.
+func _finisher_target():
+	var dmg := int(round(float(ATK_FINISHER.dmg) * power))
+	for e in game._alive_enemies():
+		if e.can_be_hit() and e.hp <= dmg and would_hit(ATK_FINISHER, e):
+			return e
+	return null
 
 
 func _on_land() -> void:
@@ -387,6 +418,12 @@ func _on_land() -> void:
 
 
 func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
+	blocked_last = false
+	if blocks(dir):
+		# guarda alta: golpe de frente não machuca nem derruba (fortes descontam um pouco de vida)
+		hp = maxi(1, hp - (int(dmg / 4) if knock else 0))
+		_on_blocked(dir)
+		return
 	damage_taken += maxi(dmg, 0)
 	hits_taken += 1
 	hits_taken_timer = 1.2

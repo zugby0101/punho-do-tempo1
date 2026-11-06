@@ -54,7 +54,7 @@ func _physics_process(delta: float) -> void:
 			hit_list.append(e)
 			var p: float = owner_player.power if is_instance_valid(owner_player) else 1.0
 			e.take_hit(int(dmg * p), dir, true)
-			if is_instance_valid(owner_player):
+			if is_instance_valid(owner_player) and not e.get("blocked_last"):
 				game.on_hit(owner_player, e, {"dmg": dmg, "heavy": true, "knock": true, "energy": true})
 			if kind == "ki":
 				game.spawn_spark(position + Vector2(0, -height), color, 1.6)

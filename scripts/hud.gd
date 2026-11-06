@@ -281,10 +281,10 @@ func _draw_title() -> void:
 	_center(110, "PUNHO DO TEMPO", 80, Color(1, 0.3, 0.6))
 	_center(150, "um beat 'em up através de 12 eras — 1 a 4 jogadores", 19, Color(0.6, 0.9, 1))
 	var lines := [
-		"P1: WASD + J soco, K pulo, L especial      P2: Setas + , soco  . pulo  / especial",
-		"P3: TFGH + Z soco, X pulo, C especial      P4: Numpad 8456 + 7 soco, 9 pulo, + especial",
-		"Controles: X soco, A pulo, Y/B especial (cada controle é um jogador)",
-		"Cima + Soco: gancho  |  Pulo + Soco: voadora  |  Soco sobre arma: pegar  |  Especial armado: arremessar",
+		"P1: WASD + J soco, K pulo, L especial, U bloqueio      P2: Setas + , soco  . pulo  / especial  N bloqueio",
+		"P3: TFGH + Z soco, X pulo, C especial, Q bloqueio      P4: Numpad 8456 + 7 soco, 9 pulo, + especial, 1 bloqueio",
+		"Controles: X soco, A pulo, Y/B especial, LB/RB bloqueio (cada controle é um jogador)",
+		"Cima + Soco: gancho  |  Pulo + Soco: voadora  |  Bloqueio + Pulo: esquiva  |  Especial armado: arremessar",
 	]
 	for i in lines.size():
 		_center(200 + i * 26, lines[i], 15, Color(1, 1, 1))

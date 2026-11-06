@@ -9,7 +9,7 @@ const KINDS := [["thug", "★"], ["knife", "★★"], ["brute", "★★★"], ["
 const KIND_SCALE := {"thug": 1.0, "knife": 1.0, "brute": 1.3, "subboss": 1.3, "boss": 1.5, "secret_boss": 1.6}
 const Weapons = preload("res://scripts/weapons.gd")
 const ANIMS := ["idle", "walk", "jab", "cross", "upper", "kick", "jumpkick", "jump", "special",
-	"swing", "throw", "slam", "charge", "dive", "hurt", "fall", "getup", "down"]
+	"swing", "throw", "slam", "charge", "dive", "hurt", "fall", "getup", "down", "block", "dodge", "finisher"]
 
 var rigs: Array = []
 var anim_i := 0

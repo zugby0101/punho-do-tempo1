@@ -232,6 +232,15 @@ def walk_keys(pr):
 # Golpes (u = 0..1)
 
 
+def _fp(pr, **kw):
+    """pose() das animações novas (bloqueio, esquiva, finalização): quem flutua (ÉON) não pisa no
+    chão — os pés acompanham o corpo em vez de ir para as posições pedidas."""
+    if pr.hover:
+        kw.pop("ff", None)
+        kw.pop("bf", None)
+    return pose(pr, **kw)
+
+
 def _strike(pr, guard, ant, hit, over, mid, settle_back=1.4):
     """Estrutura padrão: guarda -> antecipação -> IMPACTO -> excesso -> sustenta -> recupera -> assenta."""
     w = pr.weight
@@ -326,7 +335,50 @@ def attack_keys(anim, pr):
         over = pose(pr, crouch=0, lean=0, hf=(5, -31), hb=(-1, -29), ff=(7, 3), bf=(-5, 5))
         mid = pose(pr, crouch=3, hf=(18, -6))
         return _strike(pr, g, ant, hit, over, mid)
+    if anim == "finisher":  # finalização: preparação funda e golpe final com o corpo todo
+        if pr.kick_h >= 54 or "acrobat" in pr.tags:
+            # quem chuta alto finaliza com um chute alto girando o tronco
+            kh = pr.kick_h
+            ant = _fp(pr, crouch=6 + 3 * w, lean=-7, hip_dx=-2, ff=(pr.ff + 6, -kh * 0.3), hf=(6, 6), hb=(-12, 2), tilt=-0.12)
+            hit = _fp(pr, lean=-15, hip_dx=-3, ff=(54, -kh - 12), hf=(22, 12), hb=(-18, 0), tilt=0.16)
+            over = _fp(pr, lean=-16, hip_dx=-3, ff=(56, -kh - 16), hf=(22, 14), hb=(-20, 0), tilt=0.17)
+            mid = _fp(pr, lean=-5, crouch=3, ff=(22, -kh * 0.4), hf=(14, 10), hb=(0, 4))
+            return _strike(pr, g, ant, hit, over, mid, settle_back=0.9)
+        # os outros: os dois braços lá atrás e as duas mãos à frente, com o peso do corpo
+        ant = _fp(pr, crouch=5 + 3 * w, lean=-8, hip_dx=-3, hf=(-14, -20), hb=(-18, -14), bf=(pr.bf - 4, 0), tilt=-0.12)
+        hit = _fp(pr, crouch=2, lean=14, hip_dx=5, hf=(38 * r, 6), hb=(35 * r, 10), ff=(pr.ff + 6, 0), bf=(pr.bf + 6, -3), tilt=0.12)
+        over = _fp(pr, crouch=3, lean=15, hip_dx=5.5, hf=(40 * r, 8), hb=(37 * r, 12), ff=(pr.ff + 6, 0), bf=(pr.bf + 6, -3), tilt=0.13)
+        mid = _fp(pr, crouch=2, lean=4, hf=(pr.gf[0] + 4, pr.gf[1] + 4), hb=(pr.gb[0] + 2, pr.gb[1] + 2))
+        return _strike(pr, g, ant, hit, over, mid, settle_back=0.8)
     raise KeyError(anim)
+
+
+# ---------------------------------------------------------------------------
+# Defesa: bloqueio e esquiva (u = 0..1, o jogo informa o progresso)
+
+
+def defense_keys(anim, pr):
+    g = pose(pr)
+    w = pr.weight
+    if anim == "block":
+        # sobe a guarda rápido (0 -> 0,18), segura os antebraços na frente do rosto (até 0,75) e baixa
+        up = _fp(pr, crouch=3 + 2 * w, lean=-3, hip_dx=-2, hf=(16, -10), hb=(12, -6), ff=(pr.ff - 2, 0), bf=(pr.bf - 3, 0), tilt=0.12)
+        hold = _fp(pr, crouch=4 + 2 * w, lean=-2, hip_dx=-2, hf=(16, -8), hb=(12, -4), ff=(pr.ff - 2, 0), bf=(pr.bf - 3, 0), tilt=0.1)
+        keys = [K(0.0, g, "EXPO", "EASE_OUT"), K(0.18, up, "SINE", "EASE_IN_OUT"), K(0.75, hold, "SINE", "EASE_IN_OUT"), K(1.0, g)]
+    elif anim == "dodge":
+        # passo para trás: abaixa, salta inclinado para trás com os pés soltos e aterrissa assentando
+        crouch = _fp(pr, crouch=6 + 2 * w, lean=4, hf=(pr.gf[0] - 2, pr.gf[1] + 2), hb=(pr.gb[0] - 2, pr.gb[1] + 2))
+        air = _fp(pr, crouch=-3, lean=-10, hip_dx=-6, ff=(pr.ff - 4, -8), bf=(pr.bf - 6, -4), hf=(14, -6), hb=(8, -4), tilt=-0.15)
+        land = _fp(pr, crouch=7 + 2 * w, lean=3, hip_dx=-2, ff=(pr.ff, 0), bf=(pr.bf - 2, 0))
+        keys = [K(0.0, g, "QUAD", "EASE_OUT"), K(0.12, crouch, "EXPO", "EASE_OUT"), K(0.4, air, "SINE", "EASE_IN"),
+                K(0.7, land, "BACK", "EASE_OUT", back=1.2), K(1.0, g)]
+    else:
+        raise KeyError(anim)
+    if pr.mech:
+        for k in keys:
+            if k["interp"] in ("SINE", "CUBIC", "BACK", "EXPO", "QUAD"):
+                k["interp"] = "LINEAR"
+    return keys
 
 
 # ---------------------------------------------------------------------------
@@ -366,11 +418,14 @@ def state_keys(anim, pr):
 # ---------------------------------------------------------------------------
 
 LOOPS = ("idle", "walk")
-ATTACKS = ("jab", "cross", "upper", "kick", "swing", "slam", "charge", "throw", "special", "dive")
+ATTACKS = ("jab", "cross", "upper", "kick", "swing", "slam", "charge", "throw", "special", "dive", "finisher")
 STATES = ("jump", "jumpkick", "hurt", "fall", "down", "getup")
+DEFENSE = ("block", "dodge")
+NEW_ANIMS = ("block", "dodge", "finisher")  # esquiva, bloqueio e finalização (todos os 79 rigs)
 
-PLAYER_ANIMS = list(LOOPS) + list(ATTACKS) + list(STATES)
-ENEMY_ANIMS = ["idle", "walk", "jab", "kick", "slam", "charge", "special", "throw", "swing", "hurt", "fall", "down", "getup"]
+PLAYER_ANIMS = list(LOOPS) + list(ATTACKS) + list(STATES) + list(DEFENSE)
+ENEMY_ANIMS = ["idle", "walk", "jab", "kick", "slam", "charge", "special", "throw", "swing", "hurt", "fall", "down", "getup",
+               "block", "dodge", "finisher"]
 
 
 def build(anim, pr):
@@ -381,4 +436,6 @@ def build(anim, pr):
         return {"loop": True, "length": WALK_LEN, "keys": walk_keys(pr)}
     if anim in ATTACKS:
         return {"loop": False, "length": 1.0, "keys": attack_keys(anim, pr)}
+    if anim in DEFENSE:
+        return {"loop": False, "length": 1.0, "keys": defense_keys(anim, pr)}
     return {"loop": False, "length": 1.0, "keys": state_keys(anim, pr)}

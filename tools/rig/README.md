@@ -47,7 +47,7 @@ do rig (`WeaponSlot`), como no desenho original.
   41 penteados, chapéus e capacetes do jogo foram portados para polígonos.
 - **Animações de combate (`moves.py`):** poses-chave com a curva de suavização de cada trecho
   (interpolação do Blender: EXPO, BACK, SINE, QUAD, CONSTANT...). O Blender interpola, resolve o
-  IK e o resultado é amostrado quadro a quadro. Lutadores têm 18 animações e inimigos 13.
+  IK e o resultado é amostrado quadro a quadro. Lutadores têm 21 animações e inimigos 16.
 - O script descobre sozinho as convenções de eixo do Blender e escolhe o ângulo de polo de
   cada membro testando qual reproduz a pose de repouso (erro 0 px).
 
@@ -317,3 +317,29 @@ IA). Além disso:
   encostam nela com o corpo (`body_half_w`, antes entravam ~26 px), armas no chão quicam de volta,
   a arma arremessada bate e cai ali e a Onda Ki/Onda Sísmica param nela com uma faísca.
 - F3 mostra a faixa do chão (azul) e a barreira (vermelho).
+
+## Esquiva, bloqueio e finalização (`extra_anims.py`, `resolve.py`)
+
+```bash
+python tools/rig/extra_anims.py            # grava block, dodge e finisher nas 79 cenas
+python tools/rig/extra_anims.py --check    # confere o resolvedor contra as animações do Blender
+python tools/rig/hitboxes.py               # depois: hitboxes e hurtboxes das animações novas
+```
+
+As três animações estão em `moves.py` (`defense_keys` e `attack_keys("finisher")`) e entram no caminho
+normal do Blender (`PLAYER_ANIMS` / `ENEMY_ANIMS`). Para as cenas que já estão no repositório,
+`resolve.py` faz em Python o que o Blender faz: interpola os controles com as mesmas curvas
+(SINE, EXPO, BACK...), resolve o IK de 2 ossos dobrando para o lado do polo e converte para a pose local
+de cada `Bone2D`; `extra_anims.py` escreve as trilhas como o `rig_to_godot.py` (espaço da articulação,
+redução de chaves, cortes instantâneos). Conferido contra o jab, o chute e o slam dos 79 rigs gerados pelo
+Blender: ~0,004 rad fora dos quadros de corte da trilha (onde o ângulo é o mesmo a menos de uma volta).
+
+| Animação | Linha do tempo (u) | No jogo |
+|---|---|---|
+| `block` | sobe a guarda 0 → 0,18 · segura até 0,75 · baixa até 1 | segurar **Bloqueio**; os ★★ erguem a guarda sozinhos |
+| `dodge` | abaixa 0,12 · salta para trás 0,4 · aterrissa 0,7 · guarda 1 | **Bloqueio + Pulo**; facas e ninjas às vezes esquivam (invencível de 0,04 a 0,3 s) |
+| `finisher` | golpe com a linha do tempo dos golpes (impacto em 0,30) | sai no lugar do golpe do combo quando derrubaria de vez; chefes finalizam o jogador quase sem vida |
+
+Cada perfil muda a animação: os pesados abaixam mais, robôs se movem em degraus (interpolação
+linear), o ÉON continua flutuando (os pés acompanham o corpo) e quem chuta alto (Mateus, Oksana, Amélie,
+Mei, Itzel, Luca e Kirra) finaliza com um chute alto em vez das duas mãos.

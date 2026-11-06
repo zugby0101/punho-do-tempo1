@@ -92,7 +92,92 @@ func set_state(s: String) -> void:
 
 
 func can_be_hit() -> bool:
+	if state == "dodge" and state_time >= DODGE_IFRAMES.x and state_time < DODGE_IFRAMES.y:
+		return false  # esquivando: o corpo sai do caminho do golpe
 	return invuln <= 0.0 and hp > 0 and not (state in ["knockdown", "down", "getup", "dead"])
+
+
+# ---------- Defesa: bloqueio e esquiva (animações "block" e "dodge" dos 79 rigs) ----------
+const BLOCK_RAISE := 0.08   # sobe a guarda (u 0 -> 0,18 da animação)
+const BLOCK_DROP := 0.12    # baixa a guarda (u 0,75 -> 1)
+const DODGE_TIME := 0.42    # passo para trás inteiro (u 0 -> 1)
+const DODGE_IFRAMES := Vector2(0.04, 0.3)  # invencível enquanto está no ar (u ~0,1 .. 0,7)
+const DODGE_SPEED := 330.0
+var block_release := -1.0   # >= 0: baixando a guarda (tempo desde que soltou)
+var block_auto := -1.0      # > 0: solta a guarda sozinho depois desse tempo (inimigos)
+var blocked_last := false   # o último golpe recebido foi bloqueado (quem bateu não conta o acerto)
+
+
+func start_block(hold := -1.0) -> void:
+	set_state("block")
+	vel = Vector2.ZERO
+	attack = {}
+	block_release = -1.0
+	block_auto = hold
+
+
+func release_block() -> void:
+	if block_release < 0.0:
+		block_release = 0.0
+
+
+## Passo para trás (o rig anima a esquiva; a física leva o corpo). dir = para onde vai.
+func start_dodge(dir: int) -> void:
+	set_state("dodge")
+	attack = {}
+	block_release = -1.0
+	vel = Vector2(dir * DODGE_SPEED, 0.0)
+	if game != null:
+		game.sfx.play("jump", 0.1, game.sfx.body_pitch(body_scale) * 1.2)
+
+
+## Bloqueia um golpe que chega pela frente com a guarda erguida.
+func blocks(dir: int) -> bool:
+	return state == "block" and block_release < 0.0 and state_time >= BLOCK_RAISE * 0.5 and dir == -facing
+
+
+## Reação a um golpe bloqueado: recua um pouco, faísca na guarda (na altura das mãos da animação).
+func _on_blocked(dir: int) -> void:
+	blocked_last = true
+	vel = Vector2(dir * 110.0, 0.0)
+	if game == null:
+		return
+	var hand := release_point("block", Vector2(18.0, 64.0))  # antebraços na frente do rosto
+	var at := position + Vector2(facing * hand.x, -hand.y)
+	game.sfx.play("block", 0.1)
+	game.spawn_spark(at, Color(0.4, 0.8, 1.0), 0.8)
+	game.spawn_fx("block", at, position, dir, Color(0.4, 0.8, 1.0))
+
+
+## Bloqueio e esquiva em andamento. Devolve true se cuidou do quadro.
+func _update_defense(delta: float) -> bool:
+	match state:
+		"block":
+			vel = vel.move_toward(Vector2.ZERO, 900.0 * delta)
+			if block_auto > 0.0 and state_time >= block_auto:
+				release_block()
+			if block_release >= 0.0:
+				block_release += delta
+				if block_release >= BLOCK_DROP:
+					block_release = -1.0
+					set_state("idle")
+			return true
+		"dodge":
+			vel.x = move_toward(vel.x, 0.0, DODGE_SPEED * 1.8 * delta)
+			vel.y = 0.0
+			if state_time >= DODGE_TIME:
+				set_state("idle")
+			return true
+	return false
+
+
+## Ponto da animação de bloqueio: sobe rápido, segura (respirando devagar) e baixa ao soltar.
+func block_u() -> float:
+	if block_release >= 0.0:
+		return 0.75 + 0.25 * clampf(block_release / BLOCK_DROP, 0.0, 1.0)
+	if state_time < BLOCK_RAISE:
+		return 0.18 * state_time / BLOCK_RAISE
+	return clampf(0.18 + (state_time - BLOCK_RAISE) * 0.6, 0.18, 0.7)
 
 
 func is_alive() -> bool:
@@ -758,6 +843,10 @@ func rig_anim() -> Array:
 			return ["jump", clampf(0.5 - vz / 1280.0, 0.0, 1.0)]
 		"hurt":
 			return ["hurt", clampf(state_time / maxf(hurt_time, 0.01), 0.0, 1.0)]
+		"block":
+			return ["block", block_u()]
+		"dodge":
+			return ["dodge", clampf(state_time / DODGE_TIME, 0.0, 1.0)]
 		"knockdown":
 			return ["fall", clampf(state_time / 0.5, 0.0, 1.0)]
 		"getup":
@@ -1021,6 +1110,28 @@ func _draw_body(pose: String, p: float) -> void:
 			hb = Vector2(-2, -94)
 			bf = Vector2(-6, 4)
 			ff = Vector2(6, 4)
+		"block":  # antebraços na frente do rosto
+			hf = Vector2(16, -80)
+			hb = Vector2(12, -76)
+			lean = -2.0
+			hip.y = -33
+		"dodge":  # passo para trás: inclinado para trás, pés soltos
+			var dk := sin(clampf(state_time / DODGE_TIME, 0.0, 1.0) * PI)
+			lean = -8.0 * dk
+			bf = Vector2(-11, -6.0 * dk)
+			ff = Vector2(5, -8.0 * dk)
+			hf = Vector2(14, -72)
+			hb = Vector2(8, -70)
+		"finisher":  # as duas mãos à frente com o peso do corpo
+			if p < 0.0:
+				hf = Vector2(-10, -84)
+				hb = Vector2(-14, -80)
+				lean = -6.0
+			else:
+				hf = Vector2(18.0 + p * 30.0, -64)
+				hb = Vector2(14.0 + p * 28.0, -60)
+				lean = 9.0 * p
+				bf.x -= 4.0 * p
 		"throw":
 			hf = Vector2(34, -72)
 			hb = Vector2(-12, -64)
