@@ -26,7 +26,7 @@ O jogo começa quando todos estão prontos.
 | Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ | LB / RB |
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
-Enter confirma nos menus, Esc ou P pausa. No título: O = online, R = ranking, M = conquistas;
+Enter confirma nos menus (no Teclado 3, a tecla 5), Esc ou P pausa. No título: O = online, R = ranking, M = conquistas;
 V = visual, P = partículas, Y = sangue, E = tremor da câmera (100% / 50% / desligado), B = vibração. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 Segurar **Bloqueio** ergue a guarda (para golpes de frente; os fortes tiram só um pouco de vida) e
 **Bloqueio + Pulo** é uma esquiva: um passo rápido para trás, invencível enquanto está no ar. Quando um
