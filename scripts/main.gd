@@ -936,13 +936,17 @@ func _assign_aggression() -> void:
 
 
 func _check_pickups() -> void:
+	# a comida é pega quando o corpo do lutador (hurtbox) encosta na comida desenhada neste quadro
 	for pl in active_players():
-		if pl.height > 10.0:
-			continue
+		var body: Rect2 = pl.hurt_rect()
 		for p in get_tree().get_nodes_in_group("pickups"):
 			if p.is_queued_for_deletion():
 				continue
-			if absf(p.position.x - pl.position.x) < 30.0 and absf(p.position.y - pl.position.y) < 18.0:
+			if absf(p.position.y - pl.position.y) >= PickupScript.DEPTH:
+				continue
+			var food: Rect2 = p.pick_rect()
+			food.position.x += p.position.x - pl.position.x
+			if body.intersects(food, true):
 				pl.hp = mini(pl.max_hp, pl.hp + p.heal)
 				pl.score += 200
 				Ach.track(pl, "food")

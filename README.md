@@ -341,7 +341,8 @@ que são desenhados — dá para pular a Onda Sísmica. As armas no chão se peg
 desenhado (a lança com a ponta, o remo com a pá), ao alcance da mão da guarda do rig, e dá para
 agarrar uma arma que ainda está quicando quando ela passa na altura da mão. As caixas quebráveis
 apanham no tamanho em que são desenhadas, racham com o dano e se desmontam em tábuas na direção do
-golpe final. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
+golpe final, e a comida salta para fora junto com as tábuas e é pega quando o corpo encosta no
+desenho dela. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
 
