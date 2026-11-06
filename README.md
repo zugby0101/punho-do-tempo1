@@ -344,7 +344,8 @@ apanham no tamanho em que são desenhadas, racham com o dano e se desmontam em t
 golpe final, e a comida salta para fora junto com as tábuas e é pega quando o corpo encosta no
 desenho dela. Inimigos e jogadores apanham na silhueta da animação que está na tela (encolhem na dor e
 no pulo, o braço esticado também apanha), o ÉON desce do ar para golpear e os inimigos só soltam um
-golpe que alcançaria o jogador de verdade.
+golpe que alcançaria o jogador de verdade. Na investida, os chefes acertam com o corpo inteiro (não dá
+para pular por cima: saia da faixa).
 As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).

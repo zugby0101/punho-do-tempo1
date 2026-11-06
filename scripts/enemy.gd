@@ -196,7 +196,8 @@ func _update(delta: float) -> void:
 			var dy := absf(target.position.y - position.y)
 			if kind == "secret_boss" and _eon_ai(delta, target, dx):
 				return
-			if not special_attack.is_empty() and special_cd <= 0.0 and dx > 200.0 and dy < 25.0:
+			if not special_attack.is_empty() and special_cd <= 0.0 and dx > 200.0 and dy < 25.0 \
+					and would_reach_height(special_attack, target):  # não investe por baixo de quem está no ar
 				special_cd = randf_range(4.0, 6.0)
 				start_attack(special_attack)
 				game.sfx.play("roar", 0.08, game.sfx.body_pitch(body_scale))

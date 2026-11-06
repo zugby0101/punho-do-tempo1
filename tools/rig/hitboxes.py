@@ -229,7 +229,7 @@ def _interp(arr, stride, u):
 SWEPT, SWEEP_U = ("upper",), 0.04  # fighter.gd: hitbox cobre o caminho da ponta nos últimos SWEEP_U
 
 
-def simulate(d, u, reach, wlen=None, scale=1.0, height=0.0, rot=0.0, both=False, an=None):
+def simulate(d, u, reach, wlen=None, scale=1.0, height=0.0, rot=0.0, both=False, an=None, body=None):
     """Mesmo cálculo de fighter.gd -> hitbox_now. None = fora da janela de contato.
     rot = rotação do corpo (mergulho); both = golpe giratório, acerta dos dois lados."""
     armed = wlen is not None and "wpn" in d
@@ -249,6 +249,10 @@ def simulate(d, u, reach, wlen=None, scale=1.0, height=0.0, rot=0.0, both=False,
     if an in SWEPT:
         _, py = _interp(d["pts"], 3, max(u - SWEEP_U, 0.0))
         lo, hi = min(lo, height - py * scale), max(hi, height - py * scale)
+    if body is not None:  # investida: o corpo inteiro avança (fighter.gd -> hitbox_at, "dash")
+        bx0, by0, bx1, by1 = body
+        lo, hi = min(lo, height - by1 * scale), max(hi, height - by0 * scale)
+        far = max(far, bx1 * scale)
     return (-far if both else -15.0, far, lo - r * scale, hi + r * scale)
 
 
@@ -417,6 +421,9 @@ def enemy_attacks():
             continue
         atks = [(a, float(r), '"radial": true' in line)
                 for line in m.group(1).split("\n") for a, r in re.findall(r'"pose": "(\w+)".*?"reach": (' + NUM + ')', line)]
+        sp = re.search(r'special_attack = \{"pose": "(\w+)".*?"reach": (' + NUM + ')', body)
+        if sp:
+            atks.append((sp.group(1), float(sp.group(2)), "dash"))
         out[kind] = (float(sc.group(1)) if sc else 1.0, atks)
     return out
 
@@ -443,8 +450,15 @@ def player_hurt_check(enemy_hb, players_hurt, enemy_hurt):
                 dx = 48.0 * scale
                 tx0, tx1 = dx - x1 * sz, dx - x0 * sz  # lutador virado para o inimigo
                 th0, th1 = -y1 * sz, -y0 * sz
+                def bodyat(u):
+                    if radial != "dash":
+                        return None
+                    bb = enemy_hurt[name][an]["box"]
+                    i = min(int(round(u * 30)), 30)
+                    return bb[i * 5 + 1:i * 5 + 5]
                 ok = any(b and tx1 >= b[0] and tx0 <= b[1] and b[3] >= th0 and b[2] <= th1
-                         for b in (simulate(hb[an], u, reach, None, scale, -hover, both=radial, an=an) for u in us))
+                         for b in (simulate(hb[an], u, reach, None, scale, -hover, both=radial is True, an=an,
+                                            body=bodyat(u)) for u in us))
                 if not ok:
                     bad.append("%s (%s, escala %.1f) não acerta %s parado" % (name, an, scale, sl))
             if kind == "secret_boss" and "throw" in hb:

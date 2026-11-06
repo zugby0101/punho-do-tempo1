@@ -359,14 +359,21 @@ func hitbox_at(atk: Dictionary, an: String, u: float) -> Dictionary:
 	var tip_h := base_h - tip.y * s
 	var lo_h := tip_h
 	var hi_h := tip_h
+	var r_s := r * s
 	if an in SWEPT:
 		# o punho sobe tão rápido que no quadro de impacto já passou do queixo: vale o caminho até ali
 		var prev := _hb_point(d.pts, 3, maxf(u - SWEEP_U, 0.0))
 		lo_h = minf(lo_h, base_h - prev.y * s)
 		hi_h = maxf(hi_h, base_h - prev.y * s)
+	if atk.has("dash") and hurtboxes.has(an):
+		# investida (chefes): o corpo inteiro avança — acerta com a silhueta da frente, não só com o punho
+		var bb := _body_box(hurtboxes[an], u)
+		lo_h = minf(lo_h, base_h - float(bb[3]) * s)
+		hi_h = maxf(hi_h, base_h - float(bb[1]) * s)
+		far = maxf(far, float(bb[2]) * s)
 	# golpes giratórios (radial, ou o lutador vira de um lado para o outro): acerta dos dois lados
 	var both: bool = atk.get("radial", false) or atk.get("spin", false)
-	return {"x0": -far if both else -15.0, "x1": far, "h0": lo_h - r * s, "h1": hi_h + r * s,
+	return {"x0": -far if both else -15.0, "x1": far, "h0": lo_h - r_s, "h1": hi_h + r_s,
 		"tip": Vector2(tip.x * s, tip.y * s), "r": r * s, "anim": an, "u": u}
 
 
@@ -463,14 +470,7 @@ func hurt_rect() -> Rect2:
 	var u: float = ra[1]
 	if u < 0.0 or an != ra[0]:
 		u = fmod(anim_t, maxf(float(hd.len), 0.01)) / maxf(float(hd.len), 0.01)  # loop pelo relógio
-	var arr: PackedFloat32Array = hd.box
-	var n := arr.size() / 5
-	var f := clampf(u, 0.0, 1.0) * float(n - 1)
-	var i := mini(int(f), n - 2)
-	var k := f - float(i)
-	var v: Array = []
-	for j in range(1, 5):
-		v.append(lerpf(arr[i * 5 + j], arr[(i + 1) * 5 + j], k))
+	var v := _body_box(hd, u)
 	var s := body_scale
 	var df := draw_facing()
 	var x0: float = v[0] * s * df
@@ -486,6 +486,32 @@ func hurt_rect() -> Rect2:
 			g = g.expand(base + (c - base).rotated(rot))
 		r = g
 	return r
+
+
+## Caixa do corpo [x0, y0, x1, y1] (px do rig, virado para a frente, y para baixo) no ponto u.
+static func _body_box(hd: Dictionary, u: float) -> Array:
+	var arr: PackedFloat32Array = hd.box
+	var n := arr.size() / 5
+	var f := clampf(u, 0.0, 1.0) * float(n - 1)
+	var i := mini(int(f), n - 2)
+	var k := f - float(i)
+	var v: Array = []
+	for j in range(1, 5):
+		v.append(lerpf(arr[i * 5 + j], arr[(i + 1) * 5 + j], k))
+	return v
+
+
+## A faixa de altura do golpe `atk` (na janela de acerto) cruza o corpo de `tg`? Para golpes que
+## percorrem a distância sozinhos (investida dos chefes), em que a IA não precisa estar perto.
+func would_reach_height(atk: Dictionary, tg) -> bool:
+	var an: String = atk.get("pose", "jab")
+	if not use_anim_hitboxes or not hitboxes.has(an):
+		return tg.height < 40.0
+	var hb := hitbox_at(atk, an, 0.36)
+	if hb.is_empty() or hb.has("off_window"):
+		return true
+	var r := hurt_of(tg)
+	return float(hb.h1) >= -r.end.y and float(hb.h0) <= -r.position.y
 
 
 ## O golpe `atk` alcançaria `tg` agora? Confere a hitbox em alguns quadros da janela de contato
