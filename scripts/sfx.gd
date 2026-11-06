@@ -5,6 +5,7 @@ extends Node
 ##   w_*   som do golpe cortando o ar (um por tipo de golpe)
 ##   i_*   som do impacto (um por tipo de golpe / arma)
 ##   sp_*  som de início do golpe especial de cada lutador
+##   w_servo/ghost/chime/zap/heavy  camada do golpe no ar conforme quem bate (swing_sounds)
 ##   st_*  passos: chão de cada era (st_<chão>_a/_b) + camada de quem pisa (st_heavy, st_servo, ...)
 ##   m_*   som do CORPO de quem apanha, pelo material (materials.gd): carne, máquina, ciborgue, mutante,
 ##         sombra, tempo, luz; m_*_ko no golpe que derruba de vez; m_wet (sangue); m_helmet (capacete)
@@ -327,6 +328,13 @@ func _build_all() -> void:
 	b = _buf(0.28); _ring(b, 0, 0.28, [1180.0, 2470.0, 3890.0], 0.6, 10.0); _noise_band(b, 0, 0.03, 6000, 4000, 0.5, "hit", 0.0, 90.0)
 	_store("m_helmet", b, 0.5)
 
+	# --- golpe no ar: camada de quem bate (o assobio base é o w_* do golpe) ---
+	b = _buf(0.16); _tone(b, 0, 0.16, 480, 1150, 0.5, 6.0, "saw"); _noise_band(b, 0, 0.16, 2500, 4500, 0.4, "swell"); _store("w_servo", b, 0.35)
+	b = _buf(0.26); _noise_band(b, 0, 0.26, 3200, 800, 1.0, "swell", 7.0); _tone(b, 0, 0.26, 280, 200, 0.3, 3.0); _store("w_ghost", b, 0.4)
+	b = _buf(0.24); _tone(b, 0, 0.24, 1760, 3520, 0.4, 5.0, "tri"); _ring(b, 0.08, 0.16, [2637.0, 3951.0], 0.3, 14.0); _store("w_chime", b, 0.35)
+	b = _buf(0.18); _tone(b, 0, 0.18, 2200, 300, 0.5, 7.0, "saw"); _noise_band(b, 0, 0.18, 6000, 2000, 0.5, "swell", 40.0); _store("w_zap", b, 0.35)
+	b = _buf(0.26); _noise_band(b, 0, 0.26, 140, 380, 1.0, "swell"); _tone(b, 0.04, 0.22, 62, 44, 0.6, 5.0); _store("w_heavy", b, 0.55)
+
 	# --- passos: o chão de cada era (duas variações, alternadas pé a pé) ---
 	for v in ["a", "b"]:
 		var d := 1.0 if v == "a" else 0.92  # a segunda pisada um pouco mais grave
@@ -415,6 +423,24 @@ static func body_sound(mat: String, scale: float, rig_slug: String, ko: bool) ->
 
 # capacetes, elmos e coroas de metal: golpe na cabeça soa no metal (os 79 rigs: looks.py / characters.gd)
 const METAL_HATS := ["helmet", "greathelm", "kabuto", "brodie", "helmet2", "spike", "crown"]
+
+
+# camada do golpe no ar pelo material de quem bate (materials.gd); carne e mutante só o assobio
+const SWING_LAYER := {"machine": "w_servo", "cyborg": "w_servo", "shadow": "w_ghost", "time": "w_chime", "light": "w_zap"}
+
+
+## Golpe cortando o ar: [[nome, tom], ...]. O assobio do golpe (swing_for) no tom do porte e de cada
+## personagem, mais grave quanto maior o caminho da ponta na animação (arc, px: jab curto agudo, arco de
+## arma grave); a camada do material de quem bate; e um "vum" grave para quem é pesado (porte 1,1+).
+static func swing_sounds(atk: Dictionary, weapon: Dictionary, mat: String, scale: float, rig_slug: String, arc: float) -> Array:
+	var ident := 0.9 + float(absi(rig_slug.hash()) % 21) / 100.0
+	var pitch := body_pitch(scale) * ident
+	var out: Array = [[swing_for(atk, weapon), pitch * clampf(1.15 - arc / 400.0, 0.78, 1.15)]]
+	if SWING_LAYER.has(mat):
+		out.append([SWING_LAYER[mat], ident])
+	if scale >= 1.1 or atk.get("heavy", false) and scale >= 1.0 and arc >= 60.0:
+		out.append(["w_heavy", pitch])
+	return out
 
 
 ## Chão de cada era (background.gd desenha um por estilo).

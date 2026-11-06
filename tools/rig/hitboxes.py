@@ -212,7 +212,29 @@ def strike_data(bones, anim, an):
             x, y, ang = p["weapon"]
             w += [round(u, 4), round(x, 2), round(y, 2), round(ang, 4)]
         d.update({"won": round(won, 4), "woff": round(woff, 4), "wpn": w})
+        d["wsw"] = swing_onset(us, [wtip(None, p) for p in poses], won)
+    d["sw"] = swing_onset(us, [ltip(bone, p) for p in poses], on)
     return d
+
+
+SWING_FROM = 0.10    # o golpe no ar só pode começar depois daqui (antes é a guarda/antecipação lenta)
+SWING_SPEED = 0.25   # começa quando a ponta passa de 25% da velocidade máxima até o impacto
+
+
+def swing_onset(us, tips, on):
+    """[u em que a ponta começa o trecho rápido que termina no impacto, caminho dela (px) nesse trecho]:
+    o som do golpe cortando o ar começa ali (fighter.gd -> _process_attack)."""
+    idx = [i for i, u in enumerate(us) if SWING_FROM <= u <= on + 1e-6 and i > 0]
+    if not idx:
+        return [round(on, 4), 0.0]
+    sp = {i: math.hypot(tips[i][0] - tips[i - 1][0], tips[i][1] - tips[i - 1][1]) for i in idx}
+    top = max(sp.values())
+    # último trecho rápido contínuo até o impacto (o golpe; a subida da preparação não conta)
+    start = idx[-1]
+    while start - 1 in sp and sp[start - 1] >= SWING_SPEED * top:
+        start -= 1
+    arc = sum(sp[i] for i in idx if i >= start)
+    return [round(us[start - 1], 4), round(arc, 1)]
 
 
 HURT_H, HURT_W = 100.0, 16.0  # hurtbox do corpo (fighter.gd)

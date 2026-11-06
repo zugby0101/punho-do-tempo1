@@ -400,8 +400,37 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 func start_attack(a: Dictionary) -> void:
 	attack = a
 	lunged = false
+	whooshed = false
 	hit_list.clear()
 	set_state("attack")
+
+
+## Golpe cortando o ar: começa quando a ponta (punho, pé, arma) entra no trecho rápido que termina no
+## impacto, medido na animação de cada um dos 79 rigs (metadata/hitboxes "sw"/"wsw": [u, caminho px]).
+var whooshed := false
+
+
+func _swing_data() -> Array:
+	var d: Dictionary = hitboxes.get(attack.get("pose", ""), {})
+	if not weapon.is_empty() and d.has("wsw"):
+		return Array(d.wsw)  # metadata guarda PackedFloat32Array
+	return Array(d.get("sw", PackedFloat32Array()))
+
+
+func _swing_time() -> float:
+	var sw := _swing_data()
+	var st := float(attack.startup)
+	if sw.is_empty():
+		return st  # sem dados: no início da janela de acerto, como antes
+	return st * clampf(float(sw[0]) / 0.30, 0.0, 1.0)  # u 0..0,30 da animação = preparação do jogo
+
+
+func _play_swing() -> void:
+	var sw := _swing_data()
+	var arc: float = float(sw[1]) if sw.size() > 1 else 40.0
+	var slug := rig_scene_path.get_file().get_basename()
+	for s in game.sfx.swing_sounds(attack, weapon, Materials.of(self), body_scale, slug, arc):
+		game.sfx.play(s[0], 0.06, s[1])
 
 
 ## Processa um golpe em andamento. Retorna true quando o golpe terminou.
@@ -410,10 +439,12 @@ func _process_attack(delta: float, targets: Array) -> bool:
 	var t := state_time
 	var act_start: float = a.startup
 	var act_end: float = a.startup + a.active
+	if not whooshed and t >= _swing_time():
+		whooshed = true
+		_play_swing()
 	if t >= act_start and not lunged:
 		lunged = true
 		vel.x = facing * float(a.get("lunge", 0.0))
-		game.sfx.play(game.sfx.swing_for(attack, weapon), 0.06, game.sfx.body_pitch(body_scale))
 		var talk := 0.55 if is_in_group("players") else 0.3
 		game.sfx.voice(self, "heavy" if attack.get("heavy", false) else "atk", talk * (1.3 if attack.get("heavy", false) else 1.0))
 		_on_release()
