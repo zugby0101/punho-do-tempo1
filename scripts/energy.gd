@@ -13,6 +13,16 @@ var life := 1.2
 var t := 0.0
 var hit_list: Array = []
 var hostile := false  # disparado por um inimigo: acerta os jogadores
+const FighterBase = preload("res://scripts/fighter.gd")
+const KI_R := 18.0      # raio da bola desenhada (hitbox vertical: centro ± raio)
+const WAVE_H := 34.0    # altura das pedras da onda (acerta só quem está abaixo disso)
+
+
+## Faixa de altura que o projétil ocupa, igual ao desenho: [baixo, cima] acima do chão.
+func band() -> Vector2:
+	if kind == "ki":
+		return Vector2(height - KI_R, height + KI_R)
+	return Vector2(0.0, WAVE_H)
 
 
 func _physics_process(delta: float) -> void:
@@ -33,7 +43,9 @@ func _physics_process(delta: float) -> void:
 		if e in hit_list or not e.can_be_hit():
 			continue
 		var reach := 34.0 if kind == "ki" else 30.0
-		if absf(e.position.x - position.x) < reach and absf(e.position.y - position.y) < 26.0:
+		var b := band()
+		if absf(e.position.x - position.x) < reach and absf(e.position.y - position.y) < 26.0 \
+				and FighterBase.band_hits(e, b.x, b.y):
 			hit_list.append(e)
 			var p: float = owner_player.power if is_instance_valid(owner_player) else 1.0
 			e.take_hit(int(dmg * p), dir, true)
@@ -65,3 +77,9 @@ func _draw() -> void:
 			var hgt := 34.0 * (1.0 - k * 0.22) * (0.8 + 0.2 * sin(t * 40.0 + k))
 			draw_colored_polygon(PackedVector2Array([Vector2(x - 9, 0), Vector2(x + 9, 0), Vector2(x + 2, -hgt), Vector2(x - 3, -hgt * 0.8)]), color.darkened(0.15 * k))
 		draw_circle(Vector2(-dir * 24.0, -6), 12.0, Color(0.75, 0.65, 0.5, 0.4))
+	if FighterBase.show_hitboxes:
+		var b := band()
+		var reach := 34.0 if kind == "ki" else 30.0
+		var r := Rect2(-reach, -b.y, reach * 2.0, b.y - b.x)
+		draw_rect(r, Color(1, 0.15, 0.1, 0.25), true)
+		draw_rect(r, Color(1, 0.15, 0.1, 0.9), false, 1.0)

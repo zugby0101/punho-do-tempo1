@@ -335,7 +335,9 @@ frente. O alcance de cada golpe continua o do jogo (`reach`), mas a altura vem d
 pega quem está pulando (anti-aéreo), o slam só pega quem está no chão e a voadora só acerta depois
 que a perna estica. Vale também para os especiais corpo a corpo: as rajadas só acertam com o
 membro esticado, os giros acertam dos dois lados, o Tope Suicida acerta com os braços do corpo deitado
-e a onda do Esmagador Texano só pega quem está no chão. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
+e a onda do Esmagador Texano só pega quem está no chão. Os projéteis (Onda Ki, Onda Sísmica, arma
+arremessada e as orbes do ÉON) saem da mão no quadro de soltura da animação e acertam só na altura em
+que são desenhados — dá para pular a Onda Sísmica. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
 

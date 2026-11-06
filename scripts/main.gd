@@ -1141,13 +1141,15 @@ func weapon_near(p):
 	return null
 
 
-func throw_weapon(p, w: Dictionary) -> void:
+## rp = ponto de soltura (à frente dos pés, altura), tirado da animação de arremesso (fighter.release_point).
+func throw_weapon(p, w: Dictionary, rp := Vector2(20.0, 46.0)) -> void:
 	var th = ThrownScript.new()
 	th.game = self
 	th.owner_player = p
 	th.weapon = w
 	th.dir = p.facing
-	th.position = p.position + Vector2(p.facing * 20.0, 0)
+	th.height = rp.y
+	th.position = p.position + Vector2(p.facing * rp.x, 0)
 	entities.add_child(th)
 
 

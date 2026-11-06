@@ -272,6 +272,7 @@ func is_boss() -> bool:
 # ---------- ÉON, o chefe secreto ----------
 var eon_phase := 0       # 0, 1, 2 (troca a cada terço de vida)
 var orb_cd := 3.0
+var orb_lanes: Array = []  # leque de orbes esperando o quadro de soltura
 
 
 ## Comportamentos extras do ÉON. Retorna true se já agiu neste quadro.
@@ -292,12 +293,8 @@ func _eon_ai(delta: float, target, dx: float) -> bool:
 		orb_cd = randf_range(3.2, 4.5) - eon_phase * 0.6
 		facing = 1 if target.position.x > position.x else -1
 		var lanes := [-30.0, 0.0, 30.0] if eon_phase < 2 else [-45.0, -15.0, 15.0, 45.0]
-		for off in lanes:
-			var orb = game.spawn_energy(self, "ki", facing, {"dmg": 10 + eon_phase * 3, "speed": 330.0 + eon_phase * 60.0, "color": Color(0.85, 0.6, 1)})
-			orb.hostile = true
-			orb.height = 55.0
-			orb.position.y = clampf(position.y + off, game.DEPTH_MIN, game.DEPTH_MAX)
-		game.sfx.play("orb", 0.05)
+		# as orbes saem da mão no quadro de soltura da animação de arremesso (_on_release)
+		orb_lanes = lanes
 		vel = Vector2.ZERO
 		start_attack({"pose": "throw", "dmg": 0, "reach": -99, "startup": 0.05, "active": 0.05, "recovery": 0.35, "knock": false})
 		return true
@@ -361,3 +358,17 @@ func trail_color() -> Color:
 	if kind == "secret_boss":
 		return Color(0.75, 0.5, 1)
 	return Color(1, 0.35, 0.6) if kind == "subboss" else Color(1, 0.4, 0.2)
+
+
+func _on_release() -> void:
+	if orb_lanes.is_empty() or attack.get("pose", "") != "throw":
+		orb_lanes = []
+		return
+	var rp := release_point("throw", Vector2(30.0, 55.0))
+	for off in orb_lanes:
+		var orb = game.spawn_energy(self, "ki", facing, {"dmg": 10 + eon_phase * 3, "speed": 330.0 + eon_phase * 60.0, "color": Color(0.85, 0.6, 1)})
+		orb.hostile = true
+		orb.height = rp.y
+		orb.position = Vector2(position.x + facing * rp.x, clampf(position.y + off, game.DEPTH_MIN, game.DEPTH_MAX))
+	orb_lanes = []
+	game.sfx.play("orb", 0.05)

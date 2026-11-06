@@ -263,6 +263,7 @@ func _process_attack(delta: float, targets: Array) -> bool:
 		game.sfx.play(game.sfx.swing_for(attack, weapon), 0.06, game.sfx.body_pitch(body_scale))
 		var talk := 0.55 if is_in_group("players") else 0.3
 		game.sfx.voice(self, "heavy" if attack.get("heavy", false) else "atk", talk * (1.3 if attack.get("heavy", false) else 1.0))
+		_on_release()
 	elif a.has("dash") and t >= act_start and t < act_end:
 		vel.x = facing * float(a.dash)
 	else:
@@ -360,6 +361,32 @@ func hurtbox() -> Rect2:
 
 func hitbox_debug_on() -> bool:
 	return show_hitboxes
+
+
+## Quadro de soltura do golpe (início da janela de acerto = quadro de impacto da animação).
+## Arremessos e disparos soltam o projétil aqui, na mão do rig.
+func _on_release() -> void:
+	pass
+
+
+## Onde a ponta do golpe `an` está no quadro de contato da animação (impacto):
+## x = à frente dos pés (já com a escala, multiplique por facing), y = altura acima do chão.
+## Sem dados de animação, usa `fallback` (mesmas unidades, escala 1, altura positiva).
+func release_point(an: String, fallback: Vector2) -> Vector2:
+	if not use_anim_hitboxes or not hitboxes.has(an):
+		return Vector2(fallback.x * body_scale, height + fallback.y * body_scale)
+	var d: Dictionary = hitboxes[an]
+	var p := _hb_point(d.pts, 3, float(d.on))
+	return Vector2(p.x * body_scale, height - p.y * body_scale)
+
+
+## A faixa de altura [h0, h1] (acima do chão) de um projétil cruza a hurtbox do alvo?
+static func band_hits(tg, h0: float, h1: float) -> bool:
+	if not use_anim_hitboxes:
+		return true
+	var ts: float = tg.get("body_scale") if tg.get("body_scale") != null else 1.0
+	var th: float = tg.get("height") if tg.get("height") != null else 0.0
+	return h1 >= th and h0 <= th + HURT_H * ts
 
 
 ## Rotação do corpo inteiro por cima da animação nos golpes (a mesma do desenho e do rig).
