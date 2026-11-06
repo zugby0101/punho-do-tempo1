@@ -49,7 +49,7 @@ func _physics_process(delta: float) -> void:
 			e.take_hit(int(16 * p), dir, true)
 			if is_instance_valid(owner_player) and e.is_in_group("enemies"):
 				Ach.track(owner_player, "throws")
-			if is_instance_valid(owner_player):
+			if is_instance_valid(owner_player) and not e.get("blocked_last"):
 				game.on_hit(owner_player, e, atk)
 			last_target = e
 			_land(true)

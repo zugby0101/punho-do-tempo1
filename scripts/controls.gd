@@ -4,25 +4,26 @@ extends RefCounted
 ## como "k1_attack" ou "j2_left". Cada jogador lê um ou mais conjuntos.
 ## As ações globais (move_left, attack, start, pause...) servem para os menus.
 
-const ACTIONS := ["left", "right", "up", "down", "attack", "jump", "special", "start"]
+const ACTIONS := ["left", "right", "up", "down", "attack", "jump", "special", "start", "block"]
 const KEYBOARD_SETS := ["k1", "k2", "k3", "k4"]
 const JOY_SETS := ["j0", "j1", "j2", "j3"]
 
 const KEYS := {
 	"k1": {"left": [KEY_A], "right": [KEY_D], "up": [KEY_W], "down": [KEY_S],
-		"attack": [KEY_J], "jump": [KEY_K, KEY_SPACE], "special": [KEY_L], "start": [KEY_ENTER]},
+		"attack": [KEY_J], "jump": [KEY_K, KEY_SPACE], "special": [KEY_L], "start": [KEY_ENTER], "block": [KEY_U]},
 	"k2": {"left": [KEY_LEFT], "right": [KEY_RIGHT], "up": [KEY_UP], "down": [KEY_DOWN],
-		"attack": [KEY_COMMA], "jump": [KEY_PERIOD], "special": [KEY_SLASH], "start": [KEY_BACKSPACE]},
+		"attack": [KEY_COMMA], "jump": [KEY_PERIOD], "special": [KEY_SLASH], "start": [KEY_BACKSPACE], "block": [KEY_N]},
 	"k3": {"left": [KEY_F], "right": [KEY_H], "up": [KEY_T], "down": [KEY_G],
-		"attack": [KEY_Z], "jump": [KEY_X], "special": [KEY_C], "start": [KEY_V]},
+		"attack": [KEY_Z], "jump": [KEY_X], "special": [KEY_C], "start": [KEY_V], "block": [KEY_Q]},
 	"k4": {"left": [KEY_KP_4], "right": [KEY_KP_6], "up": [KEY_KP_8], "down": [KEY_KP_5],
-		"attack": [KEY_KP_7], "jump": [KEY_KP_9], "special": [KEY_KP_ADD], "start": [KEY_KP_ENTER]},
+		"attack": [KEY_KP_7], "jump": [KEY_KP_9], "special": [KEY_KP_ADD], "start": [KEY_KP_ENTER], "block": [KEY_KP_1]},
 }
 const JOY_BUTTONS := {
 	"left": [JOY_BUTTON_DPAD_LEFT], "right": [JOY_BUTTON_DPAD_RIGHT],
 	"up": [JOY_BUTTON_DPAD_UP], "down": [JOY_BUTTON_DPAD_DOWN],
 	"attack": [JOY_BUTTON_X], "jump": [JOY_BUTTON_A], "special": [JOY_BUTTON_Y, JOY_BUTTON_B],
 	"start": [JOY_BUTTON_START],
+	"block": [JOY_BUTTON_RIGHT_SHOULDER, JOY_BUTTON_LEFT_SHOULDER],
 }
 const JOY_AXES := {
 	"left": [JOY_AXIS_LEFT_X, -1.0], "right": [JOY_AXIS_LEFT_X, 1.0],
@@ -48,7 +49,10 @@ static func join_sets() -> Array:
 
 
 static func new_remote() -> Dictionary:
-	return {"bits": 0, "counts": [0, 0, 0, 0, 0, 0, 0, 0], "last": [0, 0, 0, 0, 0, 0, 0, 0], "just": 0, "vec": Vector2.ZERO}
+	var zeros: Array = []
+	zeros.resize(ACTIONS.size())
+	zeros.fill(0)
+	return {"bits": 0, "counts": zeros.duplicate(), "last": zeros.duplicate(), "just": 0, "vec": Vector2.ZERO}
 
 
 static func set_remote(set_name: String, data: Array) -> void:
@@ -65,7 +69,7 @@ static func net_update() -> void:
 	for n in remote:
 		var r: Dictionary = remote[n]
 		var j := 0
-		for i in ACTIONS.size():
+		for i in mini(ACTIONS.size(), mini(r.counts.size(), r.last.size())):  # convidado de versão antiga: menos ações
 			if int(r.counts[i]) > int(r.last[i]):
 				j |= 1 << i
 		r.just = j

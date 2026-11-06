@@ -7,7 +7,6 @@ var last_hitter = null  # jogador que deu o último golpe (recebe os pontos)
 var tier := 0  # 1 = fácil, 2 = difícil, 3 = muito difícil, 0 = chefe
 var block_flash := 0.0
 var ko_reported := false
-var blocked_last := false
 var aggressive := false
 var attack_cd := 1.0
 var special_cd := 3.0
@@ -197,6 +196,8 @@ func _update(delta: float) -> void:
 			var dy := absf(target.position.y - position.y)
 			if kind == "secret_boss" and _eon_ai(delta, target, dx):
 				return
+			if _try_dodge():
+				return
 			if not special_attack.is_empty() and special_cd <= 0.0 and dx > 200.0 and dy < 25.0 \
 					and would_reach_height(special_attack, target):  # não investe por baixo de quem está no ar
 				special_cd = randf_range(4.0, 6.0)
@@ -205,6 +206,9 @@ func _update(delta: float) -> void:
 			elif aggressive and attack_cd <= 0.0:
 				# só solta um golpe que alcançaria o alvo de verdade (hitbox da animação x hurtbox do alvo)
 				var able := attacks.filter(func(a): return would_hit(a, target))
+				if is_boss() and _can_finish(target):
+					able = [_finisher_attack()]  # chefe finaliza quem está quase sem vida
+					game.popup("FINALIZAÇÃO!", position + Vector2(0, -130.0 * body_scale), Color(1, 0.4, 0.3))
 				if not able.is_empty():
 					start_attack(able[randi() % able.size()])
 					attack_cd = randf_range(0.4, 0.9) if is_boss() else randf_range(0.7, 1.5)
@@ -212,20 +216,25 @@ func _update(delta: float) -> void:
 			if _process_attack(delta, game.active_players()):
 				attack = {}
 				set_state("idle")
+		"block", "dodge":
+			_update_defense(delta)
 
 
 ## Tier 2 bloqueia golpes leves às vezes; tier 3 tem super armadura.
 func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 	var idle := state in ["idle", "walk"]
 	blocked_last = false
+	if blocks(dir) and not knock:
+		block_flash = 0.2  # já com a guarda erguida: segura os golpes leves que vierem
+		_on_blocked(dir)
+		return
 	if tier == 2 and idle and not knock and randf() < 0.3:
+		# ergue a guarda (animação de bloqueio) e segura por um instante
 		facing = -dir
+		start_block(0.4)
+		state_time = BLOCK_RAISE  # a guarda já sobe a tempo de parar este golpe
 		block_flash = 0.2
-		blocked_last = true
-		vel = Vector2(dir * 90.0, 0)
-		game.sfx.play("block", 0.1)
-		game.spawn_spark(position + Vector2(-dir * 14.0, -60.0), Color(0.4, 0.8, 1.0), 0.8)
-		game.spawn_fx("block", position + Vector2(-dir * 14.0, -60.0 * body_scale - height), position, dir, Color(0.4, 0.8, 1.0))
+		_on_blocked(dir)
 		return
 	if tier == 3 and not knock and hp - dmg > 0:
 		hp -= dmg
@@ -375,6 +384,41 @@ static func _segment_hits(r: Rect2, a: Vector2, b: Vector2) -> bool:
 		if r.has_point(a.lerp(b, k / 12.0)):
 			return true
 	return false
+
+
+## Esquiva dos ágeis (facas e ninjas): vendo um golpe de jogador que vai acertar, às vezes dá um
+## passo para trás (animação "dodge", invencível no ar). Uma chance por golpe.
+var dodge_seen: Array = []
+
+
+func _try_dodge() -> bool:
+	if not (kind == "knife" or hat == "ninja"):
+		return false
+	for p in game.active_players():
+		if p.state != "attack" or p.attack.is_empty() or p.state_time >= float(p.attack.get("startup", 0.0)):
+			continue
+		var key := [p, p.attack.get("pose", ""), int(p.anim_t * 10.0)]
+		if dodge_seen == key or not p.would_hit(p.attack, self):
+			continue
+		dodge_seen = key
+		if randf() < 0.35:
+			facing = 1 if p.position.x > position.x else -1
+			start_dodge(-facing)
+			return true
+	return false
+
+
+## Finalização dos chefes: um golpe forte quando o jogador está quase sem vida.
+func _finisher_attack() -> Dictionary:
+	return {"pose": "finisher", "dmg": int(round(18.0 * (1.0 + game.stage_idx * 0.05))), "reach": 66,
+		"startup": 0.4, "active": 0.1, "recovery": 0.5, "knock": true, "lunge": 70.0, "heavy": true, "finisher": true}
+
+
+func _can_finish(target) -> bool:
+	if not hitboxes.has("finisher"):
+		return false
+	var fa := _finisher_attack()
+	return target.hp <= int(fa.dmg) and would_hit(fa, target)
 
 
 func _separate() -> void:

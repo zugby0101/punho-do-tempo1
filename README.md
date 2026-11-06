@@ -17,16 +17,19 @@ Até 4 pessoas jogam juntas no mesmo computador. Na tela de seleção, cada joga
 (cada lutador só pode ser escolhido por um jogador) e confirma com SOCO.
 O jogo começa quando todos estão prontos.
 
-| Jogador | Mover | Soco | Pulo | Especial |
-|---|---|---|---|---|
-| Teclado 1 | W A S D | J | K / Espaço | L |
-| Teclado 2 | Setas | `,` | `.` | `/` |
-| Teclado 3 | T F G H | Z | X | C |
-| Teclado 4 | Numpad 8 4 5 6 | Numpad 7 | Numpad 9 | Numpad + |
-| Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ |
+| Jogador | Mover | Soco | Pulo | Especial | Bloqueio |
+|---|---|---|---|---|---|
+| Teclado 1 | W A S D | J | K / Espaço | L | U |
+| Teclado 2 | Setas | `,` | `.` | `/` | N |
+| Teclado 3 | T F G H | Z | X | C | Q |
+| Teclado 4 | Numpad 8 4 5 6 | Numpad 7 | Numpad 9 | Numpad + | Numpad 1 |
+| Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ | LB / RB |
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
 Enter confirma nos menus, Esc ou P pausa. No título: O = online, R = ranking, M = conquistas. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
+Segurar **Bloqueio** ergue a guarda (para golpes de frente; os fortes tiram só um pouco de vida) e
+**Bloqueio + Pulo** é uma esquiva: um passo rápido para trás, invencível enquanto está no ar. Quando um
+golpe do combo derrubaria de vez um inimigo à frente, sai a **finalização** no lugar dele.
 No título, ◄ ► escolhe a fase inicial.
 
 Detalhes do co-op:

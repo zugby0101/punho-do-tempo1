@@ -41,7 +41,7 @@ var ws_was_open := false
 var ws_pending := {}         # mensagem de controle a enviar quando abrir
 
 # Convidado: contadores de toques (para o anfitrião detectar "acabou de apertar")
-var press_counts: Array = [0, 0, 0, 0, 0, 0, 0, 0]
+var press_counts: Array = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # uma por Controls.ACTIONS
 
 
 func _ready() -> void:
@@ -392,7 +392,7 @@ func close() -> void:
 	my_set = ""
 	peer_sets.clear()
 	Controls.remote.clear()
-	press_counts = [0, 0, 0, 0, 0, 0, 0, 0]
+	press_counts = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 
 # ================= Ranking online =================

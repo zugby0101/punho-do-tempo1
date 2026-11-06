@@ -48,6 +48,7 @@ STRIKES = {
     "throw": ["arm_f_lo", "arm_b_lo"],
     "special": ["arm_f_lo", "arm_b_lo", "foot_f", "foot_b"],
     "dive": ["head", "arm_f_lo", "arm_b_lo"],
+    "finisher": ["arm_f_lo", "arm_b_lo", "foot_f"],
 }
 WEAPON_ANIMS = ("swing", "slam")  # golpes armados (Weapons.player_combo / enemy_combo)
 RADIUS = {"arm": 10.0, "foot": 12.0, "spine": 16.0, "head": 14.0}
@@ -266,7 +267,8 @@ def gameplay_check(name, hb):
     em algum quadro da janela de acerto (como a caixa antiga acertava)."""
     bad = []
     cases = [("jab", 58, None), ("cross", 62, None), ("kick", 74, None), ("upper", 56, None), ("slam", 64, None),
-             ("charge", 56, None), ("swing", 82, 22.0), ("swing", 88, 44.0), ("slam", 86, 30.0), ("jumpkick", 66, None)]
+             ("charge", 56, None), ("swing", 82, 22.0), ("swing", 88, 44.0), ("slam", 86, 30.0), ("jumpkick", 66, None),
+             ("finisher", 72, None)]
     for an, reach, wlen in cases:
         if an not in hb:
             continue
@@ -495,7 +497,7 @@ BODY_BONES = ("root", "pelvis", "spine", "head", "arm_b_up", "arm_b_lo", "arm_f_
               "leg_b_up", "leg_b_lo", "foot_b", "leg_f_up", "leg_f_lo", "foot_f")
 HURT_STEP = 1.0 / 30.0
 HURT_ANIMS = ("idle", "walk", "hurt", "jab", "cross", "upper", "kick", "swing", "slam", "charge", "throw", "special",
-              "jump", "jumpkick", "dive")
+              "jump", "jumpkick", "dive", "block", "dodge", "finisher")
 
 
 def parse_parts(text):
