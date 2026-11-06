@@ -1023,6 +1023,7 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 	var bs: float = attacker.body_scale if "body_scale" in attacker else 1.0
 	var impact: String = sfx.impact_for(atk, wpn)
 	sfx.play(impact, 0.07, sfx.body_pitch(bs))
+	body_hit_sound(target, pos, int(atk.get("dmg", 8)))
 	# partículas do golpe: o tipo segue o impacto (soco, chute, pancada, lâmina, metal, madeira, energia...)
 	var fx_col: Color = atk.get("color", attacker.color()) if atk.get("energy", false) else (attacker.color() if by_player and players.size() > 1 else sig)
 	spawn_fx(impact.substr(2), pos, target.position, attacker.facing, fx_col, (1.35 if heavy else 1.0) * clampf(bs, 0.8, 1.6))
@@ -1166,6 +1167,25 @@ func spawn_wound(target, pos: Vector2, dir: int, k: float) -> void:
 	_wound(mat, pos, feet, dir, k)
 	if Net.is_host() and not Net.peer_sets.is_empty():
 		net_events.append(["w", mat, pos.x, pos.y, feet.x, feet.y, dir, k])
+
+
+## Som do corpo de quem apanha (sfx.gd -> body_sound): o material, no tom de cada um dos 79; respingo
+## molhado com sangue ligado; e o tilintar do capacete/coroa quando o contato foi na cabeça.
+func body_hit_sound(target, pos: Vector2, dmg: int) -> void:
+	var mat := Materials.of(target)
+	if mat == "wood":
+		return
+	var ko: bool = target.hp <= 0
+	var slug: String = String(target.rig_scene_path).get_file().get_basename()
+	var bs: Array = SfxScript.body_sound(mat, float(target.body_scale), slug, ko)
+	sfx.play(bs[0], 0.05, bs[1])
+	if blood_enabled and mat in Materials.BLEEDS and dmg >= 6:
+		sfx.play("m_wet", 0.12, bs[1])
+	if target.get("hat") in SfxScript.METAL_HATS:
+		var r: Rect2 = target.hurt_rect()
+		r.position += target.position
+		if pos.y < r.position.y + r.size.y * 0.25:  # contato no quarto de cima do corpo: a cabeça
+			sfx.play("m_helmet", 0.06, bs[1])
 
 
 func _wound(mat: String, pos: Vector2, feet: Vector2, dir: int, k: float) -> void:

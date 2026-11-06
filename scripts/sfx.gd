@@ -5,6 +5,8 @@ extends Node
 ##   w_*   som do golpe cortando o ar (um por tipo de golpe)
 ##   i_*   som do impacto (um por tipo de golpe / arma)
 ##   sp_*  som de início do golpe especial de cada lutador
+##   m_*   som do CORPO de quem apanha, pelo material (materials.gd): carne, máquina, ciborgue, mutante,
+##         sombra, tempo, luz; m_*_ko no golpe que derruba de vez; m_wet (sangue); m_helmet (capacete)
 ##   + sons gerais (pulo, dano, queda, KO, menus, bloqueio, ÉON...)
 ## Os sons são gerados uma vez e guardados (static) para as próximas fases.
 
@@ -272,6 +274,48 @@ func _build_all() -> void:
 	b = _buf(0.6); _tone(b, 0, 0.25, 65, 45, 1.0, 12.0); _tone(b, 0.18, 0.4, 140, 120, 0.6, 4.0, "saw"); _noise_band(b, 0.18, 0.4, 250, 600, 0.25, "swell"); _store("sp_tama", b, 0.85)  # tambor e brado
 	b = _buf(0.6); _tone(b, 0, 0.18, 880, 880, 0.5, 2.0, "square"); _tone(b, 0.18, 0.18, 988, 988, 0.5, 2.0, "square"); _tone(b, 0.36, 0.24, 1174, 1100, 0.5, 3.0, "square"); _store("sp_kirra", b, 0.4)  # flauta do muay thai
 
+	# --- corpo de quem apanha (um por material; o tom de cada personagem vem de body_sound) ---
+	for ko in [false, true]:
+		var L := 1.8 if ko else 1.0   # golpe que derruba: mais longo e mais grave
+		var sfx_ko := "_ko" if ko else ""
+		# carne: baque surdo do corpo (o estalo do golpe vem do i_*)
+		b = _buf(0.16 * L); _tone(b, 0, 0.16 * L, 105, 62, 1.0, 22.0 / L); _noise_band(b, 0, 0.1 * L, 700, 220, 0.5, "hit", 0.0, 30.0 / L)
+		_store("m_flesh" + sfx_ko, b, 0.7)
+		# máquina: chapa batendo, faísca estalando e um servo que reclama
+		b = _buf(0.3 * L); _ring(b, 0, 0.3 * L, [612.0, 1390.0, 2210.0, 3480.0], 0.7, 11.0 / L)
+		_noise_band(b, 0, 0.08, 7000, 4000, 0.6, "hit", 0.0, 50.0)
+		for k in 3:
+			_noise_band(b, 0.03 + k * 0.035, 0.02, 8000, 6000, 0.35, "hit", 0.0, 120.0)
+		_tone(b, 0.05, 0.2 * L, 820, 380, 0.22, 8.0, "saw")
+		_store("m_machine" + sfx_ko, b, 0.7)
+		# ciborgue: carne e metal juntos
+		b = _buf(0.24 * L); _tone(b, 0, 0.16 * L, 105, 64, 0.8, 22.0 / L); _ring(b, 0.01, 0.22 * L, [740.0, 1650.0, 2890.0], 0.4, 14.0 / L)
+		_noise_band(b, 0, 0.05, 7000, 4500, 0.35, "hit", 0.0, 70.0)
+		_store("m_cyborg" + sfx_ko, b, 0.7)
+		# mutante: baque molhado e um gorgolejo grave
+		b = _buf(0.26 * L); _tone(b, 0, 0.26 * L, 85, 52, 0.9, 12.0 / L); _noise_band(b, 0.01, 0.2 * L, 900, 250, 0.7, "hit", 22.0, 14.0 / L)
+		_store("m_mutant" + sfx_ko, b, 0.75)
+		# sombra: chiado que se desfaz e um tom fantasma com vibrato
+		b = _buf(0.4 * L); _noise_band(b, 0, 0.4 * L, 5200, 900, 0.8, "swell", 9.0)
+		_tone(b, 0, 0.4 * L, 330, 190, 0.35, 5.0 / L); _tone(b, 0.02, 0.38 * L, 335, 185, 0.25, 5.0 / L)
+		_store("m_shadow" + sfx_ko, b, 0.55)
+		# tempo: estilhaço de vidro (parciais agudos) e areia escorrendo
+		b = _buf(0.5 * L); _ring(b, 0, 0.5 * L, [1760.0, 2637.0, 3951.0, 5274.0], 0.55, 6.0 / L)
+		_noise_band(b, 0.02, 0.45 * L, 9000, 6500, 0.4, "swell", 30.0)
+		_store("m_time" + sfx_ko, b, 0.6)
+		# luz: falha digital (bipes quadrados em degraus)
+		b = _buf(0.22 * L)
+		var steps := [1320.0, 660.0, 1980.0, 990.0, 2640.0, 495.0]
+		for k in int(5 * L):
+			var fq: float = steps[k % steps.size()]
+			_tone(b, k * 0.036, 0.034, fq, fq, 0.45, 6.0, "square")
+		_store("m_light" + sfx_ko, b, 0.4)
+	# sangue: respingo molhado curto (só com o sangue ligado)
+	b = _buf(0.14); _noise_band(b, 0, 0.14, 1400, 500, 1.0, "hit", 38.0, 22.0); _store("m_wet", b, 0.35)
+	# capacete/coroa: o golpe na cabeça tilinta no metal
+	b = _buf(0.28); _ring(b, 0, 0.28, [1180.0, 2470.0, 3890.0], 0.6, 10.0); _noise_band(b, 0, 0.03, 6000, 4000, 0.5, "hit", 0.0, 90.0)
+	_store("m_helmet", b, 0.5)
+
 	# --- bipe dos diálogos (o tom acompanha quem fala) ---
 	b = _buf(0.035); _tone(b, 0, 0.035, 520, 470, 0.6, 40.0, "square"); _store("blip", b, 0.22)
 
@@ -321,6 +365,18 @@ static func impact_for(atk: Dictionary, weapon: Dictionary) -> String:
 		"charge": return "i_charge"
 		"special": return "i_kick"
 	return "i_cross" if atk.get("heavy", false) else "i_jab"
+
+
+## Som do corpo de quem apanha: [nome, tom]. O material escolhe o som; o tom é o do tamanho do corpo
+## com um ajuste fixo de cada personagem (o nome da cena do rig), para os 79 soarem diferentes.
+static func body_sound(mat: String, scale: float, rig_slug: String, ko: bool) -> Array:
+	var name := "m_%s%s" % [mat, "_ko" if ko else ""]
+	var ident := 0.9 + float(absi(rig_slug.hash()) % 21) / 100.0  # 0,90 .. 1,10
+	return [name, body_pitch(scale) * ident]
+
+
+# capacetes, elmos e coroas de metal: golpe na cabeça soa no metal (os 79 rigs: looks.py / characters.gd)
+const METAL_HATS := ["helmet", "greathelm", "kabuto", "brodie", "helmet2", "spike", "crown"]
 
 
 ## Tom do corpo: personagens maiores soam mais graves.

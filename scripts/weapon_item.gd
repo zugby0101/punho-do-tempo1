@@ -81,6 +81,7 @@ func _hit_below() -> void:
 		tg.take_hit(dmg, dir, -vz > 700.0)
 		game.spawn_spark(at, Color(1, 1, 0.8), 1.0)
 		game.spawn_wound(tg, at, dir, float(dmg) / 12.0)
+		game.body_hit_sound(tg, at, dmg)
 		game.sfx.play("i_thrown", 0.06)
 		game.shake(3.0, Vector2(0, 0.6))
 		# ricocheteia na cabeça de quem acertou
