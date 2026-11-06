@@ -259,6 +259,12 @@ tamanho real de cada lutador, que jab, cross, chute e golpe armado quebram a cai
   desenhada (`plank_rect`) — acerta quem estiver no caminho (3 de dano, uma vez por alvo), menos quem
   quebrou a caixa e outras caixas; o acerto conta como golpe de quem quebrou.
 - F3: base sólida em azul, tábuas que machucam em vermelho.
+- **IA contorna a caixa** (`enemy.gd` → `_avoid_crates`): se uma caixa está entre o inimigo e o lugar
+  aonde ele quer ir, ele passa pela frente ou por trás dela — o lado mais curto até o objetivo, dentro do
+  chão —, mudando de faixa antes de chegar na caixa e seguindo reto até depois dela; o lado escolhido
+  fica guardado enquanto a mesma caixa bloquear. Se o objetivo cai dentro da caixa (jogador encostado
+  nela), ele vai para a borda de frente ou de trás mais perto. A simulação `tools/ai/desvio_caixas.py`
+  (porta do desvio e da colisão) mostra 17 de 165 trajetos presos sem desvio e 0 com ele.
 
 **Comidas.** A área de coleta é a comida desenhada no quadro atual (`pickup.gd` → `pick_rect`: frango no
 prato 40 × 28 px, maçã 20 × 28 px), subindo e descendo com o balanço. A comida é pega quando a hurtbox
