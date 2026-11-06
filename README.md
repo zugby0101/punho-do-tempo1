@@ -264,6 +264,27 @@ funciona no renderizador Compatibility e na web):
 Golpes pesados e lutadores grandes geram efeitos maiores; no co-op as faíscas têm a cor do jogador.
 No online, o host manda os efeitos para todos. **P** no título liga/desliga as partículas e os rastros.
 
+**Impacto, sangue e o material de cada personagem.** Além das partículas do golpe, quem apanha solta
+o que é feito o corpo dele (`scripts/materials.gd`, os 79 personagens), saindo do **ponto exato do
+contato** — onde a ponta do golpe na animação (punho, pé, arma) encosta no corpo do alvo:
+
+| Material | Quem | O que sai |
+|---|---|---|
+| carne | os 14 lutadores e os humanos de todas as eras (63) | gotas de sangue que voam para o lado do golpe e mancham o chão |
+| máquina | Androide, Drone-K, Sentinela, Guardião Ômega | óleo escuro, faíscas de metal e parafusos |
+| ciborgue | Ciborgue | sangue com óleo e faíscas |
+| mutante | Mutante, Abominação | sangue verde |
+| sombra | Espectro, Arauto do Vazio e os Ecos | fumaça roxa que sobe, sem manchas |
+| tempo | Cronos, ÉON | areia dourada que escorre e estilhaços do tempo |
+| luz | IA Aurora | quadradinhos de luz (falha digital) |
+
+A quantidade acompanha o dano, e o golpe que derruba de vez solta bem mais. As manchas (`scripts/splat.gd`)
+aparecem quando as gotas chegam ao chão, ficam ~9 s numa camada abaixo dos lutadores e somem devagar
+(no máximo 90 na tela; trocar de era limpa o chão). Golpe bloqueado não fere. As faíscas do golpe têm a
+**assinatura** de quem bate: a cor do especial de cada lutador, ou a cor do material dos inimigos
+(máquinas azuis, sombras roxas, Cronos e ÉON dourados). **Y** no título liga/desliga o sangue
+(desligado, carne, ciborgue e mutante soltam só um sopro de poeira, sem manchas).
+
 **Rastro de movimento nos especiais** (`scripts/trail.gd`): durante os 14 golpes especiais — e nas
 investidas e golpes giratórios de sub-chefes e chefes (vermelho; roxo no ÉON) — o lutador deixa
 **imagens residuais** (cópias do rig na pose de instantes atrás, translúcidas na cor do especial) e

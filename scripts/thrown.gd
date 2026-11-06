@@ -45,7 +45,7 @@ func _physics_process(delta: float) -> void:
 		if absf(e.position.x - position.x) < 34.0 and absf(e.position.y - position.y) < 24.0 \
 				and FighterBase.band_hits(e, b.x, b.y):
 			var p: float = owner_player.power if is_instance_valid(owner_player) else 1.0
-			var atk := {"dmg": 16, "heavy": true, "knock": true, "thrown": true}
+			var atk := {"dmg": 16, "heavy": true, "knock": true, "thrown": true, "hit_at": position + Vector2(0, -height)}
 			e.take_hit(int(16 * p), dir, true)
 			if is_instance_valid(owner_player) and e.is_in_group("enemies"):
 				Ach.track(owner_player, "throws")

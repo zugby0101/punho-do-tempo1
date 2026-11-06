@@ -451,10 +451,11 @@ func _check_hits(targets: Array) -> bool:
 		var dir := facing
 		if radial:
 			dir = 1 if tg.position.x >= position.x else -1
+		var at := _contact_point(hb, tg)  # antes do take_hit: o alvo ainda está na pose em que foi atingido
 		tg.take_hit(int(round(float(attack.dmg) * power)), dir, bool(attack.knock))
 		if tg.get("blocked_last"):
 			continue  # golpe bloqueado
-		game.on_hit(self, tg, attack)
+		game.on_hit(self, tg, attack.merged({"hit_at": at}) if at != Vector2.INF else attack)
 		hit_any = true
 		if attack.get("weapon", false) and not weapon.is_empty() and is_in_group("players"):
 			weapon.uses = int(weapon.uses) - 1
@@ -521,8 +522,31 @@ func hitbox_at(atk: Dictionary, an: String, u: float) -> Dictionary:
 		far = maxf(far, float(bb[2]) * s)
 	# golpes giratórios (radial, ou o lutador vira de um lado para o outro): acerta dos dois lados
 	var both: bool = atk.get("radial", false) or atk.get("spin", false)
-	return {"x0": -far if both else -15.0, "x1": far, "h0": lo_h - r_s, "h1": hi_h + r_s,
+	return {"x0": -far if both else -15.0, "x1": far, "h0": lo_h - r_s, "h1": hi_h + r_s, "base_h": base_h,
 		"tip": Vector2(tip.x * s, tip.y * s), "r": r * s, "anim": an, "u": u}
+
+
+## Cor das faíscas dos golpes de quem bate (assinatura). Inimigos: conforme o material do corpo.
+const HIT_COLORS := {"machine": Color(0.45, 0.85, 1.0), "cyborg": Color(0.6, 0.9, 1.0), "mutant": Color(0.6, 1.0, 0.3),
+	"shadow": Color(0.8, 0.5, 1.0), "time": Color(1.0, 0.85, 0.35), "light": Color(0.75, 1.0, 1.0)}
+const Materials = preload("res://scripts/materials.gd")
+
+
+func hit_color() -> Color:
+	return HIT_COLORS.get(Materials.of(self), Color(1, 0.45, 0.3))
+
+
+## Onde a ponta do golpe (punho, pé, arma, na pose da animação) encosta no corpo do alvo: a ponta,
+## trazida para dentro da hurtbox dele. Vector2.INF sem dados de animação.
+func _contact_point(hb: Dictionary, tg) -> Vector2:
+	if hb.is_empty() or not hb.has("tip"):
+		return Vector2.INF
+	var tip: Vector2 = hb.tip
+	var p := position + Vector2(tip.x * facing, tip.y - float(hb.base_h))
+	var r := hurt_of(tg)
+	r.position += tg.position
+	r = r.grow(-3.0) if r.size.x > 8.0 and r.size.y > 8.0 else r
+	return Vector2(clampf(p.x, r.position.x, r.end.x), clampf(p.y, r.position.y, r.end.y))
 
 
 ## Hurtbox do corpo, relativa aos pés (y para baixo): onde este lutador pode ser atingido.

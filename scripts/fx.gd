@@ -184,3 +184,87 @@ static func _ground(parent: Node, feet: Vector2, k: float) -> void:
 	_emit(parent, feet, {"tex": "dot", "amount": 14 * k, "dir": Vector2(1, 0), "spread": 180, "v0": 60, "v1": 200, "damp": 220, "gravity": -30,
 		"life": 0.6, "s0": 1.6, "s1": 2.8, "c0": DUST, "c1": DUST, "emit_box": Vector2(18, 3), "z": -1})
 	_ring(parent, feet, Color(DUST.r, DUST.g, DUST.b, 0.6), 40.0 * k, 0.3, 0.3)
+
+
+# ---------- Ferimentos: o que sai do corpo de quem apanha (material em materials.gd) ----------
+const Splat = preload("res://scripts/splat.gd")
+const MAT_COLORS := {
+	"flesh": [Color(0.78, 0.03, 0.05), Color(0.45, 0.0, 0.02)],
+	"mutant": [Color(0.55, 0.95, 0.15), Color(0.25, 0.5, 0.05)],
+	"machine": [Color(0.16, 0.13, 0.1), Color(0.06, 0.05, 0.04)],
+	"shadow": [Color(0.75, 0.45, 1.0), Color(0.25, 0.08, 0.4)],
+	"time": [Color(1.0, 0.85, 0.4), Color(0.75, 0.55, 0.15)],
+	"light": [Color(0.7, 1.0, 1.0), Color(0.3, 0.7, 1.0)],
+}
+
+
+## pos: ponto do contato (sincronizado com a animação); feet: chão sob o alvo; dir: lado do golpe;
+## k: força (dano/12, KO maior); blood: sangue ligado; decals: camada das manchas no chão.
+static func wound(parent: Node, decals: Node, mat: String, pos: Vector2, feet: Vector2, dir: int, k: float, blood: bool) -> void:
+	_textures()
+	if mat in ["flesh", "mutant", "cyborg"] and not blood:
+		# sem sangue: só um sopro de poeira clara no ponto do golpe
+		_emit(parent, pos, {"tex": "dot", "amount": 6 * k, "dir": Vector2(dir, -0.3), "spread": 70, "v0": 40, "v1": 140, "damp": 160,
+			"life": 0.35, "s0": 1.0, "s1": 1.8, "c0": Color(1, 1, 1, 0.7), "c1": Color(0.85, 0.85, 0.9, 0.5)})
+		return
+	var fwd := Vector2(dir, -0.45)
+	match mat:
+		"flesh", "mutant":
+			_drops(parent, decals, pos, feet, dir, k, MAT_COLORS[mat])
+		"cyborg":
+			_drops(parent, decals, pos, feet, dir, k * 0.6, MAT_COLORS["flesh"])
+			_drops(parent, decals, pos, feet, dir, k * 0.5, MAT_COLORS["machine"])
+			_metal(parent, pos, dir, 0.5 * k)
+		"machine":
+			_drops(parent, decals, pos, feet, dir, k * 0.8, MAT_COLORS["machine"])
+			_metal(parent, pos, dir, k)
+			# parafusos e lascas de chapa
+			_emit(parent, pos, {"tex": "chunk", "amount": 3 + 3 * k, "dir": fwd, "spread": 60, "v0": 160, "v1": 340, "gravity": 1300,
+				"life": 0.7, "spin": 1100, "s0": 0.5, "s1": 0.9, "c0": Color(0.75, 0.77, 0.8), "c1": Color(0.45, 0.47, 0.5)})
+		"shadow":
+			# fumaça roxa que sobe e se desfaz (sem manchas: não é feito de nada)
+			var c: Array = MAT_COLORS.shadow
+			_emit(parent, pos, {"tex": "dot", "amount": 8 + 6 * k, "dir": Vector2(dir * 0.4, -1), "spread": 60, "v0": 40, "v1": 150, "gravity": -160,
+				"damp": 60, "life": 0.8, "s0": 1.2, "s1": 2.6, "c0": Color(c[0].r, c[0].g, c[0].b, 0.75), "c1": Color(c[1].r, c[1].g, c[1].b, 0.4)})
+			_emit(parent, pos, {"tex": "streak", "align": true, "add": true, "amount": 4 + 3 * k, "dir": Vector2(dir, -0.2), "spread": 50,
+				"v0": 160, "v1": 320, "damp": 500, "life": 0.25, "c0": Color(1, 0.9, 1), "c1": c[0]})
+		"time":
+			# areia dourada escorrendo e estilhaços do tempo
+			var c: Array = MAT_COLORS.time
+			_emit(parent, pos, {"tex": "dot", "add": true, "amount": 14 + 10 * k, "dir": fwd, "spread": 70, "v0": 80, "v1": 260, "gravity": 650,
+				"life": 0.8, "s0": 0.25, "s1": 0.5, "c0": Color(1, 0.95, 0.7), "c1": c[0]})
+			_emit(parent, pos, {"tex": "chunk", "add": true, "amount": 3 + 2 * k, "dir": fwd, "spread": 80, "v0": 140, "v1": 300, "gravity": 400,
+				"life": 0.6, "spin": 800, "s0": 0.6, "s1": 1.1, "c0": Color(0.8, 1, 1), "c1": c[0]})
+			_splats(decals, feet, dir, 1 + int(k), c[1], 2.5, 4.5, 4.0)
+		"light":
+			# falha digital: quadradinhos de luz que se espalham e somem
+			var c: Array = MAT_COLORS.light
+			_emit(parent, pos, {"tex": "chunk", "add": true, "amount": 10 + 6 * k, "spread": 180, "v0": 60, "v1": 240, "damp": 260,
+				"life": 0.4, "s0": 0.8, "s1": 1.6, "c0": Color(1, 1, 1), "c1": c[1]})
+			_ring(parent, pos, c[0], 26.0 * k, 0.16, 0.6)
+
+
+## Gotas que voam para o lado do golpe e caem; manchas no chão onde elas pousam.
+static func _drops(parent: Node, decals: Node, pos: Vector2, feet: Vector2, dir: int, k: float, c: Array) -> void:
+	_emit(parent, pos, {"tex": "dot", "amount": 5 + 7 * k, "dir": Vector2(dir, -0.55), "spread": 38, "v0": 120, "v1": 330, "gravity": 1150,
+		"life": 0.55, "s0": 0.3, "s1": 0.65, "c0": c[0], "c1": c[1]})
+	_emit(parent, pos, {"tex": "dot", "amount": 3 + 2 * k, "spread": 180, "v0": 15, "v1": 55, "damp": 80, "life": 0.22,
+		"s0": 0.9, "s1": 1.4, "c0": Color(c[0].r, c[0].g, c[0].b, 0.55), "c1": Color(c[1].r, c[1].g, c[1].b, 0.0)})
+	_splats(decals, feet, dir, 1 + int(k * 1.5), c[1], 3.0, 6.5 + 2.0 * k, 9.0)
+
+
+static func _splats(decals: Node, feet: Vector2, dir: int, n: int, col: Color, r0: float, r1: float, life: float) -> void:
+	if decals == null:
+		return
+	for i in n:
+		var s = Splat.new()
+		s.col = Color(col.r, col.g, col.b, 0.8)
+		s.r = randf_range(r0, r1)
+		s.delay = randf_range(0.22, 0.45)      # tempo das gotas chegarem ao chão
+		s.life = life
+		s.position = feet + Vector2(dir * randf_range(8.0, 64.0), randf_range(-5.0, 5.0))
+		decals.add_child(s)
+	while decals.get_child_count() > 90:      # limite de manchas na tela
+		var old := decals.get_child(0)
+		decals.remove_child(old)
+		old.queue_free()

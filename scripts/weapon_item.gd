@@ -77,8 +77,10 @@ func _hit_below() -> void:
 		ignore.append(tg)
 		var dir := 1 if tg.position.x >= position.x else -1
 		var dmg := clampi(int(-vz / 80.0), 4, 12)
+		var at := position + Vector2(0, -height - 10.0)
 		tg.take_hit(dmg, dir, -vz > 700.0)
-		game.spawn_spark(position + Vector2(0, -height - 10.0), Color(1, 1, 0.8), 1.0)
+		game.spawn_spark(at, Color(1, 1, 0.8), 1.0)
+		game.spawn_wound(tg, at, dir, float(dmg) / 12.0)
 		game.sfx.play("i_thrown", 0.06)
 		game.shake(3.0, Vector2(0, 0.6))
 		# ricocheteia na cabeça de quem acertou

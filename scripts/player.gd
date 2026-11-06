@@ -458,6 +458,13 @@ func color() -> Color:
 	return PLAYER_COLORS[pid]
 
 
+## Assinatura nas faíscas dos golpes: a cor do especial do lutador, clareada (cada um dos 14 tem a sua).
+func hit_color() -> Color:
+	if special_def.has("color"):
+		return Color(special_def.color).lerp(Color(1, 1, 0.9), 0.25)
+	return Color(1, 0.95, 0.5)
+
+
 func _draw() -> void:
 	if out and not game.versus:
 		return
