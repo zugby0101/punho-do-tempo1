@@ -1011,7 +1011,7 @@ func on_enemy_killed(e) -> void:
 				Ach.track(p, "subs")
 	sfx.play("ko")
 	if e.kind in ["boss", "subboss", "secret_boss"] and not versus:
-		start_slowmo(e.position + Vector2(0, -55.0 * e.body_scale - e.height), e.kind != "subboss")
+		start_slowmo(e.position + e.hurt_rect().get_center(), e.kind != "subboss")  # centro do corpo desenhado
 	var big := 1.6 if e.kind in ["boss", "subboss", "secret_boss"] else 1.0
 	spawn_fx("ko", e.position + Vector2(0, -50.0 * e.body_scale - e.height), e.position, -e.facing, Color(1, 0.75, 0.3) if big == 1.0 else Color(1, 0.4, 0.9), big)
 	if e.kind == "subboss":

@@ -266,3 +266,16 @@ e na voadora, deita no mergulho e sobe quando o ÉON flutua. Os corpos têm de 8
 - O `--check` confere que jab, cross, gancho, chute, voadora e golpe armado de cada lutador acertam
   cada inimigo parado (escalas 1,0, 1,3 e 1,6), e que os golpes normais de cada inimigo — no tamanho do
   tipo dele, lidos de `enemy.gd` — e as orbes do ÉON acertam cada lutador parado.
+
+**Chefes.** Sub-chefes, chefes e o ÉON usam tudo o que vale para os inimigos (golpes, hurtbox animada,
+IA). Além disso:
+
+- **Investida** (`special_attack` com `dash`): o chefe avança o corpo inteiro, então a hitbox é a
+  silhueta da frente dele naquele quadro (a hurtbox animada do `charge`), não só o punho. Por isso ela
+  não dá mais para ser pulada — o pulo sobe até 113 px e o corpo do sub-chefe vai a 116, o do chefe a
+  147 e o do ÉON a 139; o jeito é sair da faixa de profundidade.
+- **IA:** o chefe só dispara a investida se a faixa de altura dela cruza o corpo do alvo
+  (`would_reach_height`).
+- **Câmera lenta do golpe final:** foca o centro do corpo desenhado do chefe (`hurt_rect`), não uma
+  altura fixa.
+- O `--check` simula também a investida de cada tipo de chefe contra cada lutador parado.
