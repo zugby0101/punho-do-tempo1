@@ -191,7 +191,12 @@ func _on_dead_done() -> void:
 
 func _clamp_position() -> void:
 	position.y = clampf(position.y, game.DEPTH_MIN, game.DEPTH_MAX)
-	position.x = clampf(position.x, 20.0, game.STAGE_LEN - 20.0)
+	position.x = game.clamp_x(position.x, body_half_w())  # o corpo encosta na barreira, não entra nela
+
+
+## Meia largura do corpo para colidir com o cenário (a hurtbox, sem o membro esticado de um golpe).
+func body_half_w() -> float:
+	return HURT_W * body_scale
 
 
 # ---------- Armas ----------

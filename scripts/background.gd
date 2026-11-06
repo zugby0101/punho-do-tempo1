@@ -10,6 +10,15 @@ var left := 0.0
 var right := 0.0
 
 
+## Borda de trás do chão desenhado nesta era (o chão de cada estilo começa aqui).
+const FLOOR_TOP := {"ships": 336.0, "modern": 318.0}  # navios: convés; moderno: começa na calçada
+const FighterBase = preload("res://scripts/fighter.gd")
+
+
+func floor_top() -> float:
+	return FLOOR_TOP.get(stage.get("style", "modern"), 330.0)
+
+
 func _h(i: int, salt: float) -> float:
 	return fposmod(sin(float(i) * 12.9898 + salt * 78.233) * 43758.5453, 1.0)
 
@@ -59,14 +68,22 @@ func _draw() -> void:
 		"void": _void()
 		_: _modern()
 
-	# Barreira no fim da fase
-	var end_x: float = game.STAGE_LEN
-	if right > end_x - 40.0:
+	# Barreira no fim da fase (a face esquerda é a colisão: game.wall_x)
+	var wall_x: float = game.wall_x()
+	if right > wall_x - 10.0:
 		var wc := _end_color()
-		draw_rect(Rect2(end_x - 30, 40, 400, 520), wc)
+		draw_rect(Rect2(wall_x, 40, 400, 520), wc)
 		for r in 14:
 			for c in 5:
-				draw_rect(Rect2(end_x - 30 + c * 60 + (r % 2) * 30, 40 + r * 36, 56, 32), wc.lightened(0.15))
+				draw_rect(Rect2(wall_x + c * 60 + (r % 2) * 30, 40 + r * 36, 56, 32), wc.lightened(0.15))
+	if FighterBase.show_hitboxes:
+		# F3: a faixa do chão onde se anda e a barreira
+		var band := Rect2(left, game.DEPTH_MIN, right - left, game.DEPTH_MAX - game.DEPTH_MIN)
+		draw_rect(band, Color(0.3, 0.6, 1, 0.08), true)
+		draw_rect(band, Color(0.3, 0.6, 1, 0.7), false, 1.0)
+		draw_line(Vector2(left, floor_top()), Vector2(right, floor_top()), Color(0.3, 0.6, 1, 0.5), 1.0)
+		if right > wall_x - 10.0:
+			draw_line(Vector2(wall_x, 0), Vector2(wall_x, 540), Color(1, 0.3, 0.2, 0.9), 2.0)
 
 
 func _end_color() -> Color:
@@ -143,7 +160,7 @@ func _stone() -> void:
 		for f in 5:
 			var a := -PI * 0.5 + (f - 2) * 0.35
 			draw_line(Vector2(x + 220, 332), Vector2(x + 220, 332) + Vector2(cos(a), sin(a)) * 40.0, Color(0.2, 0.55, 0.2), 4.0)
-	_floor(330.0, Color(0.55, 0.42, 0.28), Color(0.4, 0.3, 0.2))
+	_floor(floor_top(), Color(0.55, 0.42, 0.28), Color(0.4, 0.3, 0.2))
 	_scatter(330.0, 90.0, Color(0.45, 0.4, 0.36), 6.0, 5.0)
 	for s in _segments(700.0, 1.0):
 		var bx: float = s[1] + 300.0
@@ -182,7 +199,7 @@ func _crusade() -> void:
 		# tocha
 		draw_rect(Rect2(x + 125, 200, 6, 24), Color(0.35, 0.22, 0.1))
 		draw_circle(Vector2(x + 128, 196), 7.0 + sin(t * 14.0 + i) * 2.0, Color(1, 0.6, 0.1))
-	_floor(330.0, Color(0.86, 0.72, 0.48), Color(0.6, 0.5, 0.35))
+	_floor(floor_top(), Color(0.86, 0.72, 0.48), Color(0.6, 0.5, 0.35))
 	for s in _segments(80.0, 1.0):
 		var x: float = s[1]
 		draw_rect(Rect2(x + 6, 400 + _h(s[0], 3.0) * 100.0, 34, 14), Color(0.75, 0.62, 0.42))
@@ -220,7 +237,7 @@ func _japan() -> void:
 		_poly([Vector2(x - 20, 176), Vector2(x + 280, 176), Vector2(x + 240, 130), Vector2(x + 20, 130)], Color(0.18, 0.16, 0.2))
 		draw_circle(Vector2(x + 30, 200 + sin(t * 2.0 + i) * 2.0), 11.0, Color(0.9, 0.15, 0.1))
 		draw_circle(Vector2(x + 30, 200 + sin(t * 2.0 + i) * 2.0), 18.0, Color(1, 0.4, 0.2, 0.2))
-	_floor(330.0, Color(0.58, 0.45, 0.33), Color(0.4, 0.3, 0.22))
+	_floor(floor_top(), Color(0.58, 0.45, 0.33), Color(0.4, 0.3, 0.22))
 	# pétalas caindo
 	for k in 30:
 		var px := left + fposmod(k * 97.0 + t * (20.0 + k), right - left)
@@ -257,7 +274,7 @@ func _ships() -> void:
 	for s in _segments(48.0, 1.0):
 		draw_rect(Rect2(s[1], 270, 10, 30), Color(0.4, 0.25, 0.12))
 	draw_rect(Rect2(left, 266, right - left, 8), Color(0.5, 0.32, 0.16))
-	_floor(336.0, Color(0.6, 0.42, 0.24), Color(0.4, 0.26, 0.14))
+	_floor(floor_top(), Color(0.6, 0.42, 0.24), Color(0.4, 0.26, 0.14))
 	for r in 8:
 		draw_line(Vector2(left, 360 + r * 24), Vector2(right, 360 + r * 24), Color(0.45, 0.3, 0.16), 2.0)
 	for s in _segments(150.0, 1.0):
@@ -300,7 +317,7 @@ func _industrial() -> void:
 		draw_circle(gp, 28.0, Color(0.5, 0.47, 0.45))
 		draw_circle(gp, 9.0, Color(0.25, 0.23, 0.22))
 		draw_rect(Rect2(x, 232, 240, 8), Color(0.4, 0.4, 0.42))
-	_floor(330.0, Color(0.38, 0.36, 0.35), Color(0.25, 0.24, 0.24))
+	_floor(floor_top(), Color(0.38, 0.36, 0.35), Color(0.25, 0.24, 0.24))
 	for s in _segments(36.0, 1.0):
 		for r in 9:
 			var xx: float = s[1] + (r % 2) * 18.0
@@ -336,7 +353,7 @@ func _ww1() -> void:
 		draw_line(Vector2(x + 15, 192), Vector2(x + 30, 178), Color(0.25, 0.25, 0.25), 1.5)
 	for s in _segments(200.0, 1.0):
 		draw_line(Vector2(s[1], 170), Vector2(s[1], 205), Color(0.3, 0.22, 0.15), 4.0)
-	_floor(330.0, Color(0.33, 0.27, 0.2), Color(0.25, 0.2, 0.15))
+	_floor(floor_top(), Color(0.33, 0.27, 0.2), Color(0.25, 0.2, 0.15))
 	_scatter(330.0, 150.0, Color(0.26, 0.22, 0.18), 18.0, 9.0)
 	for s in _segments(60.0, 1.0):
 		draw_rect(Rect2(s[1], 420, 50, 34), Color(0.45, 0.35, 0.22))
@@ -369,7 +386,7 @@ func _ww2() -> void:
 		if _h(i, 4.0) > 0.5:
 			draw_circle(Vector2(x + 60, 310), 12.0 + sin(t * 10.0 + i) * 3.0, Color(1, 0.5, 0.1, 0.9))
 			draw_circle(Vector2(x + 60, 298), 8.0 + sin(t * 13.0 + i) * 2.0, Color(1, 0.85, 0.3, 0.9))
-	_floor(330.0, Color(0.3, 0.28, 0.28), Color(0.2, 0.19, 0.19))
+	_floor(floor_top(), Color(0.3, 0.28, 0.28), Color(0.2, 0.19, 0.19))
 	_scatter(330.0, 70.0, Color(0.45, 0.25, 0.2), 7.0, 11.0)
 	_scatter(330.0, 110.0, Color(0.4, 0.38, 0.36), 9.0, 12.0)
 
@@ -408,7 +425,7 @@ func _coldwar() -> void:
 			draw_rect(Rect2(x + 64, 46, 32, 12), Color(1, 0.95, 0.6))
 	for s in _segments(26.0, 1.0):
 		draw_arc(Vector2(s[1], 146), 9.0, PI, TAU, 8, Color(0.3, 0.3, 0.3), 1.5)
-	_floor(330.0, Color(0.32, 0.33, 0.36), Color(0.5, 0.5, 0.5))
+	_floor(floor_top(), Color(0.32, 0.33, 0.36), Color(0.5, 0.5, 0.5))
 	for s in _segments(160.0, 1.0):
 		draw_line(Vector2(s[1], 336), Vector2(s[1] - 40, 540), Color(0.26, 0.27, 0.3), 2.0)
 	draw_rect(Rect2(left, 440, right - left, 4), Color(0.85, 0.85, 0.85, 0.7))
@@ -494,7 +511,7 @@ func _utopia() -> void:
 		# planta
 		draw_rect(Rect2(x + 140, 300, 50, 30), Color(0.85, 0.88, 0.92))
 		draw_circle(Vector2(x + 165, 286), 22.0, Color(0.35, 0.75, 0.35))
-	_floor(330.0, Color(0.86, 0.9, 0.94), Color(0.4, 0.9, 1.0))
+	_floor(floor_top(), Color(0.86, 0.9, 0.94), Color(0.4, 0.9, 1.0))
 	for s in _segments(100.0, 1.0):
 		draw_line(Vector2(s[1], 336), Vector2(s[1] - 60, 540), Color(0.75, 0.82, 0.88), 2.0)
 	draw_rect(Rect2(left, 438, right - left, 3), Color(0.3, 0.9, 1, 0.5 + sin(t * 3.0) * 0.3))
@@ -527,7 +544,7 @@ func _dystopia() -> void:
 		draw_rect(Rect2(x + 190, 290, 30, 40), Color(0.3, 0.3, 0.33))
 		draw_circle(Vector2(x + 205, 284), 10.0 + sin(t * 12.0 + i) * 3.0, Color(1, 0.45, 0.1))
 		draw_circle(Vector2(x + 205, 274), 6.0 + sin(t * 15.0 + i) * 2.0, Color(1, 0.85, 0.2))
-	_floor(330.0, Color(0.18, 0.14, 0.14), Color(0.3, 0.2, 0.18))
+	_floor(floor_top(), Color(0.18, 0.14, 0.14), Color(0.3, 0.2, 0.18))
 	for s in _segments(130.0, 1.0):
 		var x: float = s[1]
 		var y := 380.0 + _h(s[0], 7.0) * 130.0
@@ -569,7 +586,7 @@ func _apocalypse() -> void:
 		draw_circle(Vector2(x + 170, 316), 9.0, Color(0.9, 0.88, 0.8))
 		draw_rect(Rect2(x + 165, 314, 3, 3), Color(0.1, 0.05, 0.1))
 		draw_rect(Rect2(x + 172, 314, 3, 3), Color(0.1, 0.05, 0.1))
-	_floor(330.0, Color(0.1, 0.07, 0.1), Color(0.5, 0.15, 0.6))
+	_floor(floor_top(), Color(0.1, 0.07, 0.1), Color(0.5, 0.15, 0.6))
 	for s in _segments(180.0, 1.0):
 		var x: float = s[1]
 		var y := 360.0 + _h(s[0], 7.0) * 150.0
@@ -644,7 +661,7 @@ func _void() -> void:
 				draw_circle(Vector2(x + 90, by - 150), 20.0, c)
 		draw_rect(Rect2(x + 20, by, 140, 6), Color(0.6, 0.4, 1, 0.35))
 	# chão de vidro luminoso
-	_floor(330.0, Color(0.06, 0.03, 0.12), Color(0.7, 0.45, 1))
+	_floor(floor_top(), Color(0.06, 0.03, 0.12), Color(0.7, 0.45, 1))
 	for sg in _segments(80.0, 1.0):
 		draw_line(Vector2(sg[1], 336), Vector2(sg[1] - 70, 540), Color(0.5, 0.3, 0.9, 0.35), 1.5)
 	for r in 6:

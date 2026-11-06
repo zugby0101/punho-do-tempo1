@@ -15,6 +15,10 @@ const RANGE := 560.0
 const FighterBase = preload("res://scripts/fighter.gd")
 
 
+func band_half() -> float:
+	return float(weapon.get("len", 36.0)) * 0.5
+
+
 ## Faixa de altura que a arma girando ocupa (centro ± meio comprimento), acima do chão.
 func band() -> Vector2:
 	var half := float(weapon.get("len", 36.0)) * 0.5
@@ -48,6 +52,12 @@ func _physics_process(delta: float) -> void:
 				game.on_hit(owner_player, e, atk)
 			_land(true)
 			return
+	if dir > 0 and position.x + band_half() >= game.wall_x():
+		# bate na barreira do fim da fase e cai ali
+		position.x = game.wall_x() - band_half()
+		game.spawn_spark(position + Vector2(band_half() * dir, -height), Color(0.9, 0.9, 1.0), 0.6)
+		_land(false)
+		return
 	if traveled > RANGE or position.x < game.cam_left() + 10.0 or position.x > game.cam_right() - 10.0:
 		_land(false)
 		return

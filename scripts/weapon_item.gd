@@ -65,6 +65,11 @@ func _process(delta: float) -> void:
 				vel = Vector2.ZERO
 	if game != null:
 		position.x = clampf(position.x, game.cam_left() + 20.0, game.cam_right() - 20.0)
+		# o desenho da arma não entra na barreira: quica de volta
+		var box := pick_box()
+		if position.x + box.end.x > game.wall_x():
+			position.x = game.wall_x() - box.end.x
+			vel.x = -absf(vel.x) * 0.5
 		position.y = clampf(position.y, game.DEPTH_MIN, game.DEPTH_MAX)
 	queue_redraw()
 
