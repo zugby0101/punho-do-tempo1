@@ -4664,6 +4664,78 @@ skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(17.9, -66, 17.49, -65.01, 16.5, -64.6, 15.51, -65.01, 15.1, -66, 15.51, -66.99, 16.5, -67.4, 17.49, -66.99)
 bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1)]
 
+[node name="est_wrap_h" type="Polygon2D" parent="Parts"]
+color = Color(0.93, 0.9, 0.82, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(24.325, -64, 23.699, -61.256, 21.944, -59.055, 19.407, -57.834, 16.593, -57.834, 14.056, -59.055, 12.301, -61.256, 11.675, -64, 12.301, -66.744, 14.056, -68.945, 16.593, -70.166, 19.407, -70.166, 21.944, -68.945, 23.699, -66.744)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
+
+[node name="est_sh_est_wrap_h" type="Polygon2D" parent="Parts"]
+color = Color(0.6696, 0.648, 0.6204, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(23.148, -60.565, 21.944, -59.055, 19.407, -57.834, 16.593, -57.834, 14.056, -59.055, 12.301, -61.256, 11.675, -64, 12.159, -66.121)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1)]
+
+[node name="est_hl_est_wrap_h" type="Polygon2D" parent="Parts"]
+color = Color(0.9454, 0.922, 0.8596, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(15.425, -69.604, 16.593, -70.166, 19.407, -70.166, 21.944, -68.945, 23.699, -66.744, 24.04, -65.248)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1, 1, 1)]
+
+[node name="est_wrap_0" type="Polygon2D" parent="Parts"]
+color = Color(0.93, 0.9, 0.82, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(8.32, -54.174, 15.403, -50.454, 16.426, -52.402, 9.343, -56.122)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_wrap_0" type="Polygon2D" parent="Parts"]
+color = Color(0.6696, 0.648, 0.6204, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(8.32, -54.174, 15.403, -50.454, 15.878, -51.359, 8.738, -54.969)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_wrap_0" type="Polygon2D" parent="Parts"]
+color = Color(0.9454, 0.922, 0.8596, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(16.278, -52.121, 16.426, -52.402, 9.343, -56.122, 9.138, -55.731)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_wrap_1" type="Polygon2D" parent="Parts"]
+color = Color(0.93, 0.9, 0.82, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(10.367, -58.069, 17.449, -54.349, 18.472, -56.297, 11.39, -60.017)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_wrap_1" type="Polygon2D" parent="Parts"]
+color = Color(0.6696, 0.648, 0.6204, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(10.367, -58.069, 17.449, -54.349, 17.924, -55.255, 10.784, -58.865)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_wrap_1" type="Polygon2D" parent="Parts"]
+color = Color(0.9454, 0.922, 0.8596, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(18.324, -56.016, 18.472, -56.297, 11.39, -60.017, 11.184, -59.626)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_wrap_2" type="Polygon2D" parent="Parts"]
+color = Color(0.93, 0.9, 0.82, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(12.413, -61.965, 19.495, -58.245, 20.518, -60.192, 13.436, -63.912)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_wrap_2" type="Polygon2D" parent="Parts"]
+color = Color(0.6696, 0.648, 0.6204, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(12.413, -61.965, 19.495, -58.245, 19.971, -59.15, 12.83, -62.76)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_wrap_2" type="Polygon2D" parent="Parts"]
+color = Color(0.9454, 0.922, 0.8596, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(20.37, -59.911, 20.518, -60.192, 13.436, -63.912, 13.23, -63.521)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
 "": SubResource("AnimationLibrary_rig")

@@ -4535,6 +4535,54 @@ skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(3.7, -36.6, 5.3, -36.6, 5.3, -35.4, 3.7, -35.4)
 bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1)]
 
+[node name="est_ol_est_belt" type="Polygon2D" parent="Parts"]
+color = Color(0.229, 0.185, 0.084, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-10.3, -38.8, 10.3, -38.8, 10.3, -33.2, -10.3, -33.2)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_belt" type="Polygon2D" parent="Parts"]
+color = Color(0.95, 0.75, 0.2, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-9, -37.5, 9, -37.5, 9, -34.5, -9, -34.5)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_belt" type="Polygon2D" parent="Parts"]
+color = Color(0.684, 0.54, 0.174, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-9, -37.5, -4.403, -37.5, 1.531, -34.5, -9, -34.5)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_belt" type="Polygon2D" parent="Parts"]
+color = Color(0.961, 0.805, 0.376, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(4.453, -37.5, 9, -37.5, 9, -35.201)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1)]
+
+[node name="est_ol_est_plate" type="Polygon2D" parent="Parts"]
+color = Color(0.24, 0.2092, 0.106, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(8.567, -36, 7.504, -32.728, 4.72, -30.706, 1.28, -30.706, -1.504, -32.728, -2.567, -36, -1.504, -39.272, 1.28, -41.294, 4.72, -41.294, 7.504, -39.272)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
+
+[node name="est_plate" type="Polygon2D" parent="Parts"]
+color = Color(1, 0.86, 0.3, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(7.2, -36, 6.398, -33.531, 4.298, -32.006, 1.702, -32.006, -0.398, -33.531, -1.2, -36, -0.398, -38.469, 1.702, -39.994, 4.298, -39.994, 6.398, -38.469)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1)]
+
+[node name="est_sh_est_plate" type="Polygon2D" parent="Parts"]
+color = Color(0.72, 0.6192, 0.246, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(6.452, -33.697, 6.398, -33.531, 4.298, -32.006, 1.702, -32.006, -0.398, -33.531, -1.2, -36, -0.763, -37.345)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1)]
+
+[node name="est_hl_est_plate" type="Polygon2D" parent="Parts"]
+color = Color(1, 0.8908, 0.454, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(1.333, -39.726, 1.702, -39.994, 4.298, -39.994, 6.398, -38.469, 6.905, -36.909)
+bones = [NodePath("root/pelvis"), PackedFloat32Array(1, 1, 1, 1, 1)]
+
 [node name="ol_hair_back_0" type="Polygon2D" parent="Parts"]
 color = Color(0.0468, 0.0354, 0.052, 1)
 skeleton = NodePath("../../Skeleton2D")

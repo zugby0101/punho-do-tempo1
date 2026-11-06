@@ -66,6 +66,27 @@ Além das peças-base, `build_parts` gera:
 As peças `dt_*` e `ol_*` ficam presas aos mesmos ossos e são ignoradas por `hitboxes.py`, então
 hurtboxes e hitboxes não mudam com o acabamento.
 
+**Detalhes do estilo de luta** (`models.py`, roda depois do `rig_to_godot.py` no `build.py`; pode rodar
+sozinho sobre as cenas, de novo e de novo, sem acumular). Por cima do acabamento, os 14 lutadores ganham
+o que é do estilo de cada um — peças `est_*`, com contorno e sombra próprios, presas aos ossos da peça de
+origem e desenhadas no fim do grupo dela (depois do contorno, da peça e dos `dt_*`):
+
+| Lutador | Detalhe |
+|---|---|
+| Mateus (Capoeira) | cordão amarelo e verde com a ponta pendurada |
+| Valentina (Boxe), Luca (Kickboxing), Amélie (Savate) | luvas (vermelhas, azuis, azul-marinho) com punho branco |
+| Jake (Luta-livre) | joelheiras |
+| Itzel (Lucha Libre) | cinturão de campeã com placa dourada |
+| Dmitri (Sambo), Oksana (Hopak), Mei (Kung Fu) | faixa vermelha (Oksana e Mei com pontas) |
+| Kai (Karatê) | faixa preta com pontas |
+| Kofi (Boxe Dambe) | a mão da frente enfaixada (a "lança") |
+| Amara (Gidigbo) | pulseiras de contas |
+| Tama (Mau Rākau) | faixas de tatuagem nos braços e coxas |
+| Kirra (Muay Thai) | luvas vermelhas, prajioud nos braços e mongkol na cabeça |
+
+`hitboxes.py` também ignora `est_*`. No título, **V** alterna entre o rig definitivo (com o acabamento e
+os detalhes), o rig simples (só as peças-base, mais leve) e o visual clássico.
+
 ## Animações de combate (`moves.py`)
 
 Princípios de animação aplicados em todas: **antecipação**, golpe acelerado até o **impacto**,

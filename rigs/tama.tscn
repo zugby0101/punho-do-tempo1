@@ -4337,6 +4337,60 @@ skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(9.95, -57.5, 9.725, -57.11, 9.275, -57.11, 9.05, -57.5, 9.05, -62.5, 9.275, -62.89, 9.725, -62.89, 9.95, -62.5)
 bones = [NodePath("root/pelvis/spine/arm_b_up/arm_b_lo"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1)]
 
+[node name="est_tattoo_arm_b_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-0.063, -58.214, -8.864, -60.095, -9.157, -58.726, -0.355, -56.845)
+bones = [NodePath("root/pelvis/spine/arm_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_arm_b_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-7.902, -59.89, -8.864, -60.095, -9.157, -58.726, -2.997, -57.41)
+bones = [NodePath("root/pelvis/spine/arm_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_arm_b_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-0.063, -58.214, -2.723, -58.783, -0.213, -57.513)
+bones = [NodePath("root/pelvis/spine/arm_b_up"), PackedFloat32Array(1, 1, 1)]
+
+[node name="est_tattoo_arm_b_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-1.212, -52.835, -10.014, -54.717, -10.306, -53.348, -1.505, -51.466)
+bones = [NodePath("root/pelvis/spine/arm_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_arm_b_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-9.052, -54.511, -10.014, -54.717, -10.306, -53.348, -4.147, -52.031)
+bones = [NodePath("root/pelvis/spine/arm_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_arm_b_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-1.212, -52.835, -3.872, -53.404, -1.362, -52.135)
+bones = [NodePath("root/pelvis/spine/arm_b_up"), PackedFloat32Array(1, 1, 1)]
+
+[node name="est_tattoo_arm_b_lo_0" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-6.589, -51.837, -0.242, -45.456, 0.75, -46.443, -5.596, -52.824)
+bones = [NodePath("root/pelvis/spine/arm_b_up/arm_b_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_arm_b_lo_0" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-4.346, -49.582, -0.242, -45.456, 0.75, -46.443, -0.374, -47.573)
+bones = [NodePath("root/pelvis/spine/arm_b_up/arm_b_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_arm_b_lo_0" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-3.824, -51.043, -5.596, -52.824, -6.187, -52.237)
+bones = [NodePath("root/pelvis/spine/arm_b_up/arm_b_lo"), PackedFloat32Array(1, 1, 1)]
+
 [node name="ol_leg_b_up" type="Polygon2D" parent="Parts"]
 color = Color(0.2162, 0.1979, 0.2395, 1)
 skeleton = NodePath("../../Skeleton2D")
@@ -4390,6 +4444,42 @@ color = Color(0.044, 0.044, 0.044, 1)
 skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(-11, -1.6, 1, -1.6, 1, 0, -11, 0)
 bones = [NodePath("root/pelvis/leg_b_up/leg_b_lo/foot_b"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_tattoo_leg_b_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(3.871, -30.095, -4.225, -26.163, -3.613, -24.904, 4.482, -28.836)
+bones = [NodePath("root/pelvis/leg_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_leg_b_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(-1.2, -27.633, -4.225, -26.163, -3.613, -24.904, 0.37, -26.839)
+bones = [NodePath("root/pelvis/leg_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_leg_b_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(3.871, -30.095, 2.15, -29.26, 3.72, -28.466, 4.482, -28.836)
+bones = [NodePath("root/pelvis/leg_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_tattoo_leg_b_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(5.706, -26.318, -2.39, -22.385, -1.778, -21.126, 6.317, -25.058)
+bones = [NodePath("root/pelvis/leg_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_leg_b_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(0.636, -23.855, -2.39, -22.385, -1.778, -21.126, 2.206, -23.061)
+bones = [NodePath("root/pelvis/leg_b_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_leg_b_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(5.706, -26.318, 3.985, -25.482, 5.555, -24.688, 6.317, -25.058)
+bones = [NodePath("root/pelvis/leg_b_up"), PackedFloat32Array(1, 1, 1, 1)]
 
 [node name="ol_leg_f_up" type="Polygon2D" parent="Parts"]
 color = Color(0.296, 0.272, 0.325, 1)
@@ -4456,6 +4546,42 @@ color = Color(0.505, 0.505, 0.505, 1)
 skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(10, -4, 14, -4, 14, -2.8, 10, -2.8)
 bones = [NodePath("root/pelvis/leg_f_up/leg_f_lo/foot_f"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_tattoo_leg_f_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(12.932, -31.873, 5.838, -26.334, 6.699, -25.23, 13.793, -30.769)
+bones = [NodePath("root/pelvis/leg_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_leg_f_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(8.668, -28.544, 5.838, -26.334, 6.699, -25.23, 10.049, -27.846)
+bones = [NodePath("root/pelvis/leg_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_leg_f_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(12.932, -31.873, 11.485, -30.743, 12.866, -30.045, 13.793, -30.769)
+bones = [NodePath("root/pelvis/leg_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_tattoo_leg_f_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(15.516, -28.562, 8.423, -23.023, 9.284, -21.92, 16.378, -27.459)
+bones = [NodePath("root/pelvis/leg_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_leg_f_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(11.253, -25.233, 8.423, -23.023, 9.284, -21.92, 12.634, -24.535)
+bones = [NodePath("root/pelvis/leg_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_leg_f_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(15.516, -28.562, 14.07, -27.433, 15.451, -26.735, 16.378, -27.459)
+bones = [NodePath("root/pelvis/leg_f_up"), PackedFloat32Array(1, 1, 1, 1)]
 
 [node name="ol_torso" type="Polygon2D" parent="Parts"]
 color = Color(0.058, 0.051, 0.076, 1)
@@ -4654,6 +4780,60 @@ color = Color(0.776, 0.6, 0.48, 1)
 skeleton = NodePath("../../Skeleton2D")
 polygon = PackedVector2Array(16.095, -59.534, 16.864, -60.02, 17.67, -59.597, 17.706, -58.687, 11.568, -47.001, 10.798, -46.515, 9.993, -46.938, 9.956, -47.848)
 bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1)]
+
+[node name="est_tattoo_arm_f_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(8.91, -60.142, 0.124, -58.191, 0.428, -56.824, 9.214, -58.775)
+bones = [NodePath("root/pelvis/spine/arm_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_arm_f_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(3.057, -58.842, 0.124, -58.191, 0.428, -56.824, 5.027, -57.846)
+bones = [NodePath("root/pelvis/spine/arm_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_arm_f_up_0" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(8.91, -60.142, 6.924, -59.701, 8.895, -58.705, 9.214, -58.775)
+bones = [NodePath("root/pelvis/spine/arm_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_tattoo_arm_f_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(10.103, -54.773, 1.317, -52.822, 1.62, -51.455, 10.406, -53.406)
+bones = [NodePath("root/pelvis/spine/arm_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_arm_f_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(4.249, -53.473, 1.317, -52.822, 1.62, -51.455, 6.22, -52.476)
+bones = [NodePath("root/pelvis/spine/arm_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_arm_f_up_1" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(10.103, -54.773, 8.117, -54.332, 10.087, -53.335, 10.406, -53.406)
+bones = [NodePath("root/pelvis/spine/arm_f_up"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_tattoo_arm_f_lo_0" type="Polygon2D" parent="Parts"]
+color = Color(0.12, 0.09, 0.09, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(6.529, -51.839, 14.497, -47.654, 15.148, -48.893, 7.18, -53.079)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_sh_est_tattoo_arm_f_lo_0" type="Polygon2D" parent="Parts"]
+color = Color(0.0864, 0.0648, 0.0948, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(6.529, -51.839, 14.497, -47.654, 14.812, -48.254, 6.779, -52.315)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
+
+[node name="est_hl_est_tattoo_arm_f_lo_0" type="Polygon2D" parent="Parts"]
+color = Color(0.3136, 0.2902, 0.2902, 1)
+skeleton = NodePath("../../Skeleton2D")
+polygon = PackedVector2Array(15.077, -48.758, 15.148, -48.893, 7.18, -53.079, 7.044, -52.82)
+bones = [NodePath("root/pelvis/spine/arm_f_up/arm_f_lo"), PackedFloat32Array(1, 1, 1, 1)]
 
 [node name="ol_hand_f" type="Polygon2D" parent="Parts"]
 color = Color(0.2316, 0.155, 0.145, 1)

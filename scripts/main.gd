@@ -97,6 +97,7 @@ var _esc_held := false
 var _esc_just := false   # ESC acabou de ser apertado (segurar não conta de novo na tela seguinte)
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
+static var model_detail := true  # rig definitivo (contorno, luz e sombra, rosto, detalhes de estilo) ou simples
 static var fx_enabled := true    # partículas dos golpes (P no título)
 static var blood_enabled := true # sangue e manchas no chão (Y no título); desligado vira poeira
 static var shake_level := 2      # tremor da câmera (E no título): 2 = 100%, 1 = 50%, 0 = desligado
@@ -244,6 +245,9 @@ func _ready() -> void:
 		music.play("title", 0)
 	music.prefetch(stage.style, stage_idx, false)
 	music.prefetch(stage.style, stage_idx, true)
+	# agente de teste (tools/test): só existe com "-- --test-bot" na linha de comando
+	if "--test-bot" in OS.get_cmdline_user_args():
+		add_child(load("res://scripts/test_bot.gd").new())
 
 
 # ---------- Jogadores ----------
@@ -411,7 +415,14 @@ func _physics_process(delta: float) -> void:
 				return
 			if Input.is_physical_key_pressed(KEY_V) and not _v_held:
 				_v_held = true
-				rig_mode = not rig_mode
+				# V: rig definitivo -> rig simples -> clássico -> rig definitivo
+				if rig_mode and model_detail:
+					model_detail = false
+				elif rig_mode:
+					rig_mode = false
+				else:
+					rig_mode = true
+					model_detail = true
 				_save_settings()
 				sfx.play("whoosh", 0.0)
 			elif not Input.is_physical_key_pressed(KEY_V):
@@ -2139,6 +2150,7 @@ func _load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://settings.cfg") == OK:
 		rig_mode = cfg.get_value("visual", "rig_mode", true)
+		model_detail = cfg.get_value("visual", "model_detail", true)
 		fx_enabled = cfg.get_value("visual", "particles", true)
 		blood_enabled = cfg.get_value("visual", "blood", true)
 		shake_level = clampi(int(cfg.get_value("visual", "shake", 2)), 0, 2)
@@ -2149,6 +2161,7 @@ func _save_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load("user://settings.cfg")
 	cfg.set_value("visual", "rig_mode", rig_mode)
+	cfg.set_value("visual", "model_detail", model_detail)
 	cfg.set_value("visual", "particles", fx_enabled)
 	cfg.set_value("visual", "blood", blood_enabled)
 	cfg.set_value("visual", "shake", shake_level)
