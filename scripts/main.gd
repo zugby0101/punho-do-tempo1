@@ -96,6 +96,10 @@ var _f3_held := false
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
 static var fx_enabled := true    # partículas dos golpes (P no título)
+static var blood_enabled := true # sangue e manchas no chão (Y no título); desligado vira poeira
+const Materials = preload("res://scripts/materials.gd")
+var decals: Node2D               # manchas no chão (sangue, óleo, areia), abaixo dos lutadores
+var _y_held := false
 static var vibration := true     # vibração dos controles (B no título)
 static var settings_loaded := false
 const ONLINE_OPTIONS := [
@@ -165,6 +169,9 @@ func _ready() -> void:
 	bg.z_index = -100
 	_apply_stage_bounds()
 	add_child(bg)
+	decals = Node2D.new()
+	decals.z_index = -10
+	add_child(decals)
 	entities = Node2D.new()
 	entities.y_sort_enabled = true
 	add_child(entities)
@@ -295,7 +302,9 @@ func is_frozen() -> bool:
 
 
 ## Colisões do cenário tiradas do desenho da era: a faixa do chão e a barreira do fim da fase.
+## (Troca de era: as manchas no chão da era anterior também saem.)
 func _apply_stage_bounds() -> void:
+	_clear_decals()
 	if bg == null:
 		return
 	DEPTH_MIN = bg.floor_top() + FLOOR_BACK
@@ -393,6 +402,13 @@ func _physics_process(delta: float) -> void:
 					spawn_fx("energy", Vector2(cam_x, 470), Vector2(cam_x, 500), 1, Color(1, 0.8, 0.3))
 			elif not Input.is_physical_key_pressed(KEY_P):
 				_p_held = false
+			if Input.is_physical_key_pressed(KEY_Y) and not _y_held:
+				_y_held = true
+				blood_enabled = not blood_enabled
+				_save_settings()
+				sfx.play("whoosh", 0.0)
+			elif not Input.is_physical_key_pressed(KEY_Y):
+				_y_held = false
 			if Input.is_physical_key_pressed(KEY_B) and not _b_held:
 				_b_held = true
 				vibration = not vibration
@@ -995,15 +1011,20 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 	else:
 		shake(1.6, hit_dir * 0.4)
 	var s: float = target.get("body_scale") if target.get("body_scale") != null else 1.0
-	var pos: Vector2 = target.position + Vector2(-attacker.facing * 6.0, -58.0 * s - target.height)
+	# ponto do contato: onde a ponta do golpe (animação) encosta no corpo do alvo; sem ele, altura fixa
+	var pos: Vector2 = atk.get("hit_at", target.position + Vector2(-attacker.facing * 6.0, -58.0 * s - target.height))
+	var wk := clampf(float(atk.get("dmg", 8)) / 12.0, 0.4, 2.2) * (1.6 if target.get("hp") != null and target.hp <= 0 else 1.0)
+	spawn_wound(target, pos, attacker.facing, wk)
 	var by_player: bool = attacker in players
-	spawn_spark(pos, attacker.color() if by_player and players.size() > 1 else (Color(1, 0.95, 0.5) if by_player else Color(1, 0.4, 0.3)), 1.3 if heavy else 1.0)
+	# cor das faíscas: em co-op a cor do jogador (para saber quem bateu); senão a assinatura de quem bateu
+	var sig: Color = attacker.hit_color() if attacker.has_method("hit_color") else (Color(1, 0.95, 0.5) if by_player else Color(1, 0.4, 0.3))
+	spawn_spark(pos, attacker.color() if by_player and players.size() > 1 else sig, 1.3 if heavy else 1.0)
 	var wpn: Dictionary = attacker.weapon if "weapon" in attacker else {}
 	var bs: float = attacker.body_scale if "body_scale" in attacker else 1.0
 	var impact: String = sfx.impact_for(atk, wpn)
 	sfx.play(impact, 0.07, sfx.body_pitch(bs))
 	# partículas do golpe: o tipo segue o impacto (soco, chute, pancada, lâmina, metal, madeira, energia...)
-	var fx_col: Color = atk.get("color", attacker.color()) if atk.get("energy", false) else (attacker.color() if by_player and players.size() > 1 else (Color(1, 0.85, 0.35) if by_player else Color(1, 0.45, 0.3)))
+	var fx_col: Color = atk.get("color", attacker.color()) if atk.get("energy", false) else (attacker.color() if by_player and players.size() > 1 else sig)
 	spawn_fx(impact.substr(2), pos, target.position, attacker.facing, fx_col, (1.35 if heavy else 1.0) * clampf(bs, 0.8, 1.6))
 	if by_player:
 		attacker.score += int(atk.dmg) * 10
@@ -1134,6 +1155,24 @@ func spawn_spark(pos: Vector2, col: Color, size: float = 1.0) -> void:
 	effects.add_child(sp)
 
 
+## Ferimento: o que sai do corpo de quem apanha, conforme o material dele (materials.gd), no ponto do
+## contato. k = força (dano / 12; KO maior). No online o anfitrião repassa (cada um aplica o próprio
+## ajuste de sangue).
+func spawn_wound(target, pos: Vector2, dir: int, k: float) -> void:
+	var mat := Materials.of(target)
+	if mat == "wood":
+		return  # caixas: já têm lascas e tábuas
+	var feet: Vector2 = target.position
+	_wound(mat, pos, feet, dir, k)
+	if Net.is_host() and not Net.peer_sets.is_empty():
+		net_events.append(["w", mat, pos.x, pos.y, feet.x, feet.y, dir, k])
+
+
+func _wound(mat: String, pos: Vector2, feet: Vector2, dir: int, k: float) -> void:
+	if fx_enabled:
+		Fx.wound(effects, decals, mat, pos, feet, dir, k, blood_enabled)
+
+
 ## Partículas (fx.gd); no online o host repassa aos clientes.
 func spawn_fx(kind: String, pos: Vector2, feet: Vector2, dir: int, col: Color, k: float = 1.0) -> void:
 	if Net.is_host() and not Net.peer_sets.is_empty():
@@ -1261,7 +1300,14 @@ func hit_targets_for(attacker) -> Array:
 	return arr
 
 
+func _clear_decals() -> void:
+	if decals != null:
+		for d in decals.get_children():
+			d.queue_free()
+
+
 func _start_round() -> void:
+	_clear_decals()
 	# limpa a arena
 	for grp in ["weapons", "pickups", "breakables"]:
 		for n in get_tree().get_nodes_in_group(grp):
@@ -1554,7 +1600,7 @@ func net_apply(snap: Array) -> void:
 		stage_idx = new_stage
 		stage = stages[stage_idx]
 		bg.stage = stage
-	_apply_stage_bounds()
+		_apply_stage_bounds()
 	mode = snap[0]
 	mode_time = snap[1]
 	paused = snap[3]
@@ -1670,6 +1716,7 @@ func net_apply(snap: Array) -> void:
 					for j in Input.get_connected_joypads():
 						Input.start_joy_vibration(j, ev[2], ev[3], ev[4])
 			"x": spawn_fx(ev[1], Vector2(ev[2], ev[3]), Vector2(ev[4], ev[5]), ev[6], ev[7], ev[8])
+			"w": _wound(ev[1], Vector2(ev[2], ev[3]), Vector2(ev[4], ev[5]), ev[6], ev[7])
 			"p": popup(ev[1], Vector2(ev[2], ev[3]), ev[4])
 			"a":
 				if ev[1] == Net.my_set:
@@ -1901,7 +1948,7 @@ func _survival_wave_cleared() -> void:
 		stage_idx = (stage_idx + 1) % SECRET_IDX
 		stage = stages[stage_idx]
 		bg.stage = stage
-	_apply_stage_bounds()
+		_apply_stage_bounds()
 		_play_stage_music(false)
 		surv_break = 4.5
 		hud.show_message("VIAGEM NO TEMPO: %s" % stage.name, 3.0)
@@ -1938,6 +1985,7 @@ func _load_settings() -> void:
 	if cfg.load("user://settings.cfg") == OK:
 		rig_mode = cfg.get_value("visual", "rig_mode", true)
 		fx_enabled = cfg.get_value("visual", "particles", true)
+		blood_enabled = cfg.get_value("visual", "blood", true)
 		vibration = cfg.get_value("controls", "vibration", true)
 
 
@@ -1946,6 +1994,7 @@ func _save_settings() -> void:
 	cfg.load("user://settings.cfg")
 	cfg.set_value("visual", "rig_mode", rig_mode)
 	cfg.set_value("visual", "particles", fx_enabled)
+	cfg.set_value("visual", "blood", blood_enabled)
 	cfg.set_value("controls", "vibration", vibration)
 	cfg.save("user://settings.cfg")
 
