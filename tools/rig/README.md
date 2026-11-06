@@ -238,3 +238,9 @@ Jake, Dmitri, Kofi, Tama... — passaria por cima da tampa). Qualquer alvo pode 
 lutadores usam a hurtbox do corpo. A caixa racha conforme o dano e, no golpe final, deixa de ser
 atingível e se desmonta em tábuas que voam na direção do golpe (0,45 s). O `--check` confere, com o
 tamanho real de cada lutador, que jab, cross, chute e golpe armado quebram a caixa.
+
+**Comidas.** A área de coleta é a comida desenhada no quadro atual (`pickup.gd` → `pick_rect`: frango no
+prato 40 × 28 px, maçã 20 × 28 px), subindo e descendo com o balanço. A comida é pega quando a hurtbox
+do lutador encosta nela (antes: ±30 px do centro e só com o lutador a até 10 px do chão). Ao aparecer
+— de uma caixa quebrada ou no meio da fase — ela salta 34 px para fora (0,35 s), junto com as tábuas,
+e a área acompanha o salto. F3 mostra a área em azul-claro.
