@@ -38,6 +38,7 @@ Detalhes do co-op:
 - A câmera acompanha o grupo sem deixar ninguém para trás.
 - Cada jogador tem vida, vidas extras e pontuação próprias. Quem acerta o golpe final leva os pontos do inimigo.
 - Quem perde todas as vidas pode **continuar apertando SOCO** enquanto o resto do grupo estiver vivo.
+  Quem ainda estiver fora quando o grupo concluir a era volta na próxima do mesmo jeito (vidas cheias, pontuação zerada).
 - Muitos teclados não registram várias teclas ao mesmo tempo. Para 3 ou 4 jogadores, controles funcionam melhor.
 
 ## Modo Versus (2 a 4 jogadores)
