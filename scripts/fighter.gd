@@ -169,6 +169,7 @@ func _physics_process(delta: float) -> void:
 				_on_land()
 
 	position += vel * delta
+	_collide_crates()
 	_clamp_position()
 	if state in ["attack", "jump", "special"]:
 		_sweep_items()
@@ -228,6 +229,26 @@ func _on_dead_done() -> void:
 func _clamp_position() -> void:
 	position.y = clampf(position.y, game.DEPTH_MIN, game.DEPTH_MAX)
 	position.x = game.clamp_x(position.x, body_half_w())  # o corpo encosta na barreira, não entra nela
+
+
+## Caixas são sólidas: quem anda encosta nelas (sai pelo lado em que entrou menos). Por cima da tampa
+## (pulo, voando derrubado) passa livre.
+func _collide_crates() -> void:
+	var hw := body_half_w()
+	for cr in get_tree().get_nodes_in_group("breakables"):
+		if not cr.has_method("solid_rect") or cr.hp <= 0 or height >= cr.H:
+			continue
+		var r: Rect2 = cr.solid_rect()
+		var dx := position.x - cr.position.x
+		var dy := position.y - cr.position.y
+		var px := (r.size.x * 0.5 + hw) - absf(dx)    # quanto entrou de lado
+		var py := (r.size.y * 0.5) - absf(dy)         # quanto entrou em profundidade
+		if px <= 0.0 or py <= 0.0:
+			continue
+		if px < py:
+			position.x = cr.position.x + signf(dx if dx != 0.0 else -float(facing)) * (r.size.x * 0.5 + hw)
+		else:
+			position.y = cr.position.y + signf(dy if dy != 0.0 else 1.0) * r.size.y * 0.5
 
 
 ## Meia largura do corpo para colidir com o cenário (a hurtbox, sem o membro esticado de um golpe).

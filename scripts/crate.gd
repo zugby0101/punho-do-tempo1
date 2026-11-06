@@ -2,6 +2,8 @@ extends Node2D
 ## Caixa quebrável que pode esconder comida.
 ## A hurtbox é exatamente a caixa desenhada (52 × 50 px), balançando junto quando apanha; ao quebrar,
 ## a caixa se desmonta em tábuas (animação de BREAK_TIME s) e deixa de ser atingível no mesmo quadro.
+## A caixa é sólida (ninguém a atravessa; dá para pular por cima), golpes que não a quebram a empurram
+## pelo chão, e as tábuas que voam na quebra machucam quem estiver no caminho.
 
 const FighterBase = preload("res://scripts/fighter.gd")
 const W := 52.0           # largura da caixa desenhada
@@ -9,6 +11,12 @@ const H := 50.0           # altura da caixa desenhada
 const MAX_HP := 10
 const BREAK_TIME := 0.45  # duração da animação de quebra (tábuas voando)
 const LID_MARGIN := 8.0   # folga acima da tampa: o soco na altura do peito ainda pega a borda da caixa
+const SOLID_DEPTH := 14.0 # meia espessura da caixa em profundidade (chão) para bloquear quem anda
+const PUSH_PER_DMG := 14.0  # empurrão por ponto de dano (px/s), quando o golpe não quebra
+const PUSH_FRICTION := 700.0
+const PLANK_DMG := 3
+const PLANK_HURT_TIME := 0.32  # tábuas machucam enquanto ainda estão voando rápido
+const PLANK_DEPTH := 20.0
 
 var game
 var hp := 10
@@ -18,6 +26,9 @@ var wobble := 0.0
 var drop := "chicken"
 var break_t := -1.0       # >= 0: quebrando (tempo desde o golpe final)
 var break_dir := 1        # para onde as tábuas voam (direção do golpe final)
+var last_hitter = null    # quem quebrou (main.on_hit): as tábuas não o machucam
+var slide := 0.0          # velocidade do empurrão (px/s)
+var plank_hits: Array = []
 
 
 func can_be_hit() -> bool:
@@ -40,6 +51,8 @@ func take_hit(dmg: int, dir: int, _knock: bool, _launch: float = 1.0) -> void:
 	hp -= dmg
 	flash = 0.1
 	wobble = 0.25
+	if hp > 0:
+		slide = dir * (60.0 + dmg * PUSH_PER_DMG)  # não quebrou: escorrega pelo chão
 	if hp <= 0:
 		break_t = 0.0
 		break_dir = dir if dir != 0 else 1
@@ -53,12 +66,63 @@ func take_hit(dmg: int, dir: int, _knock: bool, _launch: float = 1.0) -> void:
 func _process(delta: float) -> void:
 	flash = maxf(0.0, flash - delta)
 	wobble = maxf(0.0, wobble - delta)
+	var host: bool = game != null and not game.net_client
 	if hp <= 0:
 		# também no convidado online: o hp chega do anfitrião e a quebra anima aqui
 		break_t = maxf(break_t, 0.0) + delta
-		if break_t >= BREAK_TIME and (game == null or not game.net_client):
+		if host and break_t < PLANK_HURT_TIME:
+			_planks_hit()
+		if break_t >= BREAK_TIME and host:
 			queue_free()
+	elif host and slide != 0.0 and not game.is_frozen():
+		position.x = game.clamp_x(position.x + slide * delta, W * 0.5)
+		slide = move_toward(slide, 0.0, PUSH_FRICTION * delta)
 	queue_redraw()
+
+
+## Centro e giro de uma tábua no instante t da quebra (o mesmo movimento do desenho).
+func plank_pose(pl: Array, t: float) -> Array:
+	var v: Vector2 = pl[2]
+	v.x *= break_dir
+	var c: Vector2 = pl[0] + v * t + Vector2(0, 900.0 * t * t)  # gravidade
+	c.y = minf(c.y, -float(pl[1].y) * 0.5)  # não atravessa o chão
+	return [c, float(pl[3]) * break_dir * t]
+
+
+## Caixa (alinhada aos eixos) da tábua girada, relativa à base da caixa.
+func plank_rect(pl: Array, t: float) -> Rect2:
+	var p := plank_pose(pl, t)
+	var sz: Vector2 = pl[1]
+	var a: float = p[1]
+	var ext := Vector2(absf(cos(a)) * sz.x + absf(sin(a)) * sz.y, absf(sin(a)) * sz.x + absf(cos(a)) * sz.y) * 0.5
+	return Rect2(p[0] - ext, ext * 2.0)
+
+
+## Tábuas voando acertam quem estiver no caminho (uma vez cada), menos quem quebrou a caixa.
+func _planks_hit() -> void:
+	var targets: Array = game.hit_targets_for(last_hitter)
+	for tg in targets:
+		if tg == self or tg in plank_hits or tg == last_hitter or not is_instance_valid(tg):
+			continue
+		if tg.get_script() == get_script() or not tg.can_be_hit():
+			continue  # outras caixas não
+		if absf(tg.position.y - position.y) >= PLANK_DEPTH:
+			continue
+		var body: Rect2 = tg.hurt_rect()
+		body.position.x += tg.position.x - position.x
+		for pl in PLANKS:
+			if body.intersects(plank_rect(pl, break_t), true):
+				plank_hits.append(tg)
+				var dir := 1 if tg.position.x >= position.x else -1
+				tg.take_hit(PLANK_DMG, dir, false)
+				if last_hitter != null and is_instance_valid(last_hitter):
+					game.on_hit(last_hitter, tg, {"dmg": PLANK_DMG, "pose": "jab", "thrown": true})
+				break
+
+
+## Caixa sólida para quem anda (relativa à base): a largura desenhada e SOLID_DEPTH em profundidade.
+func solid_rect() -> Rect2:
+	return Rect2(-W * 0.5, -SOLID_DEPTH, W, SOLID_DEPTH * 2.0)
 
 
 # Tábuas da caixa: [centro, tamanho, velocidade (px/s), giro (rad/s)]
@@ -94,6 +158,9 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 	if FighterBase.show_hitboxes:
 		draw_rect(hurt_rect(), Color(0.2, 1, 0.3, 0.8), false, 1.0)
+		# base sólida no chão (achatada como a sombra): quem anda não atravessa
+		var sr := solid_rect()
+		draw_rect(Rect2(sr.position.x, sr.position.y * 0.32, sr.size.x, sr.size.y * 0.32), Color(0.3, 0.6, 1, 0.8), false, 1.0)
 
 
 func _draw_break(base: Color, dark: Color) -> void:
@@ -102,12 +169,12 @@ func _draw_break(base: Color, dark: Color) -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.32))
 	draw_circle(Vector2.ZERO, 30.0 * a, Color(0, 0, 0, 0.35 * a))
 	for pl in PLANKS:
-		var v: Vector2 = pl[2]
-		v.x *= break_dir
-		var c: Vector2 = pl[0] + v * t + Vector2(0, 900.0 * t * t)  # gravidade
-		c.y = minf(c.y, -float(pl[1].y) * 0.5)  # não atravessa o chão
+		var p := plank_pose(pl, t)
 		var sz: Vector2 = pl[1]
-		draw_set_transform(c, float(pl[3]) * break_dir * t)
+		draw_set_transform(p[0], p[1])
 		draw_rect(Rect2(-sz * 0.5, sz), Color(base.r, base.g, base.b, a))
 		draw_rect(Rect2(-sz * 0.5, sz), Color(dark.r, dark.g, dark.b, a), false, 2.0)
 	draw_set_transform(Vector2.ZERO)
+	if FighterBase.show_hitboxes and t < PLANK_HURT_TIME:
+		for pl in PLANKS:
+			draw_rect(plank_rect(pl, t), Color(1, 0.15, 0.1, 0.9), false, 1.0)  # tábuas que machucam

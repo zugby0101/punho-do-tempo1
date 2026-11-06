@@ -340,8 +340,8 @@ arremessada e as orbes do ÉON) saem da mão no quadro de soltura da animação 
 que são desenhados — dá para pular a Onda Sísmica. As armas no chão se pegam com a mão no cabo
 desenhado (dá para agarrar uma arma ainda quicando), machucam quem estiver embaixo quando caem rápido
 e são chutadas pelos golpes que varrem o chão (chute, slam, golpe armado). As caixas quebráveis
-apanham no tamanho em que são desenhadas, racham com o dano e se desmontam em tábuas na direção do
-golpe final, e a comida salta para fora junto com as tábuas e é pega quando o corpo encosta no
+apanham no tamanho em que são desenhadas, são sólidas (dá para pular por cima), escorregam quando o
+golpe não as quebra, racham com o dano e se desmontam em tábuas que machucam quem estiver no caminho, e a comida salta para fora junto com as tábuas e é pega quando o corpo encosta no
 desenho dela. Inimigos e jogadores apanham na silhueta da animação que está na tela (encolhem na dor e
 no pulo, o braço esticado também apanha), o ÉON desce do ar para golpear e os inimigos só soltam um
 golpe que alcançaria o jogador de verdade. Na investida, os chefes acertam com o corpo inteiro (não dá
