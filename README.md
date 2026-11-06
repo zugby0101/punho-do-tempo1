@@ -329,6 +329,14 @@ organizados por força × altura), `air` (pulo↔voadora), `damage` (dor↔queda
 (caído↔levantando). Trocas de estado ganham **crossfade**; golpes, pulo e dano seguem a fase exata da
 jogabilidade (a pose de impacto continua caindo no quadro do acerto).
 
+**Hitboxes sincronizadas com a animação** (todos os 79 rigs): a área que acerta segue a ponta que
+golpeia — punho, pé ou a ponta da arma — quadro a quadro, e só existe enquanto essa ponta está lá na
+frente. O alcance de cada golpe continua o do jogo (`reach`), mas a altura vem da animação: o gancho
+pega quem está pulando (anti-aéreo), o slam só pega quem está no chão e a voadora só acerta depois
+que a perna estica. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
+`metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
+(verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
+
 ## Estrutura
 
 ```
@@ -350,6 +358,7 @@ scripts/sfx.gd          efeitos sonoros sintetizados e reprodução das vozes
 scripts/dialogs.gd      falas dos chefes, sub-chefes e respostas de cada lutador
 scripts/fx.gd           partículas dos golpes (fx_ring.gd: anel de choque)
 scripts/trail.gd        rastro de movimento dos especiais (imagens residuais + fitas de luz)
+scripts/hitbox_view.gd  depuração das hitboxes sincronizadas com a animação (F3)
 audio/voices/           vozes e gritos (gerados por tools/audio/voices.py)
 scripts/weapons.gd      armas de cada era: dados, golpes e desenho
 scripts/energy.gd, popup.gd   projéteis dos especiais e texto flutuante

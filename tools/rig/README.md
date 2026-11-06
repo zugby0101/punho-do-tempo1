@@ -165,3 +165,38 @@ errado fora de ±π.
 Verificações feitas: a pose do AnimationTree é idêntica à do AnimationPlayer em 4.853 poses dos 79
 rigs; nos 44.520 quadros de crossfade testados (todos os pares de estados), nenhum osso gira mais que
 ~1 rad por quadro de 10 ms.
+
+
+## Hitboxes sincronizadas com a animação (`hitboxes.py`)
+
+```bash
+python tools/rig/hitboxes.py            # grava metadata/hitboxes nas 79 cenas (build.py já roda no fim)
+python tools/rig/hitboxes.py --check    # só confere; sai com erro se algo estiver fora de sincronia
+```
+
+Não precisa do Blender: lê as cenas do Godot (ossos em repouso + trilhas), refaz a cinemática direta
+com interpolação linear (a mesma do Godot) e, em cada golpe (`jab`, `cross`, `upper`, `kick`,
+`jumpkick`, `swing`, `slam`, `charge`, `throw`, `special`, `dive`), descobre:
+
+| Dado | O que é |
+|---|---|
+| `bone` | a ponta que acerta: a que mais avança no trecho de acerto (punho da frente/de trás, pé, cabeça...) |
+| `on`, `off` | janela de contato (u = 0..1): enquanto a ponta está a pelo menos 75% do alcance máximo (no gancho, da altura) |
+| `pts` | trajetória da ponta, 60 amostras por animação, em px do rig (origem nos pés, y para baixo) |
+| `peak`, `r` | avanço da ponta no impacto e raio da hitbox (punho 10, pé 12, tronco 16, cabeça 14) |
+| `wpn`, `won`, `woff` | golpes armados (`swing`, `slam`): base e ângulo da arma e a janela da ponta da arma |
+
+No jogo (`fighter.gd` → `hitbox_now`), em golpes normais e na voadora:
+
+- a hitbox só existe enquanto a animação está na janela de contato (`on`..`off`), além da janela do jogo;
+- vai de 15 px atrás até `reach × (avanço atual da ponta / peak)` à frente, ou seja, o alcance de
+  equilíbrio do golpe acompanhando o quanto o membro está esticado naquele quadro;
+- na vertical, cobre só a faixa `altura da ponta ± r`, que precisa cruzar a hurtbox do alvo
+  (16 × 100 px, vezes a escala do corpo, a partir da altura do pulo dele);
+- armado, a ponta é a base da arma + `len` da arma no ângulo do osso `weapon`.
+
+Especiais e golpes giratórios (`radial`) continuam com as regras próprias de `player.gd`.
+
+O `--check` confere em todos os 79 rigs que o impacto da animação cai no começo da janela de acerto
+do jogo (u = 0,30) e simula os golpes do jogo (alcances e armas reais): cada um precisa ainda acertar
+um alvo parado a 90% do alcance em algum quadro da janela.
