@@ -78,10 +78,32 @@ func _process(_delta: float) -> void:
 		if res[0] == want:
 			_start(res[0])
 	if thread == null and not queue.is_empty():
+		if not threads_ok():
+			_process_no_threads()
+			return
 		var item: Array = queue.pop_front()
 		if not cache.has(item[0]):
 			thread = Thread.new()
 			thread.start(_worker.bind(item))
+
+
+## Na versão web (sem threads, para rodar em qualquer navegador e no GitHub Pages) não dá para
+## gerar em segundo plano: gera uma música por vez no próprio quadro, e só a que vai tocar agora
+## (as pré-carregadas esperam), para a pausa acontecer uma vez só, na troca de fase.
+static func threads_ok() -> bool:
+	return not OS.has_feature("web") or OS.has_feature("threads")
+
+
+func _process_no_threads() -> void:
+	for k in queue.size():
+		var item: Array = queue[k]
+		if item[0] != want:
+			continue
+		queue.remove_at(k)
+		if not cache.has(item[0]):
+			cache[item[0]] = generate(item[1], item[2], item[3])
+		_start(item[0])
+		return
 
 
 func _worker(item: Array) -> Array:
