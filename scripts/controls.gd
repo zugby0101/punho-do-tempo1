@@ -14,7 +14,7 @@ const KEYS := {
 	"k2": {"left": [KEY_LEFT], "right": [KEY_RIGHT], "up": [KEY_UP], "down": [KEY_DOWN],
 		"attack": [KEY_COMMA], "jump": [KEY_PERIOD], "special": [KEY_SLASH], "start": [KEY_BACKSPACE], "block": [KEY_N]},
 	"k3": {"left": [KEY_F], "right": [KEY_H], "up": [KEY_T], "down": [KEY_G],
-		"attack": [KEY_Z], "jump": [KEY_X], "special": [KEY_C], "start": [KEY_V], "block": [KEY_Q]},
+		"attack": [KEY_Z], "jump": [KEY_X], "special": [KEY_C], "start": [KEY_5], "block": [KEY_Q]},
 	"k4": {"left": [KEY_KP_4], "right": [KEY_KP_6], "up": [KEY_KP_8], "down": [KEY_KP_5],
 		"attack": [KEY_KP_7], "jump": [KEY_KP_9], "special": [KEY_KP_ADD], "start": [KEY_KP_ENTER], "block": [KEY_KP_1]},
 }
