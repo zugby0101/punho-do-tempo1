@@ -98,7 +98,8 @@ function validate(b) {
   if (e.board === "survival" && (!Number.isInteger(e.wave) || e.wave < 1 || e.wave > 9999)) return [null, "Onda inválida."];
   if (!e.name) return [null, "Nome inválido."];
   if (!Number.isInteger(e.score) || e.score <= 0 || e.score > MAX_SCORE) return [null, "Pontuação inválida."];
-  if (!Number.isInteger(e.stage) || e.stage < 1 || e.stage > 12) return [null, "Fase inválida."];
+  // 12 eras + a fase secreta (ÉON) = 13
+  if (!Number.isInteger(e.stage) || e.stage < 1 || e.stage > 13) return [null, "Fase inválida."];
   if (!Number.isInteger(e.players) || e.players < 1 || e.players > 4) return [null, "Número de jogadores inválido."];
   if (!Number.isInteger(e.ts) || Math.abs(Date.now() / 1000 - e.ts) > 600) return [null, "Horário inválido (confira o relógio do computador)."];
   // a assinatura é feita com os valores exatamente como o jogo enviou
