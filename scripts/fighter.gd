@@ -325,8 +325,8 @@ func _collide_crates() -> void:
 		if not cr.has_method("solid_rect") or cr.hp <= 0 or height >= cr.H:
 			continue
 		var r: Rect2 = cr.solid_rect()
-		var dx := position.x - cr.position.x
-		var dy := position.y - cr.position.y
+		var dx: float = position.x - cr.position.x
+		var dy: float = position.y - cr.position.y
 		var px := (r.size.x * 0.5 + hw) - absf(dx)    # quanto entrou de lado
 		var py := (r.size.y * 0.5) - absf(dy)         # quanto entrou em profundidade
 		if px <= 0.0 or py <= 0.0:

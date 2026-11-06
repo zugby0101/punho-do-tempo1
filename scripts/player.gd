@@ -355,7 +355,7 @@ func _on_weapon_changed() -> void:
 
 
 func _on_release() -> void:
-	var throwing := throw_pending and attack.get("pose", "") == "throw" and not weapon.is_empty()
+	var throwing: bool = throw_pending and attack.get("pose", "") == "throw" and not weapon.is_empty()
 	throw_pending = false
 	if not throwing:
 		return  # golpe interrompido (ou a arma caiu antes): nada a arremessar
