@@ -399,9 +399,8 @@ func release_point(an: String, fallback: Vector2) -> Vector2:
 static func band_hits(tg, h0: float, h1: float) -> bool:
 	if not use_anim_hitboxes:
 		return true
-	var ts: float = tg.get("body_scale") if tg.get("body_scale") != null else 1.0
-	var th: float = tg.get("height") if tg.get("height") != null else 0.0
-	return h1 >= th and h0 <= th + HURT_H * ts
+	var r := hurt_of(tg)
+	return h1 >= -r.end.y and h0 <= -r.position.y
 
 
 ## Rotação do corpo inteiro por cima da animação nos golpes (a mesma do desenho e do rig).
@@ -412,15 +411,27 @@ func body_rot() -> float:
 	return 0.0
 
 
-func _hitbox_overlaps(hb: Dictionary, tg) -> bool:
-	var dx: float = (tg.position.x - position.x) * facing
+## Hurtbox de qualquer alvo (lutador, caixa...), relativa à base dele (y para baixo).
+func hurt_rect() -> Rect2:
+	return hurtbox()
+
+
+static func hurt_of(tg) -> Rect2:
+	if tg.has_method("hurt_rect"):
+		return tg.hurt_rect()
 	var ts: float = tg.get("body_scale") if tg.get("body_scale") != null else 1.0
-	var tw: float = HURT_W * ts
-	if dx + tw < float(hb.x0) or dx - tw > float(hb.x1):
+	var th: float = tg.get("height") if tg.get("height") != null else 0.0
+	return Rect2(-HURT_W * ts, -th - HURT_H * ts, HURT_W * 2.0 * ts, HURT_H * ts)
+
+
+func _hitbox_overlaps(hb: Dictionary, tg) -> bool:
+	var r := hurt_of(tg)
+	# extremos da hurtbox no referencial do golpe (x vezes facing)
+	var a: float = (tg.position.x - position.x + r.position.x) * facing
+	var b: float = (tg.position.x - position.x + r.end.x) * facing
+	if maxf(a, b) < float(hb.x0) or minf(a, b) > float(hb.x1):
 		return false
-	var t0: float = tg.height
-	var t1: float = tg.height + HURT_H * ts
-	return float(hb.h1) >= t0 and float(hb.h0) <= t1
+	return float(hb.h1) >= -r.end.y and float(hb.h0) <= -r.position.y
 
 
 ## Interpola a trajetória gravada (amostras a cada 1/60 de u: [u, x, y, ...]).

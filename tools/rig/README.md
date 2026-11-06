@@ -231,3 +231,10 @@ um alvo parado a 90% do alcance em algum quadro da janela.
 deitada no chão ou girando enquanto quica. O lutador alcança do corpo até a mão da frente na guarda
 (primeiro quadro do `jab` do rig, `fighter.gd` → `grab_box`), da altura da mão até o chão: dá para
 pegar a arma ainda no ar quando ela passa na altura da mão. Entre várias, pega a mais próxima.
+
+**Caixas quebráveis.** A hurtbox da caixa é a caixa desenhada (52 × 50 px), balançando junto quando
+apanha, mais 8 px de folga acima da tampa (`crate.gd` → `hurt_rect`; sem ela, o jab de quem é grande —
+Jake, Dmitri, Kofi, Tama... — passaria por cima da tampa). Qualquer alvo pode ter `hurt_rect()`;
+lutadores usam a hurtbox do corpo. A caixa racha conforme o dano e, no golpe final, deixa de ser
+atingível e se desmonta em tábuas que voam na direção do golpe (0,45 s). O `--check` confere, com o
+tamanho real de cada lutador, que jab, cross, chute e golpe armado quebram a caixa.

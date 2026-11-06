@@ -342,6 +342,34 @@ def projectile_check(name, hb, player):
     return bad
 
 
+# Caixas quebráveis (crate.gd): hurtbox = caixa desenhada (52 × 50) + folga da tampa
+CRATE_W, CRATE_H, CRATE_LID = 52.0, 50.0, 8.0
+
+
+def player_sizes():
+    text = (ROOT / "scripts" / "characters.gd").read_text(encoding="utf-8")
+    sizes = [float(x) for x in re.findall(r'"size": (' + NUM + ')', text)]
+    return {sl: sz for (sl, _), sz in zip(player_specials(), sizes)}
+
+
+def crate_check(name, hb):
+    """Com o tamanho real do lutador, o combo básico (jab, cross, chute) e o golpe armado
+    quebram uma caixa à frente: a ponta da animação passa pela caixa desenhada."""
+    size = player_sizes().get(name)
+    if size is None:
+        return []
+    bad = []
+    us = [U_HIT + (U_HOLD - U_HIT) * i / 24.0 for i in range(25)]
+    for an, reach, wlen in (("jab", 58, None), ("cross", 62, None), ("kick", 74, None), ("swing", 82, 30.0)):
+        dx = reach * 0.7 * size
+        ok = any(b is not None and dx + CRATE_W / 2 >= b[0] and dx - CRATE_W / 2 <= b[1]
+                 and b[3] >= 0.0 and b[2] <= CRATE_H + CRATE_LID
+                 for b in (simulate(hb[an], u, reach, wlen, size) for u in us))
+        if not ok:
+            bad.append("%s/%s não quebra a caixa" % (name, an))
+    return bad
+
+
 def _fmt(v):
     if isinstance(v, dict):
         return "{" + ", ".join('"%s": %s' % (k, _fmt(x)) for k, x in v.items()) + "}"
@@ -380,7 +408,7 @@ def main():
             for k0, k1 in (("on", "off"), ("won", "woff")):
                 if k0 in d and an not in OPEN_ENDED and not (U_HIT - 0.04 <= d[k0] <= U_HOLD and d[k1] >= U_HIT):
                     late.append("%s/%s %s=%.3f %s=%.3f" % (fp.stem, an, k0, d[k0], k1, d[k1]))
-        late += gameplay_check(fp.stem, hb) + special_check(fp.stem, hb) + projectile_check(fp.stem, hb, fp.parent == RIGS)
+        late += gameplay_check(fp.stem, hb) + special_check(fp.stem, hb) + projectile_check(fp.stem, hb, fp.parent == RIGS) + crate_check(fp.stem, hb)
         if not only_check:
             fp.write_text(write_meta(text, hb), encoding="utf-8")
         summary = "  ".join("%s:%s %.2f-%.2f" % (an, d["bone"].replace("arm_", "").replace("_lo", ""), d["on"], d["off"])
