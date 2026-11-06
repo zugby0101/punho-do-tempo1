@@ -26,7 +26,8 @@ O jogo começa quando todos estão prontos.
 | Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ | LB / RB |
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
-Enter confirma nos menus, Esc ou P pausa. No título: O = online, R = ranking, M = conquistas. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
+Enter confirma nos menus, Esc ou P pausa. No título: O = online, R = ranking, M = conquistas;
+V = visual, P = partículas, Y = sangue, E = tremor da câmera (100% / 50% / desligado), B = vibração. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 Segurar **Bloqueio** ergue a guarda (para golpes de frente; os fortes tiram só um pouco de vida) e
 **Bloqueio + Pulo** é uma esquiva: um passo rápido para trás, invencível enquanto está no ar. Quando um
 golpe do combo derrubaria de vez um inimigo à frente, sai a **finalização** no lugar dele.
@@ -355,6 +356,10 @@ maior para quem é grande e na finalização) e **tranco vertical** (a câmera "
 gigantes — brutos, sub-chefes, chefes —, na pisada do haka do Tama e quando um corpo grande cai). Na
 câmera lenta dos chefes, o zoom dela manda. Online, os convidados recebem inclinação, zoom e tranco do
 anfitrião.
+
+**E** no título troca o **tremor** entre 100%, 50% e desligado (fica salvo). Vale para o tremor, a
+inclinação, o zoom de impacto e o tranco vertical — para quem se incomoda com a tela mexendo; online,
+cada um usa o próprio ajuste. A câmera lenta do golpe final nos chefes não muda.
 
 **Vibração dos controles** (motor leve / motor pesado):
 

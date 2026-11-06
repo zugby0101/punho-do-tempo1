@@ -97,6 +97,9 @@ static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
 static var fx_enabled := true    # partículas dos golpes (P no título)
 static var blood_enabled := true # sangue e manchas no chão (Y no título); desligado vira poeira
+static var shake_level := 2      # tremor da câmera (E no título): 2 = 100%, 1 = 50%, 0 = desligado
+const SHAKE_LEVELS := [0.0, 0.5, 1.0]
+var _e_held := false
 const Materials = preload("res://scripts/materials.gd")
 var decals: Node2D               # manchas no chão (sangue, óleo, areia), abaixo dos lutadores
 var _y_held := false
@@ -424,6 +427,14 @@ func _physics_process(delta: float) -> void:
 				sfx.play("whoosh", 0.0)
 			elif not Input.is_physical_key_pressed(KEY_Y):
 				_y_held = false
+			if Input.is_physical_key_pressed(KEY_E) and not _e_held:
+				_e_held = true
+				shake_level = (shake_level + 2) % 3  # 100% -> 50% -> desligado -> 100%
+				_save_settings()
+				sfx.play("whoosh", 0.0)
+				shake(10.0)  # amostra do nível escolhido
+			elif not Input.is_physical_key_pressed(KEY_E):
+				_e_held = false
 			if Input.is_physical_key_pressed(KEY_B) and not _b_held:
 				_b_held = true
 				vibration = not vibration
@@ -751,23 +762,26 @@ func _shake_offset(delta: float) -> Vector2:
 		cam_roll = roll_trauma * roll_trauma * MAX_ROLL * sin(ph * 29.0 + 0.7)
 	bump_t += delta
 	var bump := bump_amp * exp(-bump_t * 10.0) * cos(bump_t * 38.0)
-	return n * shake_amt + shake_kick + Vector2(0.0, bump)
+	# opção Tremor (E no título): escala tudo na saída, aqui e nos convidados online
+	return (n * shake_amt + shake_kick + Vector2(0.0, bump)) * SHAKE_LEVELS[shake_level]
 
 
 ## Zoom de impacto e inclinação (a câmera lenta dos chefes, quando ativa, cuida do zoom).
 func _dynamic_camera(delta: float) -> void:
 	if not net_client:
 		punch *= exp(-delta * 9.0)
-	camera.rotation = cam_roll
+	var lvl: float = SHAKE_LEVELS[shake_level]
+	var roll := cam_roll * lvl
+	camera.rotation = roll
 	if not slowmo_cfg.is_empty() or (net_client and snap_zoom > 1.001):
 		return  # câmera lenta (aqui ou a do anfitrião) cuida do zoom
 	# girar mostraria os cantos de fora da tela: aproxima o bastante para cobrir
-	var cover := cos(absf(cam_roll)) + (float(HALF_W) / 270.0) * sin(absf(cam_roll))
-	var z := maxf(1.0 + punch, cover)
+	var cover := cos(absf(roll)) + (float(HALF_W) / 270.0) * sin(absf(roll))
+	var z := maxf(1.0 + punch * lvl, cover)
 	camera.zoom = Vector2(z, z)
 	var view := Vector2(HALF_W, 270.0) / z
 	var center := Vector2(cam_x, 270.0)
-	var want := (center.lerp(punch_focus, 0.35) - center) if punch > 0.002 else Vector2.ZERO
+	var want := (center.lerp(punch_focus, 0.35) - center) * lvl if punch > 0.002 else Vector2.ZERO
 	camera.offset = Vector2(clampf(want.x, -(HALF_W - view.x), HALF_W - view.x), clampf(want.y, -(270.0 - view.y), 270.0 - view.y))
 
 
@@ -2113,6 +2127,7 @@ func _load_settings() -> void:
 		rig_mode = cfg.get_value("visual", "rig_mode", true)
 		fx_enabled = cfg.get_value("visual", "particles", true)
 		blood_enabled = cfg.get_value("visual", "blood", true)
+		shake_level = clampi(int(cfg.get_value("visual", "shake", 2)), 0, 2)
 		vibration = cfg.get_value("controls", "vibration", true)
 
 
@@ -2122,6 +2137,7 @@ func _save_settings() -> void:
 	cfg.set_value("visual", "rig_mode", rig_mode)
 	cfg.set_value("visual", "particles", fx_enabled)
 	cfg.set_value("visual", "blood", blood_enabled)
+	cfg.set_value("visual", "shake", shake_level)
 	cfg.set_value("controls", "vibration", vibration)
 	cfg.save("user://settings.cfg")
 
