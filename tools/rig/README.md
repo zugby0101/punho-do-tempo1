@@ -250,6 +250,16 @@ lutadores usam a hurtbox do corpo. A caixa racha conforme o dano e, no golpe fin
 atingível e se desmonta em tábuas que voam na direção do golpe (0,45 s). O `--check` confere, com o
 tamanho real de cada lutador, que jab, cross, chute e golpe armado quebram a caixa.
 
+- **Sólida:** quem anda não atravessa a caixa (`fighter.gd` → `_collide_crates`): a base dela tem a
+  largura desenhada e 28 px de profundidade, e o lutador sai pelo lado em que entrou menos. Acima da
+  tampa (50 px: pulando, voando derrubado) passa livre.
+- **Empurrada:** um golpe que não quebra a caixa a faz escorregar no chão na direção do golpe
+  (60 + 14 × dano px/s, desacelerando), até a barreira do fim da fase.
+- **Tábuas machucam:** nos primeiros 0,32 s da quebra, cada tábua — na posição e no giro em que está
+  desenhada (`plank_rect`) — acerta quem estiver no caminho (3 de dano, uma vez por alvo), menos quem
+  quebrou a caixa e outras caixas; o acerto conta como golpe de quem quebrou.
+- F3: base sólida em azul, tábuas que machucam em vermelho.
+
 **Comidas.** A área de coleta é a comida desenhada no quadro atual (`pickup.gd` → `pick_rect`: frango no
 prato 40 × 28 px, maçã 20 × 28 px), subindo e descendo com o balanço. A comida é pega quando a hurtbox
 do lutador encosta nela (antes: ±30 px do centro e só com o lutador a até 10 px do chão). Ao aparecer
