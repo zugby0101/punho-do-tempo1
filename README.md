@@ -241,6 +241,21 @@ ajuste fixo de cada personagem (pelo nome do rig), então os 79 soam diferentes 
 pega na cabeça (quarto de cima do corpo) de quem usa capacete, elmo ou coroa de metal — cavaleiros,
 samurais, soldados das guerras, reis — também tilinta no metal.
 
+**Passos** (os 79 personagens): o passo toca no quadro em que o **pé desenhado** volta ao chão — o jogo
+lê a altura dos ossos dos pés no esqueleto já posado (AnimationPlayer ou AnimationTree) e, quando um pé
+que estava levantado (3+ px) encosta (até 1 px), toca o passo. Por isso soam também a pisada do haka
+(Tama) e o toque do muay thai (Kirra) parados, o pé que volta depois do chute, o pouso do pulo e da
+esquiva; e o ÉON, que flutua, não pisa. No visual clássico, os passos seguem o balanço das pernas.
+Conferido nas animações dos 79 rigs: a caminhada dá 2 passos por ciclo em 78 deles (o ÉON, 0).
+
+| Camada | Som |
+|---|---|
+| chão da era | terra (Pedra), areia (Cruzadas), cascalho (Japão), madeira do convés (Navios), paralelepípedo (Industrial), lama (1ª Guerra), escombros (2ª Guerra), concreto (Guerra Fria), asfalto (Moderna), vidro (Utopia), grade de metal (Distopia), cinzas (Apocalipse), cristal (Vazio) — duas variações alternadas pé a pé |
+| quem pisa | máquinas e ciborgue: clank com servo · Cronos: tique-taque de relógio · IA Aurora: bipe · mutantes: passo molhado · sombras: só um sussurro · porte 1,1+ (Jake, Dmitri, Tama, Kofi, brutos e chefes): baque grave |
+
+O tom é o do porte com o ajuste de cada personagem (como no som do corpo). Os passos têm canais
+próprios, mais baixos, que não cortam os golpes, e no máximo ~40 por segundo no total.
+
 **Vozes e gritos** (`audio/voices/`, geradas por `tools/audio/voices.py` com síntese de formantes
 — sem gravações): **22 vozes** (os 14 lutadores, cada um com tom e timbre próprios, e 8 de inimigos:
 brigão, ágil, grandalhão rosnando, sub-chefe, chefe com eco, robô, fantasma sussurrado e o ÉON

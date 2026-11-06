@@ -100,6 +100,7 @@ static var blood_enabled := true # sangue e manchas no chão (Y no título); des
 const Materials = preload("res://scripts/materials.gd")
 var decals: Node2D               # manchas no chão (sangue, óleo, areia), abaixo dos lutadores
 var _y_held := false
+var _step_ms := 0
 static var vibration := true     # vibração dos controles (B no título)
 static var settings_loaded := false
 const ONLINE_OPTIONS := [
@@ -1186,6 +1187,19 @@ func body_hit_sound(target, pos: Vector2, dmg: int) -> void:
 		r.position += target.position
 		if pos.y < r.position.y + r.size.y * 0.25:  # contato no quarto de cima do corpo: a cabeça
 			sfx.play("m_helmet", 0.06, bs[1])
+
+
+## Passo de um lutador (fighter.gd: no quadro em que o pé desenhado volta ao chão). Rápido demais
+## (pés tocando quase juntos) vira um passo só.
+func footstep(f, front: bool) -> void:
+	var now := Time.get_ticks_msec()
+	if now - int(f.get_meta("step_ms", -1000)) < 90 or now - _step_ms < 25:
+		return  # no máximo ~40 passos por segundo no total (muita gente andando junto)
+	_step_ms = now
+	f.set_meta("step_ms", now)
+	var slug: String = String(f.rig_scene_path).get_file().get_basename()
+	for st in SfxScript.step_sounds(stage.get("style", "modern"), Materials.of(f), float(f.body_scale), slug, front):
+		sfx.play(st[0], 0.04, st[1])
 
 
 func _wound(mat: String, pos: Vector2, feet: Vector2, dir: int, k: float) -> void:

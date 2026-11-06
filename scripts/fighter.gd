@@ -824,6 +824,7 @@ func _draw() -> void:
 	draw_set_transform(off, rot * df, Vector2(df * s, s))
 	_draw_body(pose, net_phase if net else _attack_phase())
 	draw_set_transform(Vector2.ZERO)
+	_classic_footsteps()
 
 
 func _weapon_angle(pose: String, p: float) -> float:
@@ -919,6 +920,7 @@ func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, pha
 	rig_pose = [an, tpos]
 	if _drive_tree(an, u):
 		_sync_weapon(phase)
+		_rig_footsteps()
 		return
 	if rig_tree != null:
 		rig_tree.active = false
@@ -927,6 +929,44 @@ func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, pha
 		rig_ap.pause()
 	rig_ap.seek(tpos, true)
 	_sync_weapon(phase)
+	_rig_footsteps()
+
+
+# ---------- Passos: tocam quando o pé DESENHADO volta ao chão ----------
+const STEP_LIFT := 3.0    # px acima do chão (no rig) para contar como pé levantado
+const STEP_PLANT := 1.0   # px: pé no chão de novo = passo
+const STEP_STATES := ["idle", "walk", "attack", "jump", "block", "dodge", "special", "getup"]
+var foot_bones := {}       # "foot_f"/"foot_b" -> Bone2D do rig
+var _foot_up := {"foot_f": false, "foot_b": false}
+var _classic_w := 0.0
+
+
+## Lê a altura de cada pé no esqueleto já posado (AnimationPlayer ou AnimationTree) e toca o passo no
+## quadro em que um pé levantado encosta no chão: caminhada, pisada do haka, toque da Kirra, o pé que
+## volta do chute, o pouso do pulo e da esquiva. Quem flutua (ÉON) nunca pisa.
+func _rig_footsteps() -> void:
+	if game == null or game.net_client or foot_bones.is_empty() or not state in STEP_STATES:
+		return
+	for fname in foot_bones:
+		var b: Node2D = foot_bones[fname]
+		var y := rig.to_local(b.global_position).y  # pés na origem do rig; y para baixo
+		if y < -STEP_LIFT:
+			_foot_up[fname] = true
+		elif y > -STEP_PLANT and _foot_up[fname]:
+			_foot_up[fname] = false
+			if height <= 1.0:
+				game.footstep(self, fname == "foot_f")
+
+
+## Visual clássico: as pernas seguem sin(anim_t * 12) (_draw_body "walk"); cada troca de sinal é um pé no chão.
+func _classic_footsteps() -> void:
+	if game == null or game.net_client or state != "walk" or height > 1.0:
+		_classic_w = 0.0
+		return
+	var w := sin(anim_t * 12.0)
+	if _classic_w != 0.0 and signf(w) != signf(_classic_w):
+		game.footstep(self, w > 0.0)
+	_classic_w = w
 
 
 func _sync_weapon(phase: float) -> void:
@@ -958,6 +998,11 @@ func attach_rig(path: String) -> void:
 		tree_states = rig_tree.get_meta("states", PackedStringArray())
 		strike_points = rig_tree.get_meta("strike_points", {})
 	hitboxes = rig.get_meta("hitboxes", {})
+	foot_bones = {}
+	for fname in ["foot_f", "foot_b"]:
+		var fb := rig.get_node("Skeleton2D").find_child(fname, true, false)
+		if fb != null:
+			foot_bones[fname] = fb
 	hurtboxes = rig.get_meta("hurtboxes", {})
 	hover_px = 0.0
 	if hurtboxes.has("idle"):
