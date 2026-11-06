@@ -314,6 +314,34 @@ def special_check(slug, hb):
     return bad
 
 
+# Projéteis soltos no quadro de contato da animação (fighter.gd -> release_point):
+# (animação, faixa de altura aceitável do ponto de soltura acima do chão, avanço mínimo)
+RELEASES = {"throw": (30.0, 120.0, 20.0), "jab": (30.0, 110.0, 20.0), "slam": (0.0, 40.0, 20.0)}
+KI_R, WAVE_H = 18.0, 34.0  # energy.gd
+
+
+def release_point(d):
+    x, y = _interp(d["pts"], 3, d["on"])
+    return x, -y
+
+
+def projectile_check(name, hb, player):
+    """O ponto de soltura de cada projétil fica na mão/punho, à frente e na altura certa, e a
+    hitbox do projétil acerta um alvo parado no chão."""
+    bad = []
+    for an, (h0, h1, fwd) in RELEASES.items():
+        if an not in hb or (an != "throw" and not player):
+            continue  # Onda Ki (jab) e Onda Sísmica (slam) são dos lutadores; inimigos só arremessam (ÉON)
+        x, h = release_point(hb[an])
+        if not (h0 <= h <= h1 and x >= fwd):
+            bad.append("%s/soltura do %s em (%.0f, %.0f)" % (name, an, x, h))
+    if player and "jab" in hb:
+        _, h = release_point(hb["jab"])
+        if not hits((-34.0, 34.0, h - KI_R, h + KI_R), 0.0):
+            bad.append("%s/onda ki na altura %.0f não acerta alvo no chão" % (name, h))
+    return bad
+
+
 def _fmt(v):
     if isinstance(v, dict):
         return "{" + ", ".join('"%s": %s' % (k, _fmt(x)) for k, x in v.items()) + "}"
@@ -352,7 +380,7 @@ def main():
             for k0, k1 in (("on", "off"), ("won", "woff")):
                 if k0 in d and an not in OPEN_ENDED and not (U_HIT - 0.04 <= d[k0] <= U_HOLD and d[k1] >= U_HIT):
                     late.append("%s/%s %s=%.3f %s=%.3f" % (fp.stem, an, k0, d[k0], k1, d[k1]))
-        late += gameplay_check(fp.stem, hb) + special_check(fp.stem, hb)
+        late += gameplay_check(fp.stem, hb) + special_check(fp.stem, hb) + projectile_check(fp.stem, hb, fp.parent == RIGS)
         if not only_check:
             fp.write_text(write_meta(text, hb), encoding="utf-8")
         summary = "  ".join("%s:%s %.2f-%.2f" % (an, d["bone"].replace("arm_", "").replace("_lo", ""), d["on"], d["off"])

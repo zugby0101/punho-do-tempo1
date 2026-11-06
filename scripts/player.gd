@@ -13,6 +13,8 @@ const ATK_UPPER := {"pose": "upper", "dmg": 10, "reach": 56, "startup": 0.06, "a
 const ATK_JUMPKICK := {"pose": "jumpkick", "dmg": 13, "reach": 66, "startup": 0.03, "active": 0.6, "recovery": 0.0, "knock": true, "heavy": true}
 const ATK_SPECIAL := {"pose": "special", "dmg": 14, "reach": 100, "startup": 0.06, "active": 0.3, "recovery": 0.18, "knock": true, "radial": true, "depth": 42.0, "heavy": true}
 
+const KI_RELEASE := 0.16     # Onda Ki: tempo até o soco chegar ao impacto e soltar a bola
+const QUAKE_RELEASE := 0.3   # Onda Sísmica: tempo até os punhos baterem no chão
 const ATK_THROW := {"pose": "throw", "dmg": 0, "reach": -99, "startup": 0.05, "active": 0.05, "recovery": 0.2, "knock": false}
 const BASE_COMBO := [ATK_JAB, ATK_JAB2, ATK_CROSS, ATK_KICK]
 
@@ -39,6 +41,7 @@ var special_def: Dictionary = {}
 var sp_tick := -1
 var sp_fired := false
 var sp_land_t := -1.0
+var throw_pending := false  # arremesso de arma: sai da mão no quadro de soltura da animação
 
 
 func _ready() -> void:
@@ -96,13 +99,10 @@ func _update(delta: float) -> void:
 				game.sfx.play("pickup", 0.0)
 				game.spawn_spark(position + Vector2(0, -20), Color(1, 1, 0.6), 0.6)
 			elif Controls.just(sets, "special") and not weapon.is_empty():
-				# Arremessar a arma
-				game.throw_weapon(self, weapon)
-				weapon = {}
-				_on_weapon_changed()
+				# Arremessar a arma: a arma fica na mão durante a preparação e sai no quadro de soltura
 				vel = Vector2.ZERO
 				start_attack(ATK_THROW)
-				game.sfx.play("w_throw", 0.06, game.sfx.body_pitch(body_scale))
+				throw_pending = true
 			elif Controls.just(sets, "special") and not special_def.is_empty() and hp > int(special_def.cost):
 				_start_special()
 			elif Controls.just(sets, "special") and special_def.is_empty() and hp > SPECIAL_COST:
@@ -302,18 +302,29 @@ func _process_special(delta: float) -> void:
 				if t >= st + dur + 0.25:
 					_end_special()
 		"projectile":
-			if t >= 0.16 and not sp_fired:
+			if not sp_fired:
+				attack.phase = -maxf(t / KI_RELEASE, 0.001)  # preparação: o soco vai até o quadro de impacto
+			if t >= KI_RELEASE and not sp_fired:
 				sp_fired = true
 				attack.phase = 1.0
-				game.spawn_energy(self, "ki", facing, sp)
+				# a bola de energia sai do punho, no quadro de impacto do soco
+				var rp := release_point("jab", Vector2(30.0, 50.0))
+				var ki = game.spawn_energy(self, "ki", facing, sp)
+				ki.position.x = position.x + facing * rp.x
+				ki.height = rp.y
 			if t >= 0.5:
 				_end_special()
 		"quake":
-			if t >= 0.3 and not sp_fired:
+			if not sp_fired:
+				attack.phase = -maxf(t / QUAKE_RELEASE, 0.001)  # preparação: braços sobem e descem até o chão
+			if t >= QUAKE_RELEASE and not sp_fired:
 				sp_fired = true
 				attack.phase = 1.0
-				game.spawn_energy(self, "wave", 1, sp)
-				game.spawn_energy(self, "wave", -1, sp)
+				# as ondas nascem onde os punhos batem no chão, no quadro de impacto do slam
+				var rp := release_point("slam", Vector2(30.0, 0.0))
+				for d in [1, -1]:
+					var wv = game.spawn_energy(self, "wave", d, sp)
+					wv.position.x = position.x + facing * rp.x
 				game.shake(8.0, Vector2(0, 0.6))
 				game.rumble(self, 0.5, 0.75, 0.25)
 				game.sfx.play("quake", 0.03)
@@ -324,6 +335,18 @@ func _process_special(delta: float) -> void:
 func _on_weapon_changed() -> void:
 	combo = Weapons.player_combo(weapon) if not weapon.is_empty() else BASE_COMBO
 	combo_step = 0
+
+
+func _on_release() -> void:
+	var throwing := throw_pending and attack.get("pose", "") == "throw" and not weapon.is_empty()
+	throw_pending = false
+	if not throwing:
+		return  # golpe interrompido (ou a arma caiu antes): nada a arremessar
+	# a arma sai da mão no quadro de soltura da animação, na altura da mão
+	game.throw_weapon(self, weapon, release_point("throw", Vector2(20.0, 46.0)))
+	weapon = {}
+	_on_weapon_changed()
+	game.sfx.play("w_throw", 0.06, game.sfx.body_pitch(body_scale))
 
 
 func _do_attack(a: Dictionary) -> void:

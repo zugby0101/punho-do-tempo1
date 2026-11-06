@@ -208,7 +208,18 @@ da animação que está na tela.
 | Chute da Fênix (Mei), Joelhada Voadora (Kirra) | a voadora aparece com a perna esticada (u = 1) e acerta na altura do pé |
 | Chute do Hopak (Oksana), Punho do Trovão (Kofi), Investida Haka (Tama) | na altura do pé/punho/ombro enquanto sobe ou avança |
 
-Onda Ki (Kai) e Onda Sísmica (Amara) são projéteis (`energy.gd`) e não usam hitbox de membro.
+**Projéteis.** Saem da mão no quadro de soltura da animação (o mesmo quadro de impacto, u = 0,30 —
+`fighter.gd` → `_on_release` / `release_point`) e têm hitbox vertical igual ao que é desenhado:
+
+| Projétil | Soltura | Hitbox |
+|---|---|---|
+| Onda Ki (Kai) | o soco prepara de verdade por 0,16 s e a bola nasce no punho, na altura dele | bola: altura do centro ± 18 px |
+| Onda Sísmica (Amara) | os braços sobem e descem por 0,3 s; as duas ondas nascem onde os punhos batem no chão | pedras: do chão até 34 px (dá para pular por cima) |
+| Arma arremessada (todos) | a arma fica na mão na preparação e sai da mão no quadro de soltura do `throw` | arma girando: altura ± metade do comprimento |
+| Orbes do ÉON | saem da mão no quadro de soltura do `throw`, na altura da mão (que flutua) | bola: altura do centro ± 18 px |
+
+O `--check` confere que o ponto de soltura de cada rig está à frente e na altura da mão (ou dos punhos no
+chão, no slam) e que a Onda Ki acerta um alvo parado no chão.
 O `--check` também simula cada especial (lido de `characters.gd`) no quadro em que o jogo confere o acerto.
 
 O `--check` confere em todos os 79 rigs que o impacto da animação cai no começo da janela de acerto

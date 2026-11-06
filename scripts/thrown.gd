@@ -12,6 +12,13 @@ var traveled := 0.0
 var t := 0.0
 const SPEED := 620.0
 const RANGE := 560.0
+const FighterBase = preload("res://scripts/fighter.gd")
+
+
+## Faixa de altura que a arma girando ocupa (centro ± meio comprimento), acima do chão.
+func band() -> Vector2:
+	var half := float(weapon.get("len", 36.0)) * 0.5
+	return Vector2(height - half, height + half)
 
 
 func _physics_process(delta: float) -> void:
@@ -29,7 +36,9 @@ func _physics_process(delta: float) -> void:
 	for e in targets:
 		if not e.can_be_hit():
 			continue
-		if absf(e.position.x - position.x) < 34.0 and absf(e.position.y - position.y) < 24.0:
+		var b := band()
+		if absf(e.position.x - position.x) < 34.0 and absf(e.position.y - position.y) < 24.0 \
+				and FighterBase.band_hits(e, b.x, b.y):
 			var p: float = owner_player.power if is_instance_valid(owner_player) else 1.0
 			var atk := {"dmg": 16, "heavy": true, "knock": true, "thrown": true}
 			e.take_hit(int(16 * p), dir, true)
@@ -64,3 +73,8 @@ func _draw() -> void:
 	var ang := t * 22.0 * dir
 	var c := Vector2(0, -height)
 	Weapons.draw(self, weapon, c - Vector2(cos(ang), sin(ang)) * L * 0.5, ang)
+	if FighterBase.show_hitboxes:
+		var b := band()
+		var r := Rect2(-34.0, -b.y, 68.0, b.y - b.x)
+		draw_rect(r, Color(1, 0.15, 0.1, 0.25), true)
+		draw_rect(r, Color(1, 0.15, 0.1, 0.9), false, 1.0)
