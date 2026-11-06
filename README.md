@@ -222,6 +222,25 @@ Quando aparece o sub-chefe ou o chefe, a música muda para uma versão mais ráp
 O tom acompanha o porte: grandalhões e chefes soam mais graves. Online, o convidado ouve
 exatamente o mesmo som e tom do anfitrião.
 
+**Som do corpo de quem apanha** (os 79 personagens): junto com o impacto do golpe toca o som do
+material do corpo (o mesmo de `scripts/materials.gd` que decide sangue, óleo, fumaça...), no ponto e no
+quadro do contato:
+
+| Material | Som |
+|---|---|
+| carne | baque surdo do corpo (+ respingo molhado nos golpes de 6+ de dano, com o sangue ligado) |
+| máquina | chapa batendo, faíscas estalando e um servo que reclama |
+| ciborgue | baque do corpo com metal |
+| mutante | baque molhado e gorgolejo grave |
+| sombra | chiado que se desfaz e um tom fantasma com vibrato |
+| tempo (Cronos, ÉON) | estilhaço de vidro e areia escorrendo |
+| luz (IA Aurora) | falha digital, bipes em degraus |
+
+O golpe que derruba de vez usa a versão longa e grave de cada um. O tom é o do porte do corpo com um
+ajuste fixo de cada personagem (pelo nome do rig), então os 79 soam diferentes entre si. Golpe que
+pega na cabeça (quarto de cima do corpo) de quem usa capacete, elmo ou coroa de metal — cavaleiros,
+samurais, soldados das guerras, reis — também tilinta no metal.
+
 **Vozes e gritos** (`audio/voices/`, geradas por `tools/audio/voices.py` com síntese de formantes
 — sem gravações): **22 vozes** (os 14 lutadores, cada um com tom e timbre próprios, e 8 de inimigos:
 brigão, ágil, grandalhão rosnando, sub-chefe, chefe com eco, robô, fantasma sussurrado e o ÉON
