@@ -485,6 +485,12 @@ func _physics_process(delta: float) -> void:
 		"stageclear":
 			if mode_time > 1.5 and _confirm():
 				_save_party()
+				# Quem terminou a era fora (sem vidas) volta na próxima como num "continuar":
+				# vidas cheias e pontuação zerada (senão entraria com 0 vidas, morrendo de vez no 1º nocaute)
+				for i in players.size():
+					if players[i].out:
+						party[i].lives = 3
+						party[i].score = 0
 				stage_idx += 1
 				skip_title = true
 				get_tree().reload_current_scene()
