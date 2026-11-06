@@ -69,6 +69,15 @@ const TREE_STATE_OF := {
 }
 const TREE_BLEND_TARGET := {"walk": 1.0, "jumpkick": 1.0, "fall": 1.0, "getup": 1.0}
 var power := 1.0
+# Hitboxes sincronizadas com a animação (metadata/hitboxes do rig, gerada por tools/rig/hitboxes.py):
+# a janela de contato e a posição da ponta que acerta (punho, pé ou arma) quadro a quadro.
+var hitboxes: Dictionary = {}
+static var use_anim_hitboxes := true
+static var show_hitboxes := false  # F3 mostra hitboxes (vermelho) e hurtboxes (verde)
+const HURT_H := 100.0   # altura da hurtbox do corpo (px, escala 1)
+const HURT_W := 16.0    # meia largura da hurtbox
+const HitboxView = preload("res://scripts/hitbox_view.gd")
+var hitbox_view = null
 
 
 func set_state(s: String) -> void:
@@ -267,6 +276,9 @@ func _check_hits(targets: Array) -> bool:
 	var hit_any := false
 	var radial: bool = attack.get("radial", false)
 	var depth: float = attack.get("depth", 22.0)
+	var hb := hitbox_now()
+	if hb.has("off_window"):
+		return false  # a ponta do golpe ainda não chegou (ou já saiu) do ponto de impacto
 	for tg in targets:
 		if not is_instance_valid(tg) or tg == self or tg in hit_list or not tg.can_be_hit():
 			continue
@@ -275,21 +287,104 @@ func _check_hits(targets: Array) -> bool:
 			dx = absf(dx)
 		var dy: float = absf(tg.position.y - position.y)
 		var dz: float = absf(tg.height - height)
-		if dx > -15.0 and dx < float(attack.reach) * body_scale and dy < depth and dz < 60.0:
-			hit_list.append(tg)
-			var dir := facing
-			if radial:
-				dir = 1 if tg.position.x >= position.x else -1
-			tg.take_hit(int(round(float(attack.dmg) * power)), dir, bool(attack.knock))
-			if tg.get("blocked_last"):
-				continue  # golpe bloqueado
-			game.on_hit(self, tg, attack)
-			hit_any = true
-			if attack.get("weapon", false) and not weapon.is_empty() and is_in_group("players"):
-				weapon.uses = int(weapon.uses) - 1
-				if weapon.uses <= 0:
-					_break_weapon()
+		if hb.is_empty():
+			if not (dx > -15.0 and dx < float(attack.reach) * body_scale and dy < depth and dz < 60.0):
+				continue
+		elif not (dy < depth and _hitbox_overlaps(hb, tg)):
+			continue
+		hit_list.append(tg)
+		var dir := facing
+		if radial:
+			dir = 1 if tg.position.x >= position.x else -1
+		tg.take_hit(int(round(float(attack.dmg) * power)), dir, bool(attack.knock))
+		if tg.get("blocked_last"):
+			continue  # golpe bloqueado
+		game.on_hit(self, tg, attack)
+		hit_any = true
+		if attack.get("weapon", false) and not weapon.is_empty() and is_in_group("players"):
+			weapon.uses = int(weapon.uses) - 1
+			if weapon.uses <= 0:
+				_break_weapon()
 	return hit_any
+
+
+## Hitbox do golpe neste quadro, tirada da animação que está tocando.
+## Vazio = sem dados de animação (usa a caixa antiga por alcance).
+## {"off_window": true} = fora da janela de contato da animação.
+## Senão: "x0".."x1" (relativo ao lutador, já virado com facing), "h0".."h1" (altura acima do chão).
+func hitbox_now() -> Dictionary:
+	if not use_anim_hitboxes or hitboxes.is_empty() or attack.is_empty():
+		return {}
+	if not state in ["attack", "jump"] or attack.get("radial", false) or float(attack.get("reach", 0.0)) <= 0.0:
+		return {}
+	var ra := rig_anim()
+	var an: String = ra[0]
+	var u: float = ra[1]
+	if not hitboxes.has(an) or u < 0.0:
+		return {}
+	var d: Dictionary = hitboxes[an]
+	var armed: bool = not weapon.is_empty() and d.has("wpn")  # golpe armado: acerta a ponta da arma
+	var on: float = d.won if armed else d.on
+	var off: float = d.woff if armed else d.off
+	if u < on - 0.001 or u > off + 0.001:
+		return {"off_window": true}
+	var s := body_scale
+	var tip := _hb_point(d.pts, 3, u)
+	var r: float = float(d.r)
+	var peak: float = maxf(float(d.peak), 1.0)
+	if armed:
+		var w := _hb_point(d.wpn, 4, u)
+		var ang := _hb_angle(d.wpn, u)
+		var L := float(weapon.get("len", 40.0))
+		tip = Vector2(w.x, w.y) + Vector2(cos(ang), sin(ang)) * L
+		var w_pk := _hb_point(d.wpn, 4, on)
+		peak = maxf(w_pk.x + cos(_hb_angle(d.wpn, on)) * L, 1.0)
+		r = 14.0
+	# alcance: o "reach" do golpe (equilíbrio do jogo) acompanhando o quanto a ponta está esticada agora
+	var ext := clampf(tip.x / peak, 0.2, 1.15)
+	var far := float(attack.reach) * ext * s
+	var tip_h := height - tip.y * s
+	return {"x0": -15.0, "x1": far, "h0": tip_h - r * s, "h1": tip_h + r * s,
+		"tip": Vector2(tip.x * s, tip.y * s), "r": r * s, "anim": an, "u": u}
+
+
+## Hurtbox do corpo, relativa aos pés (y para baixo): onde este lutador pode ser atingido.
+func hurtbox() -> Rect2:
+	var s := body_scale
+	return Rect2(-HURT_W * s, -height - HURT_H * s, HURT_W * 2.0 * s, HURT_H * s)
+
+
+func hitbox_debug_on() -> bool:
+	return show_hitboxes
+
+
+func _hitbox_overlaps(hb: Dictionary, tg) -> bool:
+	var dx: float = (tg.position.x - position.x) * facing
+	var ts: float = tg.get("body_scale") if tg.get("body_scale") != null else 1.0
+	var tw: float = HURT_W * ts
+	if dx + tw < float(hb.x0) or dx - tw > float(hb.x1):
+		return false
+	var t0: float = tg.height
+	var t1: float = tg.height + HURT_H * ts
+	return float(hb.h1) >= t0 and float(hb.h0) <= t1
+
+
+## Interpola a trajetória gravada (amostras a cada 1/60 de u: [u, x, y, ...]).
+static func _hb_point(arr: PackedFloat32Array, stride: int, u: float) -> Vector2:
+	var n := arr.size() / stride
+	var f := clampf(u, 0.0, 1.0) * float(n - 1)
+	var i := mini(int(f), n - 2)
+	var k := f - float(i)
+	var a := Vector2(arr[i * stride + 1], arr[i * stride + 2])
+	var b := Vector2(arr[(i + 1) * stride + 1], arr[(i + 1) * stride + 2])
+	return a.lerp(b, k)
+
+
+static func _hb_angle(arr: PackedFloat32Array, u: float) -> float:
+	var n := arr.size() / 4
+	var f := clampf(u, 0.0, 1.0) * float(n - 1)
+	var i := mini(int(f), n - 2)
+	return lerp_angle(arr[i * 4 + 3], arr[(i + 1) * 4 + 3], f - float(i))
 
 
 # ---------- Desenho ----------
@@ -484,12 +579,15 @@ func attach_rig(path: String) -> void:
 		trail.reset_ghosts()  # troca de personagem: fantasmas do rig novo
 	rig.visible = false
 	add_child(rig)
+	if hitbox_view != null:
+		move_child(hitbox_view, -1)  # a depuração das hitboxes fica sempre por cima do rig
 	rig_ap = rig.get_node("AnimationPlayer")
 	rig_tree = rig.get_node_or_null("AnimationTree")
 	if rig_tree != null:
 		rig_pb = rig_tree.get("parameters/playback")
 		tree_states = rig_tree.get_meta("states", PackedStringArray())
 		strike_points = rig_tree.get_meta("strike_points", {})
+	hitboxes = rig.get_meta("hitboxes", {})
 
 
 ## Dirige o AnimationTree: escolhe o estado da máquina, a posição nos BlendSpaces e a fase.
@@ -545,6 +643,9 @@ func _make_trail() -> void:
 	trail.f = self
 	add_child(trail)
 	move_child(trail, 0)  # antes do rig: fica atrás do lutador
+	hitbox_view = HitboxView.new()
+	hitbox_view.f = self
+	add_child(hitbox_view)  # por último: desenha por cima do rig
 
 
 ## Cor do rastro de movimento (alfa 0 = sem rastro). Jogador e inimigo definem quando há rastro.

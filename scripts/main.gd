@@ -4,6 +4,7 @@ extends Node2D
 
 const PlayerScript = preload("res://scripts/player.gd")
 const EnemyScript = preload("res://scripts/enemy.gd")
+const FighterBase = preload("res://scripts/fighter.gd")
 const CrateScript = preload("res://scripts/crate.gd")
 const PickupScript = preload("res://scripts/pickup.gd")
 const SparkScript = preload("res://scripts/spark.gd")
@@ -86,6 +87,7 @@ var ach_page := 0
 var _v_held := false
 var _p_held := false
 var _b_held := false
+var _f3_held := false
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
 static var fx_enabled := true    # partículas dos golpes (P no título)
@@ -708,6 +710,12 @@ func _reset_slowmo() -> void:
 
 
 func _process(_delta: float) -> void:
+	# F3: mostra as hitboxes sincronizadas com a animação (depuração)
+	if Input.is_physical_key_pressed(KEY_F3) and not _f3_held:
+		_f3_held = true
+		FighterBase.show_hitboxes = not FighterBase.show_hitboxes
+	elif not Input.is_physical_key_pressed(KEY_F3):
+		_f3_held = false
 	var now := Time.get_ticks_usec()
 	var real_dt := clampf((now - slowmo_usec) / 1000000.0, 0.0, 0.1)
 	slowmo_usec = now

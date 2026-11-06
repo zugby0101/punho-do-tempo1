@@ -7,6 +7,7 @@ Etapas:
   1. blender_rig.py  — monta armatures, IK, peças e animações; salva art/rigs/punho_rigs.blend,
                        art/rigs/json/*.json e art/rigs/preview.png
   2. rig_to_godot.py — gera rigs/*.tscn (Skeleton2D + Polygon2D + AnimationPlayer) e confere a cinemática
+  3. hitboxes.py     — grava em cada cena as hitboxes sincronizadas com as animações (metadata/hitboxes)
 """
 import sys
 from pathlib import Path
@@ -21,9 +22,12 @@ except ImportError:
 
 import blender_rig  # noqa: E402
 import rig_to_godot  # noqa: E402
+import hitboxes  # noqa: E402
 
 if __name__ == "__main__":
     blender_rig.main()
     if "--check" not in sys.argv:
         sys.argv.append("--check")
     rig_to_godot.main()
+    sys.argv.remove("--check")
+    hitboxes.main()
