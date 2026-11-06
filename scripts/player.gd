@@ -400,6 +400,7 @@ func take_hit(dmg: int, dir: int, knock: bool, launch: float = 1.0) -> void:
 func _clamp_position() -> void:
 	position.y = clampf(position.y, game.DEPTH_MIN, game.DEPTH_MAX)
 	position.x = clampf(position.x, game.cam_left() + 24.0, game.cam_right() - 24.0)
+	position.x = game.clamp_x(position.x, body_half_w())  # o corpo encosta na barreira do fim da fase
 
 
 func _die() -> void:

@@ -23,8 +23,13 @@ const ThrownScript = preload("res://scripts/thrown.gd")
 const EnergyScript = preload("res://scripts/energy.gd")
 const PopupScript = preload("res://scripts/popup.gd")
 
-const DEPTH_MIN := 360.0
-const DEPTH_MAX := 520.0
+# Faixa do chão onde se anda (pés): começa FLOOR_BACK px abaixo da borda do chão desenhado na era
+# (background.gd -> floor_top) e vai até FLOOR_FRONT px antes da base da tela.
+var DEPTH_MIN := 360.0
+var DEPTH_MAX := 520.0
+const FLOOR_BACK := 30.0
+const FLOOR_FRONT := 20.0
+const SCREEN_H := 540.0
 const STAGE_LEN := 4400.0
 const HALF_W := 480.0
 const MAX_PLAYERS := 4
@@ -158,6 +163,7 @@ func _ready() -> void:
 	bg.game = self
 	bg.stage = stage
 	bg.z_index = -100
+	_apply_stage_bounds()
 	add_child(bg)
 	entities = Node2D.new()
 	entities.y_sort_enabled = true
@@ -286,6 +292,24 @@ func _set_mode(m: String) -> void:
 
 func is_frozen() -> bool:
 	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry", "achievements", "dialog"] or paused or hitstop > 0.0
+
+
+## Colisões do cenário tiradas do desenho da era: a faixa do chão e a barreira do fim da fase.
+func _apply_stage_bounds() -> void:
+	if bg == null:
+		return
+	DEPTH_MIN = bg.floor_top() + FLOOR_BACK
+	DEPTH_MAX = SCREEN_H - FLOOR_FRONT
+
+
+## Face esquerda da barreira desenhada no fim da fase (background.gd).
+func wall_x() -> float:
+	return STAGE_LEN - 30.0
+
+
+## Limite horizontal para algo com meia largura `half`: não entra na barreira do fim da fase.
+func clamp_x(x: float, half: float) -> float:
+	return clampf(x, half, wall_x() - half)
 
 
 func cam_left() -> float:
@@ -655,6 +679,7 @@ func _change_stage(d: int) -> void:
 	stage = stages[stage_idx]
 	waves = Stages.waves_for(stage_idx)
 	bg.stage = stage
+	_apply_stage_bounds()
 	sfx.play("whoosh", 0.0)
 
 
@@ -1503,6 +1528,7 @@ func net_apply(snap: Array) -> void:
 		stage_idx = new_stage
 		stage = stages[stage_idx]
 		bg.stage = stage
+	_apply_stage_bounds()
 	mode = snap[0]
 	mode_time = snap[1]
 	paused = snap[3]
@@ -1849,6 +1875,7 @@ func _survival_wave_cleared() -> void:
 		stage_idx = (stage_idx + 1) % SECRET_IDX
 		stage = stages[stage_idx]
 		bg.stage = stage
+	_apply_stage_bounds()
 		_play_stage_music(false)
 		surv_break = 4.5
 		hud.show_message("VIAGEM NO TEMPO: %s" % stage.name, 3.0)

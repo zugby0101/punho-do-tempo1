@@ -35,6 +35,11 @@ func _physics_process(delta: float) -> void:
 	t += delta
 	life -= delta
 	position.x += dir * speed * delta
+	if dir > 0 and position.x + (KI_R if kind == "ki" else 9.0) >= game.wall_x():
+		# a barreira do fim da fase segura o projétil
+		game.spawn_spark(Vector2(game.wall_x(), position.y - (height if kind == "ki" else 12.0)), color, 1.2)
+		queue_free()
+		return
 	if life <= 0.0 or position.x < game.cam_left() - 40.0 or position.x > game.cam_right() + 40.0:
 		queue_free()
 		return

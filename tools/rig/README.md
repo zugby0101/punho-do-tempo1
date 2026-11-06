@@ -279,3 +279,14 @@ IA). Além disso:
 - **Câmera lenta do golpe final:** foca o centro do corpo desenhado do chefe (`hurt_rect`), não uma
   altura fixa.
 - O `--check` simula também a investida de cada tipo de chefe contra cada lutador parado.
+
+**Cenários.** As colisões do cenário saem do desenho de cada era (`background.gd`):
+
+- **Chão:** a faixa onde se anda começa 30 px abaixo da borda de trás do chão desenhado (`floor_top`:
+  330 px na maioria das eras, 336 no convés dos navios, 318 na calçada da era moderna) e vai até 20 px
+  antes da base da tela (`main.gd` → `_apply_stage_bounds`, a cada troca de era). Antes era fixa
+  em 360–520 px em todas as eras.
+- **Barreira do fim da fase:** a face desenhada (`wall_x`, `STAGE_LEN - 30`) é a parede. Lutadores
+  encostam nela com o corpo (`body_half_w`, antes entravam ~26 px), armas no chão quicam de volta,
+  a arma arremessada bate e cai ali e a Onda Ki/Onda Sísmica param nela com uma faísca.
+- F3 mostra a faixa do chão (azul) e a barreira (vermelho).
