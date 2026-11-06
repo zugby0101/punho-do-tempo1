@@ -1,10 +1,15 @@
 extends Node2D
-## Arma caída no chão. O jogador pega apertando SOCO em cima dela.
+## Arma caída no chão. O jogador pega apertando SOCO com a mão no cabo dela.
+## Caindo rápido (do céu, ou solta por quem foi derrubado), acerta quem estiver embaixo;
+## no chão, golpes que varrem por ela (chute, slam, golpe armado) a chutam para longe.
 
 const Weapons = preload("res://scripts/weapons.gd")
 const LIFETIME := 18.0
 const FighterBase = preload("res://scripts/fighter.gd")
 const PICK_DEPTH := 20.0  # diferença de profundidade (chão) máxima para alcançar a arma
+const FALL_HURT_VZ := 300.0  # caindo mais rápido que isso (px/s), machuca quem está embaixo
+const KICK_SPEED := 300.0
+const KICK_VZ := 240.0
 
 var game
 var weapon: Dictionary
@@ -13,6 +18,7 @@ var vz := 0.0
 var vel := Vector2.ZERO
 var life := LIFETIME
 var t := 0.0
+var ignore: Array = []  # quem a arma não machuca ao cair (quem a soltou, quem já foi atingido)
 
 
 func toss(dir: float) -> void:
@@ -34,9 +40,51 @@ func draw_angle() -> float:
 	return -0.12 + (t * 14.0 if height > 0.0 else 0.0)
 
 
-## Hitbox de pegar: exatamente o que está desenhado (relativa à posição da arma, y para baixo).
+## Caixa da arma desenhada (relativa à posição da arma, y para baixo): acerta ao cair, é chutada.
 func pick_box() -> Rect2:
 	return Weapons.bounds(weapon, grip(), draw_angle())
+
+
+## Cabo da arma desenhado: é aqui que a mão precisa encostar para pegar (da mão até ~10 px de cabo).
+func grip_box() -> Rect2:
+	var e := Weapons.extent(weapon)
+	var a := draw_angle()
+	var d := Vector2(cos(a), sin(a))
+	var h := grip()
+	return Rect2(h - d * e.x, Vector2.ZERO).expand(h + d * 10.0).grow(5.0)
+
+
+## Chutada por um golpe: sai voando baixo para o lado do golpe (não machuca: não cai rápido).
+func kick(dir: int, by) -> void:
+	vel = Vector2(dir * KICK_SPEED, 0.0)
+	vz = KICK_VZ
+	height = maxf(height, 1.0)
+	ignore = [by]
+
+
+func _hit_below() -> void:
+	var box := pick_box()
+	var targets: Array = game.active_players() + game._alive_enemies()
+	for tg in targets:
+		if tg in ignore or not is_instance_valid(tg) or not tg.can_be_hit():
+			continue
+		if absf(tg.position.y - position.y) >= PICK_DEPTH:
+			continue
+		var body: Rect2 = tg.hurt_rect()
+		body.position.x += tg.position.x - position.x
+		if not body.intersects(box, true):
+			continue
+		ignore.append(tg)
+		var dir := 1 if tg.position.x >= position.x else -1
+		var dmg := clampi(int(-vz / 80.0), 4, 12)
+		tg.take_hit(dmg, dir, -vz > 700.0)
+		game.spawn_spark(position + Vector2(0, -height - 10.0), Color(1, 1, 0.8), 1.0)
+		game.sfx.play("i_thrown", 0.06)
+		game.shake(3.0, Vector2(0, 0.6))
+		# ricocheteia na cabeça de quem acertou
+		vz = 180.0
+		vel.x = -dir * 90.0
+		return
 
 
 func _process(delta: float) -> void:
@@ -55,6 +103,8 @@ func _process(delta: float) -> void:
 		vz -= 1500.0 * delta
 		height += vz * delta
 		position += vel * delta
+		if vz < -FALL_HURT_VZ and height > 0.0 and game != null:
+			_hit_below()
 		if height <= 0.0:
 			height = 0.0
 			if vz < -200.0:
@@ -88,5 +138,8 @@ func _draw() -> void:
 		draw_circle(Vector2(L * 0.35, -9.0), 2.5 + g * 2.0, Color(1, 1, 0.8, 0.5 * g))
 	if FighterBase.show_hitboxes:
 		var r := pick_box()
-		draw_rect(r, Color(1, 0.85, 0.2, 0.2), true)
-		draw_rect(r, Color(1, 0.85, 0.2, 0.9), false, 1.0)
+		var falling := vz < -FALL_HURT_VZ and height > 0.0
+		var c := Color(1, 0.15, 0.1) if falling else Color(1, 0.85, 0.2)  # vermelho: caindo, machuca
+		draw_rect(r, Color(c.r, c.g, c.b, 0.2), true)
+		draw_rect(r, Color(c.r, c.g, c.b, 0.9), false, 1.0)
+		draw_rect(grip_box(), Color(1, 1, 1, 0.9), false, 1.0)  # cabo: onde a mão pega

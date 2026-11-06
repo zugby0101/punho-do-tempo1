@@ -1150,8 +1150,9 @@ func spawn_pickup(kind: String, pos: Vector2) -> void:
 
 
 # ---------- Armas ----------
-func spawn_weapon_item(w: Dictionary, pos: Vector2, dir: int, h: float = 0.0) -> void:
+func spawn_weapon_item(w: Dictionary, pos: Vector2, dir: int, h: float = 0.0, ignore: Array = []):
 	var it = WeaponItemScript.new()
+	it.ignore = ignore.duplicate()
 	it.game = self
 	it.weapon = w
 	it.position = pos
@@ -1159,9 +1160,28 @@ func spawn_weapon_item(w: Dictionary, pos: Vector2, dir: int, h: float = 0.0) ->
 	entities.add_child(it)
 	it.toss(float(dir))
 	it.height = maxf(h, 1.0)
+	return it
 
 
-## Arma ao alcance da mão: a área de pegar do lutador (corpo + mão da guarda do rig) cruza o desenho
+## Golpe varrendo o chão: a ponta (pés, punhos, arma) passou pelos pontos `pts` (relativos aos pés do
+## lutador, y para baixo) com raio `r` neste quadro; armas no chão tocadas por ela são chutadas.
+func kick_weapons(by, pts: Array, r: float) -> void:
+	for it in get_tree().get_nodes_in_group("weapons"):
+		if it.is_queued_for_deletion() or it in by.hit_list:
+			continue
+		if absf(it.position.y - by.position.y) >= WeaponItemScript.PICK_DEPTH:
+			continue
+		var box: Rect2 = it.pick_box().grow(r)
+		box.position.x += it.position.x - by.position.x
+		for p in pts:
+			if box.has_point(p):
+				by.hit_list.append(it)
+				it.kick(by.facing, by)
+				sfx.play("i_metal" if it.weapon.get("kind", "") == "blade" else "i_wood", 0.08)
+				spawn_spark(it.position + Vector2(0, -8.0), Color(1, 0.95, 0.7), 0.5)
+				break
+
+## Arma ao alcance da mão: a mão do lutador (da guarda do rig, abaixando até o chão) encosta no cabo
 ## da arma — no chão ou ainda quicando, se ela estiver na altura da mão. Pega a mais próxima.
 func weapon_near(p):
 	var grab: Rect2 = p.grab_box()
@@ -1172,7 +1192,7 @@ func weapon_near(p):
 			continue
 		if absf(it.position.y - p.position.y) >= WeaponItemScript.PICK_DEPTH:
 			continue
-		var box: Rect2 = it.pick_box()
+		var box: Rect2 = it.grip_box()  # a mão precisa encostar no cabo
 		box.position += Vector2(it.position.x - p.position.x, 0.0)
 		if not grab.intersects(box, true):
 			continue

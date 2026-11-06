@@ -9,6 +9,7 @@ var weapon: Dictionary
 var dir := 1
 var height := 46.0
 var traveled := 0.0
+var last_target = null
 var t := 0.0
 const SPEED := 620.0
 const RANGE := 560.0
@@ -50,6 +51,7 @@ func _physics_process(delta: float) -> void:
 				Ach.track(owner_player, "throws")
 			if is_instance_valid(owner_player):
 				game.on_hit(owner_player, e, atk)
+			last_target = e
 			_land(true)
 			return
 	if dir > 0 and position.x + band_half() >= game.wall_x():
@@ -68,7 +70,11 @@ func _physics_process(delta: float) -> void:
 func _land(hit: bool) -> void:
 	weapon.uses = int(weapon.uses) - (3 if hit else 1)
 	if weapon.uses > 0:
-		game.spawn_weapon_item(weapon, position, -dir if hit else dir, height)
+		# ao cair, não machuca quem arremessou nem quem acabou de levar a arma
+		var ign: Array = [owner_player]
+		if last_target != null:
+			ign.append(last_target)
+		game.spawn_weapon_item(weapon, position, -dir if hit else dir, height, ign)
 	else:
 		game.spawn_spark(position + Vector2(0, -height), Color(0.9, 0.9, 1.0), 0.8)
 		game.sfx.play("break")
