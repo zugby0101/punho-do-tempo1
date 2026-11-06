@@ -5,6 +5,7 @@ extends Node
 ##   w_*   som do golpe cortando o ar (um por tipo de golpe)
 ##   i_*   som do impacto (um por tipo de golpe / arma)
 ##   sp_*  som de início do golpe especial de cada lutador
+##   st_*  passos: chão de cada era (st_<chão>_a/_b) + camada de quem pisa (st_heavy, st_servo, ...)
 ##   m_*   som do CORPO de quem apanha, pelo material (materials.gd): carne, máquina, ciborgue, mutante,
 ##         sombra, tempo, luz; m_*_ko no golpe que derruba de vez; m_wet (sangue); m_helmet (capacete)
 ##   + sons gerais (pulo, dano, queda, KO, menus, bloqueio, ÉON...)
@@ -16,6 +17,8 @@ var players: Array = []
 var idx := 0
 var voice_players: Array = []  # vozes em canais próprios (um grito não corta o impacto)
 var vidx := 0
+var step_players: Array = []  # passos em canais próprios (não roubam o canal dos golpes)
+var sidx := 0
 var hook: Callable  # online: o anfitrião repassa os sons (nome, tom) aos convidados
 
 
@@ -25,6 +28,11 @@ func _ready() -> void:
 		pl.volume_db = -6.0
 		add_child(pl)
 		players.append(pl)
+	for i in 6:
+		var sp := AudioStreamPlayer.new()
+		sp.volume_db = -12.0
+		add_child(sp)
+		step_players.append(sp)
 	for i in 5:
 		var vp := AudioStreamPlayer.new()
 		vp.volume_db = -3.0
@@ -56,6 +64,9 @@ func play_exact(name: String, pitch: float) -> void:
 	if name.begins_with("vo_"):
 		p = voice_players[vidx]
 		vidx = (vidx + 1) % voice_players.size()
+	elif name.begins_with("st_"):
+		p = step_players[sidx]
+		sidx = (sidx + 1) % step_players.size()
 	else:
 		p = players[idx]
 		idx = (idx + 1) % players.size()
@@ -316,6 +327,33 @@ func _build_all() -> void:
 	b = _buf(0.28); _ring(b, 0, 0.28, [1180.0, 2470.0, 3890.0], 0.6, 10.0); _noise_band(b, 0, 0.03, 6000, 4000, 0.5, "hit", 0.0, 90.0)
 	_store("m_helmet", b, 0.5)
 
+	# --- passos: o chão de cada era (duas variações, alternadas pé a pé) ---
+	for v in ["a", "b"]:
+		var d := 1.0 if v == "a" else 0.92  # a segunda pisada um pouco mais grave
+		b = _buf(0.12); _noise_band(b, 0, 0.1, 700 * d, 250, 0.9, "hit", 0.0, 40.0); _tone(b, 0, 0.08, 90 * d, 60, 0.6, 40.0); _store("st_dirt_" + v, b, 0.5)
+		b = _buf(0.16); _noise_band(b, 0, 0.15, 5200 * d, 2500, 0.9, "hit", 0.0, 22.0); _tone(b, 0, 0.06, 110 * d, 80, 0.3, 50.0); _store("st_sand_" + v, b, 0.4)
+		b = _buf(0.14)
+		for k in 4:
+			_noise_band(b, k * 0.018, 0.04, 4200 * d, 2600, 0.6, "hit", 0.0, 90.0)
+		_tone(b, 0, 0.07, 100 * d, 70, 0.5, 45.0); _store("st_gravel_" + v, b, 0.5)
+		b = _buf(0.14); _tone(b, 0, 0.12, 190 * d, 150, 0.8, 28.0, "tri"); _tone(b, 0, 0.1, 410 * d, 330, 0.25, 40.0); _noise_band(b, 0, 0.03, 1800, 900, 0.4, "hit", 0.0, 80.0); _store("st_wood_" + v, b, 0.55)
+		b = _buf(0.11); _noise_band(b, 0, 0.05, 2600 * d, 1400, 0.9, "hit", 0.0, 70.0); _tone(b, 0, 0.09, 140 * d, 95, 0.55, 40.0); _store("st_cobble_" + v, b, 0.55)
+		b = _buf(0.2); _noise_band(b, 0, 0.18, 900 * d, 300, 0.9, "hit", 26.0, 16.0); _tone(b, 0, 0.1, 75 * d, 55, 0.5, 30.0); _store("st_mud_" + v, b, 0.5)
+		b = _buf(0.16); _noise_band(b, 0, 0.06, 3000 * d, 1500, 0.8, "hit", 0.0, 60.0); _noise_band(b, 0.04, 0.08, 5000, 3000, 0.4, "hit", 0.0, 60.0); _tone(b, 0, 0.08, 110 * d, 75, 0.5, 40.0); _store("st_rubble_" + v, b, 0.5)
+		b = _buf(0.1); _noise_band(b, 0, 0.04, 3600 * d, 2000, 0.8, "hit", 0.0, 95.0); _tone(b, 0, 0.07, 160 * d, 120, 0.5, 55.0); _store("st_concrete_" + v, b, 0.5)
+		b = _buf(0.1); _noise_band(b, 0, 0.05, 2400 * d, 1300, 0.8, "hit", 0.0, 80.0); _tone(b, 0, 0.07, 130 * d, 95, 0.55, 50.0); _store("st_asphalt_" + v, b, 0.5)
+		b = _buf(0.18); _noise_band(b, 0, 0.02, 6000, 4000, 0.5, "hit", 0.0, 120.0); _ring(b, 0, 0.18, [2093.0 * d, 3136.0 * d], 0.35, 18.0); _tone(b, 0, 0.06, 170 * d, 130, 0.4, 55.0); _store("st_glass_" + v, b, 0.45)
+		b = _buf(0.22); _ring(b, 0, 0.22, [420.0 * d, 1010.0 * d, 1730.0 * d], 0.6, 12.0); _noise_band(b, 0, 0.03, 4000, 2500, 0.5, "hit", 0.0, 90.0); _store("st_metal_" + v, b, 0.5)
+		b = _buf(0.16); _noise_band(b, 0, 0.16, 1800 * d, 600, 0.9, "swell", 0.0, 18.0); _tone(b, 0, 0.06, 90 * d, 65, 0.3, 50.0); _store("st_ash_" + v, b, 0.35)
+		b = _buf(0.3); _ring(b, 0, 0.3, [1568.0 * d, 2349.0 * d, 3136.0 * d], 0.4, 7.0); _tone(b, 0, 0.06, 150 * d, 110, 0.4, 55.0); _store("st_crystal_" + v, b, 0.4)
+	# --- passos: a camada de quem pisa ---
+	b = _buf(0.22); _tone(b, 0, 0.22, 58, 38, 1.0, 12.0); _noise_band(b, 0, 0.08, 400, 150, 0.3, "hit", 0.0, 30.0); _store("st_heavy", b, 0.6)
+	b = _buf(0.2); _ring(b, 0, 0.12, [880.0, 1990.0], 0.5, 22.0); _tone(b, 0.03, 0.15, 600, 900, 0.25, 12.0, "saw"); _store("st_servo", b, 0.4)
+	b = _buf(0.08); _tone(b, 0, 0.05, 3200, 3200, 0.6, 60.0); _ring(b, 0, 0.08, [4700.0], 0.3, 50.0); _store("st_tick", b, 0.35)
+	b = _buf(0.08); _tone(b, 0, 0.06, 1760, 1320, 0.5, 30.0, "square"); _store("st_blip", b, 0.2)
+	b = _buf(0.16); _noise_band(b, 0, 0.14, 800, 300, 1.0, "hit", 30.0, 20.0); _store("st_squelch", b, 0.35)
+	b = _buf(0.2); _noise_band(b, 0, 0.2, 6000, 2500, 1.0, "swell", 0.0, 18.0); _store("st_whisper", b, 0.18)
+
 	# --- bipe dos diálogos (o tom acompanha quem fala) ---
 	b = _buf(0.035); _tone(b, 0, 0.035, 520, 470, 0.6, 40.0, "square"); _store("blip", b, 0.22)
 
@@ -377,6 +415,32 @@ static func body_sound(mat: String, scale: float, rig_slug: String, ko: bool) ->
 
 # capacetes, elmos e coroas de metal: golpe na cabeça soa no metal (os 79 rigs: looks.py / characters.gd)
 const METAL_HATS := ["helmet", "greathelm", "kabuto", "brodie", "helmet2", "spike", "crown"]
+
+
+## Chão de cada era (background.gd desenha um por estilo).
+const FLOOR_SURFACE := {
+	"stone": "dirt", "crusade": "sand", "japan": "gravel", "ships": "wood", "industrial": "cobble", "ww1": "mud",
+	"ww2": "rubble", "coldwar": "concrete", "modern": "asphalt", "utopia": "glass", "dystopia": "metal",
+	"apocalypse": "ash", "void": "crystal",
+}
+# camada de quem pisa, pelo material do corpo (materials.gd); carne não tem camada extra
+const STEP_LAYER := {"machine": "st_servo", "cyborg": "st_servo", "time": "st_tick", "light": "st_blip",
+	"mutant": "st_squelch", "shadow": "st_whisper"}
+
+
+## Passo: [[nome, tom], ...]. Chão da era (variação a/b alternada pé a pé), camada do material e,
+## para quem é pesado (porte 1,1+), um baque grave. Sombras pisam quase sem som (só o sussurro).
+static func step_sounds(style: String, mat: String, scale: float, rig_slug: String, front: bool) -> Array:
+	var ident := 0.9 + float(absi(rig_slug.hash()) % 21) / 100.0
+	var pitch := body_pitch(scale) * ident
+	var out: Array = []
+	if mat != "shadow":
+		out.append(["st_%s_%s" % [FLOOR_SURFACE.get(style, "concrete"), "a" if front else "b"], pitch])
+	if STEP_LAYER.has(mat):
+		out.append([STEP_LAYER[mat], ident])
+	if scale >= 1.1 and mat != "shadow":
+		out.append(["st_heavy", pitch])
+	return out
 
 
 ## Tom do corpo: personagens maiores soam mais graves.
