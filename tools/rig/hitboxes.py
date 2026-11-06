@@ -555,6 +555,8 @@ def body_box(bones, pose, parts, rest):
     incluídos) deformado pelos ossos como o Godot faz (pose do osso x inverso do repouso)."""
     xs, ys = [], []
     for name, verts, ws in parts:
+        if name.startswith(("ol_", "dt_")):
+            continue  # contornos e detalhes de acabamento: a caixa do corpo é a das peças-base
         if any(b not in BODY_BONES for b, _ in ws):
             continue  # capas, halo, ampulheta, orbes, tranças: efeitos que balançam sozinhos
         for i, v in enumerate(verts):
