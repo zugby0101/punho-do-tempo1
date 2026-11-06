@@ -95,6 +95,7 @@ var _b_held := false
 var _f3_held := false
 static var last_names := {}      # pid -> último nome usado
 static var rig_mode := true      # visual dos lutadores: rig 2D (true) ou desenho clássico
+static var model_detail := true  # rig definitivo (contorno, sombreado, rosto, detalhes) ou simples (só as peças)
 static var fx_enabled := true    # partículas dos golpes (P no título)
 static var blood_enabled := true # sangue e manchas no chão (Y no título); desligado vira poeira
 static var shake_level := 2      # tremor da câmera (E no título): 2 = 100%, 1 = 50%, 0 = desligado
@@ -406,7 +407,14 @@ func _physics_process(delta: float) -> void:
 				return
 			if Input.is_physical_key_pressed(KEY_V) and not _v_held:
 				_v_held = true
-				rig_mode = not rig_mode
+				# V: rig definitivo -> rig simples -> clássico -> rig definitivo
+				if rig_mode and model_detail:
+					model_detail = false
+				elif rig_mode:
+					rig_mode = false
+				else:
+					rig_mode = true
+					model_detail = true
 				_save_settings()
 				sfx.play("whoosh", 0.0)
 			elif not Input.is_physical_key_pressed(KEY_V):
@@ -2125,6 +2133,7 @@ func _load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://settings.cfg") == OK:
 		rig_mode = cfg.get_value("visual", "rig_mode", true)
+		model_detail = cfg.get_value("visual", "model_detail", true)
 		fx_enabled = cfg.get_value("visual", "particles", true)
 		blood_enabled = cfg.get_value("visual", "blood", true)
 		shake_level = clampi(int(cfg.get_value("visual", "shake", 2)), 0, 2)
@@ -2135,6 +2144,7 @@ func _save_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load("user://settings.cfg")
 	cfg.set_value("visual", "rig_mode", rig_mode)
+	cfg.set_value("visual", "model_detail", model_detail)
 	cfg.set_value("visual", "particles", fx_enabled)
 	cfg.set_value("visual", "blood", blood_enabled)
 	cfg.set_value("visual", "shake", shake_level)

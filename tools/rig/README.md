@@ -343,3 +343,40 @@ Blender: ~0,004 rad fora dos quadros de corte da trilha (onde o ângulo é o mes
 Cada perfil muda a animação: os pesados abaixam mais, robôs se movem em degraus (interpolação
 linear), o ÉON continua flutuando (os pés acompanham o corpo) e quem chuta alto (Mateus, Oksana, Amélie,
 Mei, Itzel, Luca e Kirra) finaliza com um chute alto em vez das duas mãos.
+
+## Modelos definitivos (`models.py`)
+
+```bash
+python tools/rig/models.py      # acabamento final nas 79 cenas (build.py roda depois do rig_to_godot)
+python tools/rig/hitboxes.py    # depois: as hurtboxes usam a silhueta desenhada
+```
+
+Sobre as peças do Blender, cada modelo ganha (todas presas aos mesmos ossos da peça de origem, então
+acompanham as animações):
+
+- **contorno** de ~1,3 px em cada peça, num tom bem escuro da própria cor, logo atrás dela;
+- **sombreamento cel**: o lado da peça longe da luz (luz de cima e da frente) num tom mais escuro e um
+  brilho estreito no lado iluminado;
+- **rosto**: branco do olho, sobrancelha (franzida nos inimigos) e boca; robôs, visores e o ÉON mantêm o
+  rosto deles, ninjas ficam sem boca e a máscara da Itzel sem sobrancelha;
+- **detalhes do estilo de luta** dos 14 lutadores:
+
+| Lutador | Detalhe |
+|---|---|
+| Mateus (Capoeira) | cordão amarelo e verde com a ponta pendurada |
+| Valentina (Boxe), Luca (Kickboxing), Amélie (Savate) | luvas (vermelhas, azuis, azul-marinho) com punho branco |
+| Jake (Luta-livre) | joelheiras |
+| Itzel (Lucha Libre) | cinturão de campeã com placa dourada |
+| Dmitri (Sambo) | jaqueta (mangas) e faixa vermelha |
+| Oksana (Hopak) | faixa vermelha com pontas |
+| Kai (Karatê) | mangas do kimono e faixa preta com pontas |
+| Mei (Kung Fu) | mangas e faixa vermelha com pontas |
+| Kofi (Boxe Dambe) | a mão da frente enfaixada (a "lança") |
+| Amara (Gidigbo) | pulseiras de contas |
+| Tama (Mau Rākau) | faixas de tatuagem nos braços e coxas |
+| Kirra (Muay Thai) | luvas vermelhas, prajioud nos braços e mongkol na cabeça |
+
+As peças novas têm prefixo (`ol_`, `sh_`, `hl_`, `fc_`, `dt_`) e são refeitas do zero a cada execução
+(rodar de novo não muda nada); cores trocadas guardam a original em `metadata/base_color`. Cada modelo
+passa de ~22 para ~86 polígonos: **V** no título alterna entre rig definitivo, rig simples (sem o
+acabamento, para máquinas mais fracas) e o visual clássico.

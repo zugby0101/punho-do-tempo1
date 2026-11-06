@@ -27,7 +27,7 @@ O jogo começa quando todos estão prontos.
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
 Enter confirma nos menus, Esc ou P pausa. No título: O = online, R = ranking, M = conquistas;
-V = visual, P = partículas, Y = sangue, E = tremor da câmera (100% / 50% / desligado), B = vibração. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
+V = visual (rig definitivo / rig simples / clássico), P = partículas, Y = sangue, E = tremor da câmera (100% / 50% / desligado), B = vibração. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 Segurar **Bloqueio** ergue a guarda (para golpes de frente; os fortes tiram só um pouco de vida) e
 **Bloqueio + Pulo** é uma esquiva: um passo rápido para trás, invencível enquanto está no ar. Quando um
 golpe do combo derrubaria de vez um inimigo à frente, sai a **finalização** no lugar dele.
@@ -407,8 +407,10 @@ Todos os personagens — os 14 lutadores e os 65 inimigos, sub-chefes e chefes d
 são animados por um **rig 2D de esqueleto** gerado no Blender por
 script Python (armature com IK para mãos e pés e animações de combate com antecipação, impacto
 sincronizado com o acerto, excesso e personalidade por estilo de luta) e convertido em cenas do Godot
-(`Skeleton2D` + `Polygon2D` com skinning + `AnimationPlayer`). No título, **V** alterna entre o
-rig e o visual clássico. Como gerar e editar: [`tools/rig/README.md`](tools/rig/README.md).
+(`Skeleton2D` + `Polygon2D` com skinning + `AnimationPlayer`). Os modelos definitivos têm contorno,
+sombreamento cel em dois tons, rosto (olho, sobrancelha e boca) e os detalhes do estilo de luta de cada
+lutador (luvas, faixas, cordão, joelheiras, tatuagens, mongkol...). No título, **V** alterna entre o rig
+definitivo, o rig simples (sem o acabamento, mais leve) e o visual clássico. Como gerar e editar: [`tools/rig/README.md`](tools/rig/README.md).
 
 Cada rig tem também um **`AnimationTree`** com máquina de estados e **BlendSpaces**:
 `locomotion` (BlendSpace1D parado↔andando, sincronizado), `strike` (BlendSpace2D com os golpes

@@ -934,8 +934,25 @@ func _phase_u(p: float) -> float:
 	return 0.42 + 0.58 * (1.0 - p)
 
 
+## Peças de acabamento do modelo definitivo (tools/rig/models.py): contorno, sombra, brilho, rosto, detalhes.
+const DETAIL_PREFIX := ["ol_", "sh_", "hl_", "fc_", "dt_"]
+
+
+func _apply_model_detail() -> void:
+	var want: bool = game.model_detail
+	if rig.has_meta("detail") and bool(rig.get_meta("detail")) == want:
+		return
+	rig.set_meta("detail", want)
+	for n in rig.get_node("Parts").get_children():
+		for pre in DETAIL_PREFIX:
+			if n.name.begins_with(pre):
+				n.visible = want
+				break
+
+
 func _sync_rig(off: Vector2, rot: float, scl: Vector2, an: String, u: float, phase: float) -> void:
 	rig.visible = true
+	_apply_model_detail()
 	rig.position = off
 	rig.rotation = rot
 	rig.scale = scl
