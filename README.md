@@ -241,6 +241,15 @@ ajuste fixo de cada personagem (pelo nome do rig), então os 79 soam diferentes 
 pega na cabeça (quarto de cima do corpo) de quem usa capacete, elmo ou coroa de metal — cavaleiros,
 samurais, soldados das guerras, reis — também tilinta no metal.
 
+**Golpes cortando o ar** (os 79 personagens): o assobio do golpe começa quando a ponta (punho, pé,
+arma) entra no trecho rápido que termina no impacto — medido na animação de cada rig e gravado em
+`metadata/hitboxes` (`sw`; `wsw` para a ponta da arma) pelo `tools/rig/hitboxes.py`; em quase todos os
+golpes isso é u ≈ 0,27, logo depois da antecipação (antes, tocava só no quadro do impacto). O tom
+acompanha o porte e o ajuste de cada personagem, e fica mais grave quanto maior o caminho da ponta (jab
+de 27 px agudo, arco de arma de até 172 px grave). Por cima do assobio, a camada de quem bate: máquinas
+e ciborgue com servo, sombras com sopro fantasma, Cronos e ÉON com varredura de sino, IA Aurora com zumbido
+elétrico, e um "vum" grave para quem é pesado.
+
 **Passos** (os 79 personagens): o passo toca no quadro em que o **pé desenhado** volta ao chão — o jogo
 lê a altura dos ossos dos pés no esqueleto já posado (AnimationPlayer ou AnimationTree) e, quando um pé
 que estava levantado (3+ px) encosta (até 1 px), toca o passo. Por isso soam também a pisada do haka
