@@ -182,6 +182,7 @@ func _update(delta: float) -> void:
 					target.position.y + (0.0 if aggressive else lane_offset))
 			# Mantém o alvo dentro da tela quando o inimigo já entrou
 			goal.x = clampf(goal.x, game.cam_left() + 30.0, game.cam_right() - 30.0)
+			goal = _avoid_crates(goal)  # contorna caixas no caminho
 			var to := goal - position
 			if to.length() > 6.0:
 				var dirv := to.normalized()
@@ -324,6 +325,56 @@ func _eon_time_warp() -> void:
 	# convoca Ecos
 	for k in eon_phase + 1:
 		game._spawn_enemy("knife" if k % 2 == 0 else "thug", 1 if k % 2 == 0 else -1)
+
+
+## Desvio de caixas (sólidas: fighter.gd -> _collide_crates). Se uma caixa está entre o inimigo e o
+## objetivo, ele passa pela frente ou por trás dela (o lado mais curto até o objetivo, dentro do chão),
+## primeiro mudando de faixa ainda antes da caixa e depois seguindo reto até depois dela. O lado
+## escolhido fica guardado enquanto a mesma caixa bloquear (não fica indeciso).
+## Se o objetivo cai dentro da caixa (jogador encostado nela), vai para a borda de frente/trás mais perto.
+const AVOID_MARGIN := 6.0
+var detour_crate = null
+var detour_y := 0.0
+
+
+func _avoid_crates(goal: Vector2) -> Vector2:
+	var hw := body_half_w()
+	for cr in get_tree().get_nodes_in_group("breakables"):
+		if not cr.has_method("solid_rect") or cr.hp <= 0:
+			continue
+		# área que o centro do inimigo não pode ocupar: base da caixa + meia largura do corpo
+		var sr: Rect2 = cr.solid_rect()
+		var r := Rect2(cr.position + sr.position - Vector2(hw, 0.0), sr.size + Vector2(hw * 2.0, 0.0))
+		var up := r.position.y - AVOID_MARGIN
+		var dn := r.end.y + AVOID_MARGIN
+		if r.grow(AVOID_MARGIN).has_point(goal):
+			var go_up: bool = (absf(goal.y - up) <= absf(goal.y - dn) and up - 2.0 >= game.DEPTH_MIN) or dn + 2.0 > game.DEPTH_MAX
+			goal.y = up - 2.0 if go_up else dn + 2.0
+		if not _segment_hits(r.grow(AVOID_MARGIN - 1.0), position, goal):
+			if detour_crate == cr:
+				detour_crate = null
+			continue
+		var ty := detour_y
+		if detour_crate != cr:
+			var cost_up := absf(position.y - up) + absf(goal.y - up) + (1e9 if up < game.DEPTH_MIN else 0.0)
+			var cost_dn := absf(position.y - dn) + absf(goal.y - dn) + (1e9 if dn > game.DEPTH_MAX else 0.0)
+			ty = up if cost_up <= cost_dn else dn
+			detour_crate = cr
+			detour_y = ty
+		var far_x := r.end.x + AVOID_MARGIN if goal.x > cr.position.x else r.position.x - AVOID_MARGIN
+		var near_x := r.position.x - AVOID_MARGIN if position.x < cr.position.x else r.end.x + AVOID_MARGIN
+		var beside := position.x > r.position.x - AVOID_MARGIN and position.x < r.end.x + AVOID_MARGIN
+		if absf(position.y - ty) > 3.0 and not beside:
+			return Vector2(near_x, ty)  # muda de faixa antes de chegar na caixa
+		return Vector2(far_x, ty)       # segue pela faixa até passar da caixa
+	return goal
+
+
+static func _segment_hits(r: Rect2, a: Vector2, b: Vector2) -> bool:
+	for k in range(1, 13):
+		if r.has_point(a.lerp(b, k / 12.0)):
+			return true
+	return false
 
 
 func _separate() -> void:
