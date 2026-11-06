@@ -76,6 +76,7 @@ static var use_anim_hitboxes := true
 static var show_hitboxes := false  # F3 mostra hitboxes (vermelho) e hurtboxes (verde)
 const HURT_H := 100.0   # altura da hurtbox do corpo (px, escala 1)
 const HURT_W := 16.0    # meia largura da hurtbox
+const DIVE_ROT := PI * 0.45  # o corpo deitado no mergulho (tools/rig/hitboxes.py -> BODY_ROT)
 const HitboxView = preload("res://scripts/hitbox_view.gd")
 var hitbox_view = null
 
@@ -315,7 +316,7 @@ func _check_hits(targets: Array) -> bool:
 func hitbox_now() -> Dictionary:
 	if not use_anim_hitboxes or hitboxes.is_empty() or attack.is_empty():
 		return {}
-	if not state in ["attack", "jump"] or attack.get("radial", false) or float(attack.get("reach", 0.0)) <= 0.0:
+	if not state in ["attack", "jump", "special"] or float(attack.get("reach", 0.0)) <= 0.0:
 		return {}
 	var ra := rig_anim()
 	var an: String = ra[0]
@@ -323,13 +324,14 @@ func hitbox_now() -> Dictionary:
 	if not hitboxes.has(an) or u < 0.0:
 		return {}
 	var d: Dictionary = hitboxes[an]
-	var armed: bool = not weapon.is_empty() and d.has("wpn")  # golpe armado: acerta a ponta da arma
+	# golpe armado: acerta a ponta da arma (o especial é sempre do corpo, mesmo segurando uma arma)
+	var armed: bool = not weapon.is_empty() and d.has("wpn") and state != "special"
 	var on: float = d.won if armed else d.on
 	var off: float = d.woff if armed else d.off
 	if u < on - 0.001 or u > off + 0.001:
 		return {"off_window": true}
 	var s := body_scale
-	var tip := _hb_point(d.pts, 3, u)
+	var tip := _hb_point(d.pts, 3, u).rotated(body_rot())  # no mergulho o corpo voa deitado
 	var r: float = float(d.r)
 	var peak: float = maxf(float(d.peak), 1.0)
 	if armed:
@@ -344,7 +346,9 @@ func hitbox_now() -> Dictionary:
 	var ext := clampf(tip.x / peak, 0.2, 1.15)
 	var far := float(attack.reach) * ext * s
 	var tip_h := height - tip.y * s
-	return {"x0": -15.0, "x1": far, "h0": tip_h - r * s, "h1": tip_h + r * s,
+	# golpes giratórios (radial, ou o lutador vira de um lado para o outro): acerta dos dois lados
+	var both: bool = attack.get("radial", false) or attack.get("spin", false)
+	return {"x0": -far if both else -15.0, "x1": far, "h0": tip_h - r * s, "h1": tip_h + r * s,
 		"tip": Vector2(tip.x * s, tip.y * s), "r": r * s, "anim": an, "u": u}
 
 
@@ -356,6 +360,14 @@ func hurtbox() -> Rect2:
 
 func hitbox_debug_on() -> bool:
 	return show_hitboxes
+
+
+## Rotação do corpo inteiro por cima da animação nos golpes (a mesma do desenho e do rig).
+## No referencial "para a frente" (x vezes facing) ela é sempre positiva = tomba para a frente.
+func body_rot() -> float:
+	if state == "special" and attack.get("pose", "") == "dive":
+		return DIVE_ROT
+	return 0.0
 
 
 func _hitbox_overlaps(hb: Dictionary, tg) -> bool:
@@ -454,7 +466,7 @@ func _draw() -> void:
 	var pose := net_pose if net else _current_pose()
 	var df := net_df if net else draw_facing()
 	if state == "special" and pose == "dive":
-		rot = PI * 0.45
+		rot = DIVE_ROT
 	if use_rig:
 		var ra: Array = [net_rig_anim, net_rig_u] if net else rig_anim()
 		_sync_rig(off, rot * df, Vector2(df * s, s), ra[0], ra[1], net_phase if net else _attack_phase())
@@ -493,7 +505,11 @@ func rig_anim() -> Array:
 				return ["idle", -1.0]
 			return [attack.get("pose", "jab"), _attack_u()]
 		"special":
-			return [attack.get("pose", "special"), _phase_u(float(attack.get("phase", 1.0)))]
+			var sp_pose: String = attack.get("pose", "special")
+			var ph := float(attack.get("phase", 1.0))
+			if sp_pose == "jumpkick" and ph >= 1.0:
+				return [sp_pose, 1.0]  # voadora dos especiais: perna esticada, como no pulo
+			return [sp_pose, _phase_u(ph)]
 		"jump":
 			if not attack.is_empty():
 				var at: float = get("air_t") if get("air_t") != null else state_time

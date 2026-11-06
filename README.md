@@ -333,7 +333,9 @@ jogabilidade (a pose de impacto continua caindo no quadro do acerto).
 golpeia — punho, pé ou a ponta da arma — quadro a quadro, e só existe enquanto essa ponta está lá na
 frente. O alcance de cada golpe continua o do jogo (`reach`), mas a altura vem da animação: o gancho
 pega quem está pulando (anti-aéreo), o slam só pega quem está no chão e a voadora só acerta depois
-que a perna estica. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
+que a perna estica. Vale também para os especiais corpo a corpo: as rajadas só acertam com o
+membro esticado, os giros acertam dos dois lados, o Tope Suicida acerta com os braços do corpo deitado
+e a onda do Esmagador Texano só pega quem está no chão. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
 
