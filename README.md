@@ -341,6 +341,21 @@ amplitude proporcional a trauma², com ruído suave, então socos leves quase n�
 golpes fortes sacodem de verdade. Golpes fortes ainda dão um **tranco na direção do golpe** (para
 cima no gancho e na pancada). Golpes seguidos se acumulam.
 
+**Câmera dinâmica: cada um dos 79 treme a tela do seu jeito** (`main.gd` → `shake_profile`). O tremor
+leva a marca de quem causou:
+
+| Traço | Vem de | Efeito |
+|---|---|---|
+| massa | porte do corpo | o mesmo golpe forte: Valentina ~7 px, Dmitri ~10, chefes ~15 |
+| ritmo | material do corpo + ajuste fixo de cada personagem | máquinas: tremor rápido e seco · IA Aurora: picotado · mutantes: mais lento · sombras e tempo (Cronos, ÉON): balanço lento |
+| inclinação | gigantes (1,3+), tempo e sombra | a câmera gira de leve (ÉON até ~0,8°, chefes ~0,15°); aproxima o bastante para os cantos não aparecerem |
+
+E ainda: **zoom de impacto** (um pulso rápido de zoom em direção ao ponto do contato nos golpes fortes,
+maior para quem é grande e na finalização) e **tranco vertical** (a câmera "afunda" a cada passo dos
+gigantes — brutos, sub-chefes, chefes —, na pisada do haka do Tama e quando um corpo grande cai). Na
+câmera lenta dos chefes, o zoom dela manda. Online, os convidados recebem inclinação, zoom e tranco do
+anfitrião.
+
 **Vibração dos controles** (motor leve / motor pesado):
 
 | Situação | Quem vibra | Intensidade |

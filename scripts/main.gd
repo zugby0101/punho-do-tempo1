@@ -133,6 +133,19 @@ var ko_flash := 0.0            # clarão branco do impacto final
 var shake_amt := 0.0           # amplitude atual do tremor (px), derivada do trauma
 var trauma := 0.0              # 0..1: soma dos impactos recentes; tremor = trauma² (fortes tremem muito mais)
 var shake_kick := Vector2.ZERO # tranco da câmera na direção do golpe
+# Câmera dinâmica: cada um dos 79 personagens treme a tela do seu jeito (shake_profile)
+var shake_freq := 1.0          # ritmo do tremor (máquinas rápido e seco, sombras/tempo balanço lento)
+var shake_phase := 0.0
+var roll_trauma := 0.0         # inclinação da câmera (gigantes, tempo, sombra)
+var cam_roll := 0.0
+var punch := 0.0               # pulso de zoom no impacto
+var punch_focus := Vector2.ZERO
+var bump_amp := 0.0            # tranco vertical (passos de gigantes, pisadas, quedas)
+var bump_t := 0.0
+const MAX_ROLL := 0.035        # rad (~2°)
+var snap_zoom := 1.0           # convidado: zoom da câmera lenta do anfitrião
+const SHAKE_FREQ := {"machine": 1.6, "cyborg": 1.3, "mutant": 0.85, "shadow": 0.6, "time": 0.55, "light": 2.0}
+const SHAKE_ROLL := {"time": 0.8, "shadow": 0.5}
 var shake_t := 0.0
 var combo_count := 0
 var combo_timer := 0.0
@@ -180,6 +193,7 @@ func _ready() -> void:
 	effects.z_index = 50
 	add_child(effects)
 	camera = Camera2D.new()
+	camera.ignore_rotation = false  # a câmera dinâmica inclina a tela
 	add_child(camera)
 	camera.make_current()
 	var layer := CanvasLayer.new()
@@ -715,19 +729,71 @@ func _update_camera(delta: float) -> void:
 			cam_x = move_toward(cam_x, desired, 500.0 * delta)
 		cam_x = minf(cam_x, STAGE_LEN - HALF_W)
 	camera.position = Vector2(cam_x, 270.0) + _shake_offset(delta)
+	_dynamic_camera(delta)
 
 
-## Tremor: ruído suave (não pulos aleatórios) com amplitude trauma², mais o tranco direcional.
+## Tremor: ruído suave (não pulos aleatórios) com amplitude trauma², mais o tranco direcional, no ritmo
+## de quem causou (shake_freq), mais o tranco vertical dos passos e quedas pesadas.
 func _shake_offset(delta: float) -> Vector2:
 	if not net_client:
 		trauma = maxf(0.0, trauma - 1.5 * delta)
 		shake_amt = trauma * trauma * 20.0
+		roll_trauma = maxf(0.0, roll_trauma - 1.2 * delta)
+		shake_freq = move_toward(shake_freq, 1.0, 0.8 * delta)
 	else:
 		shake_amt = move_toward(shake_amt, 0.0, 30.0 * delta)
 	shake_kick = shake_kick.lerp(Vector2.ZERO, 1.0 - exp(-12.0 * delta))
 	shake_t += delta
-	var n := Vector2(sin(shake_t * 47.0) + 0.6 * sin(shake_t * 83.0 + 1.3), sin(shake_t * 53.0 + 2.1) + 0.6 * sin(shake_t * 97.0 + 0.4)) / 1.6
-	return n * shake_amt + shake_kick
+	shake_phase += delta * shake_freq
+	var ph := shake_phase
+	var n := Vector2(sin(ph * 47.0) + 0.6 * sin(ph * 83.0 + 1.3), sin(ph * 53.0 + 2.1) + 0.6 * sin(ph * 97.0 + 0.4)) / 1.6
+	if not net_client:
+		cam_roll = roll_trauma * roll_trauma * MAX_ROLL * sin(ph * 29.0 + 0.7)
+	bump_t += delta
+	var bump := bump_amp * exp(-bump_t * 10.0) * cos(bump_t * 38.0)
+	return n * shake_amt + shake_kick + Vector2(0.0, bump)
+
+
+## Zoom de impacto e inclinação (a câmera lenta dos chefes, quando ativa, cuida do zoom).
+func _dynamic_camera(delta: float) -> void:
+	if not net_client:
+		punch *= exp(-delta * 9.0)
+	camera.rotation = cam_roll
+	if not slowmo_cfg.is_empty() or (net_client and snap_zoom > 1.001):
+		return  # câmera lenta (aqui ou a do anfitrião) cuida do zoom
+	# girar mostraria os cantos de fora da tela: aproxima o bastante para cobrir
+	var cover := cos(absf(cam_roll)) + (float(HALF_W) / 270.0) * sin(absf(cam_roll))
+	var z := maxf(1.0 + punch, cover)
+	camera.zoom = Vector2(z, z)
+	var view := Vector2(HALF_W, 270.0) / z
+	var center := Vector2(cam_x, 270.0)
+	var want := (center.lerp(punch_focus, 0.35) - center) if punch > 0.002 else Vector2.ZERO
+	camera.offset = Vector2(clampf(want.x, -(HALF_W - view.x), HALF_W - view.x), clampf(want.y, -(270.0 - view.y), 270.0 - view.y))
+
+
+## Como cada um dos 79 treme a tela: massa (porte), ritmo (material + ajuste fixo de cada personagem)
+## e inclinação (gigantes 1,3+, seres do tempo e da sombra).
+func shake_profile(f) -> Dictionary:
+	var s: float = f.body_scale
+	var mat := Materials.of(f)
+	var ident := 0.92 + float(absi(String(f.rig_scene_path).hash()) % 17) / 100.0
+	return {"mass": clampf(0.75 + (s - 0.9) * 1.1, 0.8, 1.55),
+		"freq": float(SHAKE_FREQ.get(mat, 1.0)) * ident / sqrt(s),
+		"roll": (0.6 if s >= 1.3 else 0.0) + float(SHAKE_ROLL.get(mat, 0.0))}
+
+
+## Pulso de zoom em direção ao ponto do impacto (golpes fortes, finalização).
+func punch_zoom(amount: float, focus: Vector2) -> void:
+	if amount > punch:
+		punch = minf(amount, 0.09)
+		punch_focus = focus
+
+
+## Tranco vertical da câmera (px): passos de gigantes, pisada do haka, corpo grande caindo.
+func bump(px: float) -> void:
+	bump_amp = bump_amp * exp(-bump_t * 10.0) + px
+	bump_amp = minf(bump_amp, 9.0)
+	bump_t = 0.0
 
 
 # ---------- Câmera lenta (golpe final em chefes) ----------
@@ -804,6 +870,7 @@ func _slowmo_snap() -> Array:
 
 func _apply_slowmo_snap(s: Array) -> void:
 	Engine.time_scale = s[0]
+	snap_zoom = s[1]
 	camera.zoom = Vector2(s[1], s[1])
 	camera.offset = s[2]
 	cine = s[3]
@@ -1004,13 +1071,15 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 	var power := clampf(float(atk.get("dmg", 8)) / 14.0, 0.6, 1.4)
 	var hit_dir := Vector2(attacker.facing, -0.25 if atk.get("pose", "") in ["upper", "slam"] else 0.0)
 	if heavy:
-		shake(7.0 * power, hit_dir)
+		shake(7.0 * power, hit_dir, attacker)
+		punch_zoom(0.028 * power * (shake_profile(attacker).mass if attacker.get("rig_scene_path") != null else 1.0),
+			atk.get("hit_at", target.position + Vector2(0, -50.0)))
 		if attacker in players:
 			rumble(attacker, 0.35, 0.5 * power, 0.13)
 		if target in players:
 			rumble(target, 0.7, minf(1.0, 0.85 * power), 0.24)
 	else:
-		shake(1.6, hit_dir * 0.4)
+		shake(1.6, hit_dir * 0.4, attacker)
 	var s: float = target.get("body_scale") if target.get("body_scale") != null else 1.0
 	# ponto do contato: onde a ponta do golpe (animação) encosta no corpo do alvo; sem ele, altura fixa
 	var pos: Vector2 = atk.get("hit_at", target.position + Vector2(-attacker.facing * 6.0, -58.0 * s - target.height))
@@ -1042,7 +1111,8 @@ func on_hit(attacker, target, atk: Dictionary) -> void:
 		var boss_ko: bool = target.get("kind") in ["boss", "subboss", "secret_boss"]
 		if not boss_ko and target.has_method("hurt_rect"):
 			start_slowmo(target.position + target.hurt_rect().get_center(), false)
-		shake(9.0, hit_dir)
+		shake(9.0, hit_dir, attacker)
+		punch_zoom(0.06, atk.get("hit_at", target.position + Vector2(0, -50.0)))
 
 
 func on_enemy_killed(e) -> void:
@@ -1122,9 +1192,16 @@ func player_died(p) -> void:
 
 
 ## Tremor de tela. amount ~2 (leve) .. 14 (enorme); dir dá um tranco da câmera para aquele lado.
-func shake(amount: float, dir := Vector2.ZERO) -> void:
-	trauma = minf(1.0, trauma + amount / 16.0)
-	shake_kick = (shake_kick + dir * amount * 0.9).limit_length(16.0)
+## Tremor de tela. src: quem causou (lutador): o tremor ganha a massa, o ritmo e a inclinação dele.
+func shake(amount: float, dir := Vector2.ZERO, src = null) -> void:
+	var k := 1.0
+	if src != null and is_instance_valid(src) and src.get("rig_scene_path") != null:
+		var pr := shake_profile(src)
+		k = pr.mass
+		shake_freq = lerpf(shake_freq, pr.freq, clampf(amount / 10.0, 0.2, 1.0))
+		roll_trauma = minf(1.0, roll_trauma + amount * float(pr.roll) / 16.0)
+	trauma = minf(1.0, trauma + amount * k / 16.0)
+	shake_kick = (shake_kick + dir * amount * k * 0.9).limit_length(18.0)
 
 
 ## Vibração no(s) controle(s) de um jogador: fraco = motor leve, forte = motor pesado (0..1).
@@ -1200,6 +1277,12 @@ func footstep(f, front: bool) -> void:
 	var slug: String = String(f.rig_scene_path).get_file().get_basename()
 	for st in SfxScript.step_sounds(stage.get("style", "modern"), Materials.of(f), float(f.body_scale), slug, front):
 		sfx.play(st[0], 0.04, st[1])
+	# gigantes fazem o chão (e a câmera) tremer a cada passo; a pisada do haka (parado) também
+	var s: float = f.body_scale
+	if s >= 1.3:
+		bump((s - 1.2) * 5.0)
+	elif s >= 1.1 and f.state == "idle":
+		bump(1.6)
 
 
 func _wound(mat: String, pos: Vector2, feet: Vector2, dir: int, k: float) -> void:
@@ -1554,6 +1637,7 @@ func _client_tick(delta: float) -> void:
 			var tgt: Vector2 = n.get_meta("net_target")
 			n.position = tgt if n.position.distance_to(tgt) > 150.0 else n.position.lerp(tgt, 0.45)
 	camera.position = Vector2(cam_x, 270.0) + _shake_offset(delta)
+	_dynamic_camera(delta)
 
 
 func _fighter_fields(f) -> Array:
@@ -1600,7 +1684,7 @@ func net_snapshot() -> Array:
 	return [mode, mode_time, stage_idx, paused, combo_count, combo_timer, show_go, cam_x, Vector3(shake_amt, shake_kick.x, shake_kick.y),
 		round_num, round_wins, round_winner, ending_page, game_mode, slot_s,
 		hud.message, hud.message_timer, enemy_id, hud.enemy_timer, pids, music_key, ev, ents, surv_wave,
-		dialog_line, dialog_chars, _slowmo_snap()]
+		dialog_line, dialog_chars, _slowmo_snap(), [cam_roll, punch, punch_focus, bump_amp * exp(-bump_t * 10.0), shake_freq]]
 
 
 func _apply_fighter(n, d: Array, i: int) -> int:
@@ -1663,6 +1747,15 @@ func net_apply(snap: Array) -> void:
 		dialog_chars = snap[25]
 	if snap.size() > 26:
 		_apply_slowmo_snap(snap[26])
+	if snap.size() > 27 and snap[27] is Array and snap[27].size() >= 5:
+		# câmera dinâmica do anfitrião: inclinação, zoom de impacto, tranco vertical e ritmo do tremor
+		cam_roll = snap[27][0]
+		punch = snap[27][1]
+		punch_focus = snap[27][2]
+		if float(snap[27][3]) > bump_amp * exp(-bump_t * 10.0) + 0.5:
+			bump_amp = snap[27][3]
+			bump_t = 0.0
+		shake_freq = snap[27][4]
 	# Entidades
 	var seen := {}
 	for d in snap[22]:
