@@ -16,7 +16,7 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
-	draw_rect(f.hurtbox(), Color(0.2, 1, 0.3, 0.8), false, 1.0)
+	draw_rect(f.hurt_rect(), Color(0.2, 1, 0.3, 0.8), false, 1.0)
 	if f.is_in_group("players") and f.weapon.is_empty() and f.state in ["idle", "walk"]:
 		draw_rect(f.grab_box(), Color(1, 0.85, 0.2, 0.7), false, 1.0)  # alcance para pegar armas
 	if f.attack.is_empty():

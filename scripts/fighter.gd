@@ -72,10 +72,14 @@ var power := 1.0
 # Hitboxes sincronizadas com a animação (metadata/hitboxes do rig, gerada por tools/rig/hitboxes.py):
 # a janela de contato e a posição da ponta que acerta (punho, pé ou arma) quadro a quadro.
 var hitboxes: Dictionary = {}
+var hurtboxes: Dictionary = {}   # metadata/hurtboxes: caixa do corpo quadro a quadro (inimigos)
+var anim_hurtbox := false        # usa a hurtbox animada (inimigos) em vez da caixa fixa
 static var use_anim_hitboxes := true
 static var show_hitboxes := false  # F3 mostra hitboxes (vermelho) e hurtboxes (verde)
 const HURT_H := 100.0   # altura da hurtbox do corpo (px, escala 1)
 const HURT_W := 16.0    # meia largura da hurtbox
+const SWEPT := ["upper"]   # golpes cuja hitbox cobre o caminho da ponta nos últimos SWEEP_U da animação
+const SWEEP_U := 0.04
 const DIVE_ROT := PI * 0.45  # o corpo deitado no mergulho (tools/rig/hitboxes.py -> BODY_ROT)
 const HitboxView = preload("res://scripts/hitbox_view.gd")
 var hitbox_view = null
@@ -320,8 +324,12 @@ func hitbox_now() -> Dictionary:
 	if not state in ["attack", "jump", "special"] or float(attack.get("reach", 0.0)) <= 0.0:
 		return {}
 	var ra := rig_anim()
-	var an: String = ra[0]
-	var u: float = ra[1]
+	return hitbox_at(attack, ra[0], ra[1])
+
+
+## Hitbox do golpe `atk` no ponto `u` da animação `an` (o mesmo cálculo de hitbox_now, para qualquer quadro:
+## a IA usa para saber se um golpe alcançaria o alvo antes de soltá-lo).
+func hitbox_at(atk: Dictionary, an: String, u: float) -> Dictionary:
 	if not hitboxes.has(an) or u < 0.0:
 		return {}
 	var d: Dictionary = hitboxes[an]
@@ -345,11 +353,18 @@ func hitbox_now() -> Dictionary:
 		r = 14.0
 	# alcance: o "reach" do golpe (equilíbrio do jogo) acompanhando o quanto a ponta está esticada agora
 	var ext := clampf(tip.x / peak, 0.2, 1.15)
-	var far := float(attack.reach) * ext * s
+	var far := float(atk.reach) * ext * s
 	var tip_h := height - tip.y * s
+	var lo_h := tip_h
+	var hi_h := tip_h
+	if an in SWEPT:
+		# o punho sobe tão rápido que no quadro de impacto já passou do queixo: vale o caminho até ali
+		var prev := _hb_point(d.pts, 3, maxf(u - SWEEP_U, 0.0))
+		lo_h = minf(lo_h, height - prev.y * s)
+		hi_h = maxf(hi_h, height - prev.y * s)
 	# golpes giratórios (radial, ou o lutador vira de um lado para o outro): acerta dos dois lados
-	var both: bool = attack.get("radial", false) or attack.get("spin", false)
-	return {"x0": -far if both else -15.0, "x1": far, "h0": tip_h - r * s, "h1": tip_h + r * s,
+	var both: bool = atk.get("radial", false) or atk.get("spin", false)
+	return {"x0": -far if both else -15.0, "x1": far, "h0": lo_h - r * s, "h1": hi_h + r * s,
 		"tip": Vector2(tip.x * s, tip.y * s), "r": r * s, "anim": an, "u": u}
 
 
@@ -412,8 +427,59 @@ func body_rot() -> float:
 
 
 ## Hurtbox de qualquer alvo (lutador, caixa...), relativa à base dele (y para baixo).
+## Com hurtbox animada (inimigos), é a caixa em volta do corpo no quadro da animação que está na tela:
+## encolhe na dor, cresce quando o braço ou o pé estica, sobe quando o ÉON flutua.
 func hurt_rect() -> Rect2:
-	return hurtbox()
+	if not anim_hurtbox or not use_anim_hitboxes or hurtboxes.is_empty():
+		return hurtbox()
+	var ra := rig_anim()
+	var an: String = ra[0]
+	if not hurtboxes.has(an):
+		an = "idle"
+		if not hurtboxes.has(an):
+			return hurtbox()
+	var hd: Dictionary = hurtboxes[an]
+	var u: float = ra[1]
+	if u < 0.0 or an != ra[0]:
+		u = fmod(anim_t, maxf(float(hd.len), 0.01)) / maxf(float(hd.len), 0.01)  # loop pelo relógio
+	var arr: PackedFloat32Array = hd.box
+	var n := arr.size() / 5
+	var f := clampf(u, 0.0, 1.0) * float(n - 1)
+	var i := mini(int(f), n - 2)
+	var k := f - float(i)
+	var v: Array = []
+	for j in range(1, 5):
+		v.append(lerpf(arr[i * 5 + j], arr[(i + 1) * 5 + j], k))
+	var s := body_scale
+	var df := draw_facing()
+	var x0: float = v[0] * s * df
+	var x1: float = v[2] * s * df
+	return Rect2(minf(x0, x1), v[1] * s - height, absf(x1 - x0), (v[3] - v[1]) * s)
+
+
+## O golpe `atk` alcançaria `tg` agora? Confere a hitbox em alguns quadros da janela de contato
+## contra a hurtbox do alvo, com o avanço do lunge. Sem dados de animação, usa a distância antiga.
+func would_hit(atk: Dictionary, tg) -> bool:
+	var dy := absf(tg.position.y - position.y)
+	var an: String = atk.get("pose", "jab")
+	if not use_anim_hitboxes or not hitboxes.has(an):
+		return absf(tg.position.x - position.x) < 70.0 * body_scale and dy < 18.0 and tg.height < 40.0
+	if dy >= float(atk.get("depth", 22.0)) * 0.8:
+		return false
+	var d: Dictionary = hitboxes[an]
+	var armed: bool = not weapon.is_empty() and d.has("wpn")
+	var on: float = d.won if armed else d.on
+	var off: float = minf(d.woff if armed else d.off, 0.42)  # só a janela de acerto do jogo
+	var lunge := float(atk.get("lunge", 0.0))
+	var slack := lunge * lunge / 1800.0  # quanto o lunge avança até parar (desacelera 900 px/s²)
+	for k in 3:
+		var hb := hitbox_at(atk, an, lerpf(on, maxf(off, on), k / 2.0))
+		if hb.is_empty() or hb.has("off_window"):
+			continue
+		hb.x1 = float(hb.x1) + slack
+		if _hitbox_overlaps(hb, tg):
+			return true
+	return false
 
 
 static func hurt_of(tg) -> Rect2:
@@ -657,6 +723,7 @@ func attach_rig(path: String) -> void:
 		tree_states = rig_tree.get_meta("states", PackedStringArray())
 		strike_points = rig_tree.get_meta("strike_points", {})
 	hitboxes = rig.get_meta("hitboxes", {})
+	hurtboxes = rig.get_meta("hurtboxes", {})
 
 
 ## Dirige o AnimationTree: escolhe o estado da máquina, a posição nos BlendSpaces e a fase.
