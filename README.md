@@ -339,7 +339,9 @@ e a onda do Esmagador Texano só pega quem está no chão. Os projéteis (Onda K
 arremessada e as orbes do ÉON) saem da mão no quadro de soltura da animação e acertam só na altura em
 que são desenhados — dá para pular a Onda Sísmica. As armas no chão se pegam pelo que está
 desenhado (a lança com a ponta, o remo com a pá), ao alcance da mão da guarda do rig, e dá para
-agarrar uma arma que ainda está quicando quando ela passa na altura da mão. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
+agarrar uma arma que ainda está quicando quando ela passa na altura da mão. As caixas quebráveis
+apanham no tamanho em que são desenhadas, racham com o dano e se desmontam em tábuas na direção do
+golpe final. As trajetórias saem das próprias cenas (`tools/rig/hitboxes.py`, gravadas em
 `metadata/hitboxes`) e valem também no visual clássico. **F3** durante o jogo mostra as hurtboxes
 (verde), a hitbox do quadro (vermelho) e a ponta da animação (amarelo).
 
