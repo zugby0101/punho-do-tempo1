@@ -226,11 +226,22 @@ O `--check` confere em todos os 79 rigs que o impacto da animação cai no come�
 do jogo (u = 0,30) e simula os golpes do jogo (alcances e armas reais): cada um precisa ainda acertar
 um alvo parado a 90% do alcance em algum quadro da janela.
 
-**Armas no chão.** A área de pegar uma arma caída é exatamente o que está desenhado
-(`Weapons.extent` / `Weapons.bounds`: cabo, lâmina, pá do remo, ponta da lança, lâmina da foice...),
-deitada no chão ou girando enquanto quica. O lutador alcança do corpo até a mão da frente na guarda
-(primeiro quadro do `jab` do rig, `fighter.gd` → `grab_box`), da altura da mão até o chão: dá para
-pegar a arma ainda no ar quando ela passa na altura da mão. Entre várias, pega a mais próxima.
+**Armas no chão.** A caixa da arma caída é exatamente o que está desenhado (`Weapons.extent` /
+`Weapons.bounds`: cabo, lâmina, pá do remo, ponta da lança, lâmina da foice...), deitada no chão ou
+girando enquanto quica.
+
+- **Pegar:** a mão precisa encostar no **cabo** desenhado (`weapon_item.gd` → `grip_box`). A mão é a da
+  frente na guarda (primeiro quadro do `jab` do rig, `fighter.gd` → `grab_box`), do meio do antebraço até
+  o punho, abaixando até o chão — então é preciso estar de frente para a arma, do lado do cabo. Dá para
+  agarrar a arma no ar quando o cabo passa na altura da mão. Entre várias, pega a mais próxima.
+- **Caindo machuca:** caindo a mais de 300 px/s (do céu, ou solta por quem foi derrubado), a caixa da arma
+  acerta quem estiver embaixo (4 a 12 de dano conforme a velocidade; derruba acima de 700 px/s) e
+  ricocheteia. Não machuca quem a soltou, quem a arremessou nem quem já foi atingido. A arma de quem é
+  derrubado voa na direção do golpe (antes voltava para quem bateu).
+- **Chutar:** a ponta do golpe é seguida quadro a quadro (`_sweep_items`, do u do quadro anterior até o
+  atual): armas no chão tocadas por ela são chutadas para o lado do golpe — o pé que sobe do chão no
+  chute, os punhos do slam, a ponta da arma no golpe armado. Socos passam por cima.
+- F3: caixa da arma em amarelo (vermelho enquanto cai machucando), cabo em branco, mão em amarelo.
 
 **Caixas quebráveis.** A hurtbox da caixa é a caixa desenhada (52 × 50 px), balançando junto quando
 apanha, mais 8 px de folga acima da tampa (`crate.gd` → `hurt_rect`; sem ela, o jab de quem é grande —

@@ -170,7 +170,43 @@ func _physics_process(delta: float) -> void:
 
 	position += vel * delta
 	_clamp_position()
+	if state in ["attack", "jump", "special"]:
+		_sweep_items()
+	else:
+		_sweep_u = -1.0
 	queue_redraw()
+
+
+## Caminho da ponta do golpe neste quadro (do u do quadro anterior até o atual): armas no chão
+## que ela tocar são chutadas — o pé que sobe do chão no chute, os punhos do slam, a arma no golpe armado.
+var _sweep_u := -1.0
+
+
+func _sweep_items() -> void:
+	if not use_anim_hitboxes or attack.is_empty():
+		_sweep_u = -1.0
+		return
+	var ra := rig_anim()
+	var an: String = ra[0]
+	var u: float = ra[1]
+	if not hitboxes.has(an) or u < 0.0:
+		_sweep_u = -1.0
+		return
+	var u0 := _sweep_u if _sweep_u >= 0.0 and _sweep_u <= u else u
+	_sweep_u = u
+	var d: Dictionary = hitboxes[an]
+	var s := body_scale
+	var armed: bool = not weapon.is_empty() and d.has("wpn") and state != "special"
+	var pts: Array = []
+	for k in 4:
+		var uu := lerpf(u0, u, k / 3.0)
+		var tip := _hb_point(d.pts, 3, uu).rotated(body_rot())
+		if armed:
+			var w := _hb_point(d.wpn, 4, uu)
+			var ang := _hb_angle(d.wpn, uu)
+			tip = w + Vector2(cos(ang), sin(ang)) * float(weapon.get("len", 40.0))
+		pts.append(Vector2(tip.x * s * facing, tip.y * s - height + strike_drop(an, uu)))
+	game.kick_weapons(self, pts, (14.0 if armed else float(d.r)) * s)
 
 
 # ---------- Virtuais ----------
@@ -208,7 +244,8 @@ func equip_weapon(w: Dictionary) -> void:
 func drop_weapon(dir: int) -> void:
 	var w := weapon
 	weapon = {}
-	game.spawn_weapon_item(w, position, -dir, maxf(height, 20.0))
+	# voa na direção do golpe (para longe de quem bateu) e não cai na cabeça de quem soltou
+	game.spawn_weapon_item(w, position, dir, maxf(height, 20.0), [self])
 	_on_weapon_changed()
 
 
@@ -388,15 +425,16 @@ func hurtbox() -> Rect2:
 	return Rect2(-HURT_W * s, -height - HURT_H * s, HURT_W * 2.0 * s, HURT_H * s)
 
 
-## Área de pegar armas do chão (relativa aos pés, y para baixo): do corpo até a mão da frente na
-## guarda (primeiro quadro do jab do rig), da altura da mão até o chão.
+## Área de pegar armas do chão (relativa aos pés, y para baixo): a mão da frente na guarda (primeiro
+## quadro do jab do rig), do meio do antebraço até o punho, da altura da mão até o chão.
 func grab_box() -> Rect2:
 	var s := body_scale
 	var hand := Vector2(26.0, -57.0)
 	if use_anim_hitboxes and hitboxes.has("jab"):
 		hand = _hb_point(hitboxes.jab.pts, 3, 0.0)
-	var back := -HURT_W * s
-	var front := (hand.x + 4.0) * s
+	# só a mão: do meio do antebraço até o punho (precisa estar de frente para a arma)
+	var back := hand.x * 0.4 * s
+	var front := (hand.x + 6.0) * s
 	var top := (hand.y - 10.0) * s - height
 	var x0 := back if facing > 0 else -front
 	var x1 := front if facing > 0 else -back

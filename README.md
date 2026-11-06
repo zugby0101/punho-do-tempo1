@@ -337,9 +337,9 @@ que a perna estica. Vale também para os especiais corpo a corpo: as rajadas só
 membro esticado, os giros acertam dos dois lados, o Tope Suicida acerta com os braços do corpo deitado
 e a onda do Esmagador Texano só pega quem está no chão. Os projéteis (Onda Ki, Onda Sísmica, arma
 arremessada e as orbes do ÉON) saem da mão no quadro de soltura da animação e acertam só na altura em
-que são desenhados — dá para pular a Onda Sísmica. As armas no chão se pegam pelo que está
-desenhado (a lança com a ponta, o remo com a pá), ao alcance da mão da guarda do rig, e dá para
-agarrar uma arma que ainda está quicando quando ela passa na altura da mão. As caixas quebráveis
+que são desenhados — dá para pular a Onda Sísmica. As armas no chão se pegam com a mão no cabo
+desenhado (dá para agarrar uma arma ainda quicando), machucam quem estiver embaixo quando caem rápido
+e são chutadas pelos golpes que varrem o chão (chute, slam, golpe armado). As caixas quebráveis
 apanham no tamanho em que são desenhadas, racham com o dano e se desmontam em tábuas na direção do
 golpe final, e a comida salta para fora junto com as tábuas e é pega quando o corpo encosta no
 desenho dela. Inimigos e jogadores apanham na silhueta da animação que está na tela (encolhem na dor e
