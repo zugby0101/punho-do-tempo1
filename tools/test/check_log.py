@@ -16,7 +16,8 @@ import sys
 # avisos do ambiente (CI sem som, sem controle...) que não são do jogo
 IGNORE = [r"ALSA", r"PulseAudio", r"XOpenIM", r"joypad", r"Joypad", r"udev", r"libdecor", r"Wayland",
           r"No such file or directory.*(pulse|alsa)", r"Couldn't open audio", r"glXCreateContextAttribsARB",
-          r"Shader cache", r"--rendering-driver"]
+          r"Shader cache", r"--rendering-driver",
+          r"resources still in use at exit"]  # aviso do Godot ao fechar (música ainda gerando), não é erro do jogo
 ERR = re.compile(r"(SCRIPT ERROR|Parse Error|^ERROR:|USER ERROR|^\s*ERROR:)")
 AT = re.compile(r"(res://[\w/\.]+\.(?:gd|tscn)):(\d+)")
 

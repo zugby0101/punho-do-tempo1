@@ -832,7 +832,11 @@ func _draw() -> void:
 	var use_rig: bool = rig != null and game != null and game.rigs_enabled()
 	if rig != null:
 		rig.visible = false
-	if invuln > 0.0 and not (state in ["attack", "special"]) and int(invuln * 20.0) % 2 == 0:
+	var blink: bool = invuln > 0.0 and not (state in ["attack", "special"]) and int(invuln * 20.0) % 2 == 0
+	if is_in_group("enemies"):
+		# inimigo invencível (levantando, esquivando) pisca transparente, mas nunca some da tela
+		modulate.a = 0.45 if blink else 1.0
+	elif blink:
 		return
 	if state == "dead" and int(state_time * 16.0) % 2 == 0:
 		return

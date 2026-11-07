@@ -429,6 +429,7 @@ func _watch_vanish(e, id: int) -> void:
 			enemy_hidden_inv[id] = e.invuln
 		# um quadro sem desenho é o pisca-pisca; 6 seguidos (0,1 s) já é sumiço de verdade
 		if hidden_n == 6:
+			_fail("%s vivo na tela ficou 0,1 s sem desenho (estado %s, partida %d)" % [k, e.state, run_idx + 1])
 			_vanish("invisivel" if float(enemy_hidden_inv.get(id, 0.0)) <= 0.0 else "invisivel_piscando", k, e,
 				"vivo na tela mas sem desenho por 0,1 s (invuln ao sumir %.2f)" % float(enemy_hidden_inv.get(id, 0.0)))
 
