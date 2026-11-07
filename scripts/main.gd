@@ -1101,6 +1101,9 @@ func _check_pickups() -> void:
 # ---------- Eventos de combate ----------
 func on_hit(attacker, target, atk: Dictionary) -> void:
 	var heavy: bool = atk.get("heavy", false)
+	# os punhos do inimigo só brilham quando ele acerta uma finalização no jogador
+	if atk.get("finisher", false) and target in players and attacker.is_in_group("enemies"):
+		attacker.fist_glow = attacker.FIST_GLOW_TIME
 	hitstop = 0.09 if heavy else 0.05
 	# golpe forte: tremor grande com tranco na direção do golpe e vibração em quem bate e em quem apanha
 	var power := clampf(float(atk.get("dmg", 8)) / 14.0, 0.6, 1.4)
@@ -1693,7 +1696,7 @@ func net_snapshot() -> Array:
 		if sc == PlayerScript:
 			ents.append(["P", id] + _fighter_fields(n) + [_char_of(n), n.pid, n.lives, n.score, n.out])
 		elif sc == EnemyScript:
-			ents.append(["E", id] + _fighter_fields(n) + [n.kind, n.block_flash, n.tier, n.display_name])
+			ents.append(["E", id] + _fighter_fields(n) + [n.kind, n.block_flash, n.tier, n.display_name, n.fist_glow])
 		elif sc == CrateScript:
 			ents.append(["C", id, n.position.x, n.position.y, n.hp, n.flash, n.wobble])
 		elif sc == PickupScript:
@@ -1822,6 +1825,8 @@ func net_apply(snap: Array) -> void:
 				n.block_flash = d[i + 1]
 				n.tier = d[i + 2]
 				n.display_name = d[i + 3]
+				if d.size() > i + 4:
+					n.fist_glow = d[i + 4]
 			"C":
 				n.set_meta("net_target", Vector2(d[2], d[3]))
 				n.hp = d[4]

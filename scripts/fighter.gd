@@ -20,6 +20,8 @@ var state_time := 0.0
 var anim_t := 0.0
 var invuln := 0.0
 var flash := 0.0
+var fist_glow := 0.0  # > 0: punhos brilhando (inimigo que acabou de acertar uma finalização no jogador)
+const FIST_GLOW_TIME := 0.9
 var hurt_time := 0.3
 var bounced := false
 var lunged := false
@@ -202,6 +204,7 @@ func _physics_process(delta: float) -> void:
 	anim_t += delta
 	invuln = maxf(0.0, invuln - delta)
 	flash = maxf(0.0, flash - delta)
+	fist_glow = maxf(0.0, fist_glow - delta)
 
 	match state:
 		"hurt":
@@ -1019,11 +1022,11 @@ func _classic_footsteps() -> void:
 	_classic_w = w
 
 
-func _sync_weapon(phase: float) -> void:
+func _sync_weapon(_phase: float) -> void:
 	var slot = rig.get_node_or_null("Parts/WeaponSlot")
 	if slot != null:
 		slot.set_weapon(weapon, flash > 0.0)
-		slot.set_glow(is_in_group("enemies") and state == "attack" and phase < 0.0)
+		slot.set_glow(fist_glow > 0.0)
 
 
 func attach_rig(path: String) -> void:
@@ -1358,8 +1361,8 @@ func _draw_body(pose: String, p: float) -> void:
 	if not weapon.is_empty():
 		Weapons.draw(self, weapon, hf, _weapon_angle(pose, p), flash > 0.0)
 	draw_circle(hf, 5.5, skin_c)
-	# Telegrafa o golpe dos inimigos (brilho na mão)
-	if state == "attack" and p < 0.0 and is_in_group("enemies"):
+	# Punhos brilhando: só quando o inimigo acerta uma finalização no jogador
+	if fist_glow > 0.0:
 		draw_circle(hf, 8.0, Color(1, 0.9, 0.2, 0.35 + 0.3 * sin(anim_t * 40.0)))
 
 
