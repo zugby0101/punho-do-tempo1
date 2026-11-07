@@ -396,11 +396,13 @@ func _check_rules() -> void:
 var enemy_pos := {}
 var enemy_in := {}
 var vanish_logs := 0
+var enemy_hidden := {}
+var enemy_hidden_inv := {}
 
 
 func _watch_vanish(e, id: int) -> void:
 	var k := String(e.kind)
-	var inside: bool = e.position.x > game.cam_left() + 4.0 and e.position.x < game.cam_right() - 4.0
+	var inside: bool = e.position.x > game.cam_left() - 2.0 and e.position.x < game.cam_right() + 2.0
 	if enemy_pos.has(id):
 		var jump: float = (e.position - Vector2(enemy_pos[id])).length()
 		if jump > 40.0:
@@ -414,14 +416,21 @@ func _watch_vanish(e, id: int) -> void:
 	if not inside and bool(enemy_in.get(id, false)):
 		enemy_in[id] = false
 	enemy_pos[id] = e.position
-	if inside and e.state != "dead" and e.invuln <= 0.0:
+	var hidden_n: int = int(enemy_hidden.get(id, 0))
+	if inside and e.state != "dead":
 		var drawn := true
 		if e.rig != null and game.rigs_enabled():
 			drawn = e.rig.visible and e.rig.modulate.a > 0.05 and e.rig.is_visible_in_tree()
 		if not e.is_visible_in_tree() or e.modulate.a < 0.05:
 			drawn = false
-		if not drawn:
-			_vanish("invisivel", k, e, "vivo na tela mas sem desenho")
+		hidden_n = 0 if drawn else hidden_n + 1
+		enemy_hidden[id] = hidden_n
+		if hidden_n == 1:
+			enemy_hidden_inv[id] = e.invuln
+		# um quadro sem desenho é o pisca-pisca; 6 seguidos (0,1 s) já é sumiço de verdade
+		if hidden_n == 6:
+			_vanish("invisivel" if float(enemy_hidden_inv.get(id, 0.0)) <= 0.0 else "invisivel_piscando", k, e,
+				"vivo na tela mas sem desenho por 0,1 s (invuln ao sumir %.2f)" % float(enemy_hidden_inv.get(id, 0.0)))
 
 
 func _vanish(what: String, k: String, e, why: String) -> void:
