@@ -42,6 +42,7 @@ const DEFAULT_CHARS := [8, 9, 0, 3]
 static var stage_idx := 0
 static var party: Array = []
 static var skip_title := false
+static var back_to_modes := false  # a pausa pediu para voltar ao menu (escolha de modo)
 static var game_mode := "story"  # "story" (história/co-op), "versus" ou "survival"
 static var survival_start := 0    # era em que a sobrevivência começou (para recomeçar)
 
@@ -238,7 +239,9 @@ func _ready() -> void:
 			_play_stage_music(false)
 	else:
 		party = []
-		_set_mode("title")
+		# "Voltar ao menu" da pausa cai direto na escolha de modo
+		_set_mode("modes" if back_to_modes else "title")
+		back_to_modes = false
 		music.play("title", 0)
 	music.prefetch(stage.style, stage_idx, false)
 	music.prefetch(stage.style, stage_idx, true)
@@ -495,9 +498,11 @@ func _physics_process(delta: float) -> void:
 					_show_ending_page()
 			return
 
-	if Input.is_action_just_pressed("pause"):
-		paused = not paused
 	if paused:
+		_update_pause_menu()
+		return
+	if Input.is_action_just_pressed("pause"):
+		_open_pause()
 		return
 
 	if versus:
@@ -739,6 +744,74 @@ func _update_modes_menu() -> void:
 				sfx.play("go", 0.0)
 
 
+## ---------- Tela de pausa ----------
+## ESC/P (ou Back no controle) pausa; ▲▼ escolhe, SOCO/ENTER confirma, ESC/P de novo continua.
+const PAUSE_ROWS := ["continuar", "comandos", "menu"]
+var pause_row := 0
+var pause_confirm := false  # pedindo confirmação para sair da partida
+var options_return := "modes"
+
+
+func _open_pause() -> void:
+	paused = true
+	pause_row = 0
+	pause_confirm = false
+	sfx.play("whoosh", 0.0)
+
+
+func _update_pause_menu() -> void:
+	if Input.is_action_just_pressed("pause"):
+		if pause_confirm:
+			pause_confirm = false
+		else:
+			paused = false
+		sfx.play("whoosh", 0.0)
+		return
+	if pause_confirm:
+		if Controls.who_pressed(["attack", "start"]) != "":
+			_quit_to_menu()
+		elif Controls.who_pressed(["jump"]) != "":
+			pause_confirm = false
+			sfx.play("whoosh", 0.0)
+		return
+	if Input.is_action_just_pressed("move_down"):
+		pause_row = (pause_row + 1) % PAUSE_ROWS.size()
+		sfx.play("whoosh", 0.0)
+	elif Input.is_action_just_pressed("move_up"):
+		pause_row = posmod(pause_row - 1, PAUSE_ROWS.size())
+		sfx.play("whoosh", 0.0)
+	elif Controls.who_pressed(["jump"]) != "":
+		paused = false
+		sfx.play("whoosh", 0.0)
+	elif Controls.who_pressed(["attack", "start"]) != "":
+		match PAUSE_ROWS[pause_row]:
+			"continuar":
+				paused = false
+				sfx.play("go", 0.0)
+			"comandos":
+				option_row = 0
+				options_return = mode
+				_set_mode("options")
+				sfx.play("go", 0.0)
+			"menu":
+				pause_confirm = true
+				sfx.play("whoosh", 0.0)
+
+
+## Abandona a partida e volta para a escolha de modo (no online, fecha a sala/conexão).
+func _quit_to_menu() -> void:
+	sfx.play("go", 0.0)
+	_reset_slowmo()
+	Engine.time_scale = 1.0
+	paused = false
+	party = []
+	skip_title = false
+	back_to_modes = true
+	if Net.online():
+		Net.close()
+	get_tree().reload_current_scene.call_deferred()
+
+
 func _open_online_menu() -> void:
 	online_choice = 0
 	_set_mode("online_menu")
@@ -747,6 +820,7 @@ func _open_online_menu() -> void:
 
 func _open_options() -> void:
 	option_row = 0
+	options_return = "modes"
 	_set_mode("options")
 	sfx.play("go", 0.0)
 
@@ -758,7 +832,7 @@ func _update_options_menu() -> void:
 		return
 	if _esc_just or Controls.who_pressed(["jump"]) != "" or Input.is_action_just_pressed("start"):
 		sfx.play("whoosh", 0.0)
-		_set_mode("modes")
+		_set_mode(options_return)
 		return
 	for k in [[KEY_V, "visual"], [KEY_P, "particulas"], [KEY_Y, "sangue"], [KEY_E, "tremor"], [KEY_B, "vibracao"]]:
 		var held: bool = Input.is_physical_key_pressed(k[0])
