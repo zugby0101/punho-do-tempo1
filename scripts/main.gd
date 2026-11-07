@@ -53,7 +53,7 @@ var stage: Dictionary
 var waves: Array
 var crate_spots := [[480.0, 400.0, "apple"], [900.0, 470.0, "weapon"], [1180.0, 470.0, "chicken"], [1980.0, 390.0, "apple"], [2780.0, 480.0, "chicken"], [3620.0, 420.0, "chicken"]]
 
-var mode := "title"  # title, select, intro, play, stageclear, gameover, ending, roundstart, roundend, match
+var mode := "title"  # title, modes, options, select, intro, play, stageclear, gameover, ending, roundstart, roundend, match
 var versus := false
 var round_num := 1
 var round_wins: Array = [0, 0, 0, 0]
@@ -89,9 +89,8 @@ var score_sent := false
 var name_queue: Array = []       # jogadores que ainda vão digitar o nome
 var name_entries: Array = []
 var ach_page := 0
-var _v_held := false
-var _p_held := false
-var _b_held := false
+var _c_held := false
+var _keys_held := {}
 var _f3_held := false
 var _esc_held := false
 var _esc_just := false   # ESC acabou de ser apertado (segurar não conta de novo na tela seguinte)
@@ -102,10 +101,8 @@ static var fx_enabled := true    # partículas dos golpes (P no título)
 static var blood_enabled := true # sangue e manchas no chão (Y no título); desligado vira poeira
 static var shake_level := 2      # tremor da câmera (E no título): 2 = 100%, 1 = 50%, 0 = desligado
 const SHAKE_LEVELS := [0.0, 0.5, 1.0]
-var _e_held := false
 const Materials = preload("res://scripts/materials.gd")
 var decals: Node2D               # manchas no chão (sangue, óleo, areia), abaixo dos lutadores
-var _y_held := false
 var _step_ms := 0
 static var vibration := true     # vibração dos controles (B no título)
 static var settings_loaded := false
@@ -322,7 +319,7 @@ func _set_mode(m: String) -> void:
 
 
 func is_frozen() -> bool:
-	return mode in ["title", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry", "achievements", "dialog"] or paused or hitstop > 0.0
+	return mode in ["title", "modes", "options", "select", "intro", "ending", "roundstart", "match", "ranking", "name_entry", "achievements", "dialog"] or paused or hitstop > 0.0
 
 
 ## Colisões do cenário tiradas do desenho da era: a faixa do chão e a barreira do fim da fase.
@@ -392,7 +389,7 @@ func _physics_process(delta: float) -> void:
 				ach_page = posmod(ach_page - 1, pages)
 				sfx.play("whoosh", 0.0)
 			elif mode_time > 0.4 and (_esc_just or _confirm() or Input.is_action_just_pressed("achievements")):
-				_set_mode("title")
+				_set_mode("modes")
 			return
 		"name_entry":
 			if _esc_just:
@@ -407,87 +404,23 @@ func _physics_process(delta: float) -> void:
 			# anfitrião esperando o servidor criar a sala
 			if _esc_just:
 				Net.close()
-				_set_mode("title")
+				_set_mode("modes")
 			return
 		"title":
-			if Input.is_action_just_pressed("ranking"):
-				_open_ranking("title")
-				return
-			if Input.is_physical_key_pressed(KEY_V) and not _v_held:
-				_v_held = true
-				# V: rig definitivo -> rig simples -> clássico -> rig definitivo
-				if rig_mode and model_detail:
-					model_detail = false
-				elif rig_mode:
-					rig_mode = false
-				else:
-					rig_mode = true
-					model_detail = true
-				_save_settings()
-				sfx.play("whoosh", 0.0)
-			elif not Input.is_physical_key_pressed(KEY_V):
-				_v_held = false
-			if Input.is_physical_key_pressed(KEY_P) and not _p_held:
-				_p_held = true
-				fx_enabled = not fx_enabled
-				_save_settings()
-				sfx.play("whoosh", 0.0)
-				if fx_enabled:
-					spawn_fx("energy", Vector2(cam_x, 470), Vector2(cam_x, 500), 1, Color(1, 0.8, 0.3))
-			elif not Input.is_physical_key_pressed(KEY_P):
-				_p_held = false
-			if Input.is_physical_key_pressed(KEY_Y) and not _y_held:
-				_y_held = true
-				blood_enabled = not blood_enabled
-				_save_settings()
-				sfx.play("whoosh", 0.0)
-			elif not Input.is_physical_key_pressed(KEY_Y):
-				_y_held = false
-			if Input.is_physical_key_pressed(KEY_E) and not _e_held:
-				_e_held = true
-				shake_level = (shake_level + 2) % 3  # 100% -> 50% -> desligado -> 100%
-				_save_settings()
-				sfx.play("whoosh", 0.0)
-				shake(10.0)  # amostra do nível escolhido
-			elif not Input.is_physical_key_pressed(KEY_E):
-				_e_held = false
-			if Input.is_physical_key_pressed(KEY_B) and not _b_held:
-				_b_held = true
-				vibration = not vibration
-				_save_settings()
-				sfx.play("whoosh", 0.0)
-				if vibration:
-					for j in Input.get_connected_joypads():
-						Input.start_joy_vibration(j, 0.5, 0.7, 0.25)
-			elif not Input.is_physical_key_pressed(KEY_B):
-				_b_held = false
-			if Input.is_action_just_pressed("achievements"):
-				ach_page = 0
-				_set_mode("achievements")
-				sfx.play("go", 0.0)
-				return
-			if Input.is_action_just_pressed("net_host") or Input.is_action_just_pressed("net_join"):
-				online_choice = 0
-				_set_mode("online_menu")
-				sfx.play("go", 0.0)
-				return
-			if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
-				var modes := ["story", "versus", "survival"]
-				var step := 1 if Input.is_action_just_pressed("move_down") else -1
-				game_mode = modes[posmod(modes.find(game_mode) + step, modes.size())]
-				versus = game_mode == "versus"
-				survival = game_mode == "survival"
-				sfx.play("whoosh", 0.0)
-			elif Input.is_action_just_pressed("move_right"):
-				_change_stage(1)
-			elif Input.is_action_just_pressed("move_left"):
-				_change_stage(-1)
-			elif mode_time > 0.3:
-				var who := Controls.who_pressed(["attack", "start"])
-				if who != "":
+			# tela de entrada: só o título; SOCO ou ENTER vai para a escolha de modo
+			if mode_time > 0.3:
+				var who0 := Controls.who_pressed(["attack", "start"])
+				if who0 != "":
+					title_who = who0
+					menu_row = 0
 					sfx.play("go", 0.0)
-					_set_mode("select")
-					_add_slot(who)
+					_set_mode("modes")
+			return
+		"modes":
+			_update_modes_menu()
+			return
+		"options":
+			_update_options_menu()
 			return
 		"select":
 			_update_select()
@@ -734,6 +667,141 @@ func party_names() -> String:
 
 func _play_stage_music(intense: bool) -> void:
 	music.play(stage.style, stage_idx, intense)
+
+
+## Tela de escolha de modo: ▲▼ escolhe a linha, ◄► muda o modo/fase, SOCO/ENTER confirma.
+const MODE_ROWS := ["modo", "fase", "comandos", "online", "ranking", "conquistas"]
+const OPTION_ROWS := ["visual", "particulas", "sangue", "tremor", "vibracao"]
+var menu_row := 0
+var option_row := 0
+var title_who := "k1"   # quem apertou na tela de entrada (entra como P1 na seleção)
+
+
+func _update_modes_menu() -> void:
+	if mode_time < 0.15:
+		return
+	if _esc_just or Controls.who_pressed(["jump"]) != "":
+		sfx.play("whoosh", 0.0)
+		_set_mode("title")
+		return
+	if Input.is_action_just_pressed("ranking"):
+		_open_ranking("modes")
+		return
+	if Input.is_action_just_pressed("achievements"):
+		ach_page = 0
+		_set_mode("achievements")
+		sfx.play("go", 0.0)
+		return
+	if Input.is_action_just_pressed("net_host") or Input.is_action_just_pressed("net_join"):
+		_open_online_menu()
+		return
+	if Input.is_physical_key_pressed(KEY_C) and not _c_held:
+		_c_held = true
+		_open_options()
+		return
+	elif not Input.is_physical_key_pressed(KEY_C):
+		_c_held = false
+	if Input.is_action_just_pressed("move_down"):
+		menu_row = (menu_row + 1) % MODE_ROWS.size()
+		sfx.play("whoosh", 0.0)
+	elif Input.is_action_just_pressed("move_up"):
+		menu_row = posmod(menu_row - 1, MODE_ROWS.size())
+		sfx.play("whoosh", 0.0)
+	elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("move_left"):
+		var step := 1 if Input.is_action_just_pressed("move_right") else -1
+		match MODE_ROWS[menu_row]:
+			"modo":
+				var modes := ["story", "versus", "survival"]
+				game_mode = modes[posmod(modes.find(game_mode) + step, modes.size())]
+				versus = game_mode == "versus"
+				survival = game_mode == "survival"
+				sfx.play("whoosh", 0.0)
+			"fase":
+				_change_stage(step)
+	else:
+		var who := Controls.who_pressed(["attack", "start"])
+		if who == "":
+			return
+		match MODE_ROWS[menu_row]:
+			"modo", "fase":
+				sfx.play("go", 0.0)
+				_set_mode("select")
+				_add_slot(who)
+			"comandos":
+				_open_options()
+			"online":
+				_open_online_menu()
+			"ranking":
+				_open_ranking("modes")
+			"conquistas":
+				ach_page = 0
+				_set_mode("achievements")
+				sfx.play("go", 0.0)
+
+
+func _open_online_menu() -> void:
+	online_choice = 0
+	_set_mode("online_menu")
+	sfx.play("go", 0.0)
+
+
+func _open_options() -> void:
+	option_row = 0
+	_set_mode("options")
+	sfx.play("go", 0.0)
+
+
+## Menu de comandos e opções: mostra os controles; ▲▼ escolhe uma opção, ◄► ou SOCO muda.
+## Os atalhos de antes (V, P, Y, E, B) continuam valendo aqui.
+func _update_options_menu() -> void:
+	if mode_time < 0.15:
+		return
+	if _esc_just or Controls.who_pressed(["jump"]) != "" or Input.is_action_just_pressed("start"):
+		sfx.play("whoosh", 0.0)
+		_set_mode("modes")
+		return
+	for k in [[KEY_V, "visual"], [KEY_P, "particulas"], [KEY_Y, "sangue"], [KEY_E, "tremor"], [KEY_B, "vibracao"]]:
+		var held: bool = Input.is_physical_key_pressed(k[0])
+		if held and not _keys_held.get(k[0], false):
+			_toggle_option(k[1])
+		_keys_held[k[0]] = held
+	if Input.is_action_just_pressed("move_down"):
+		option_row = (option_row + 1) % OPTION_ROWS.size()
+		sfx.play("whoosh", 0.0)
+	elif Input.is_action_just_pressed("move_up"):
+		option_row = posmod(option_row - 1, OPTION_ROWS.size())
+		sfx.play("whoosh", 0.0)
+	elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("move_left") or Controls.who_pressed(["attack"]) != "":
+		_toggle_option(OPTION_ROWS[option_row])
+
+
+func _toggle_option(which: String) -> void:
+	match which:
+		"visual":
+			# rig definitivo -> rig simples -> clássico -> rig definitivo
+			if rig_mode and model_detail:
+				model_detail = false
+			elif rig_mode:
+				rig_mode = false
+			else:
+				rig_mode = true
+				model_detail = true
+		"particulas":
+			fx_enabled = not fx_enabled
+			if fx_enabled:
+				spawn_fx("energy", Vector2(cam_x, 470), Vector2(cam_x, 500), 1, Color(1, 0.8, 0.3))
+		"sangue":
+			blood_enabled = not blood_enabled
+		"tremor":
+			shake_level = (shake_level + 2) % 3  # 100% -> 50% -> desligado -> 100%
+			shake(10.0)  # amostra do nível escolhido
+		"vibracao":
+			vibration = not vibration
+			if vibration:
+				for j in Input.get_connected_joypads():
+					Input.start_joy_vibration(j, 0.5, 0.7, 0.25)
+	_save_settings()
+	sfx.play("whoosh", 0.0)
 
 
 func _change_stage(d: int) -> void:
@@ -1558,7 +1626,7 @@ func _versus_champion():
 # =================== Online ===================
 func _update_online_menu() -> void:
 	if _esc_just and mode_time > 0.2:
-		_set_mode("title")
+		_set_mode("modes")
 		return
 	if Input.is_action_just_pressed("move_down"):
 		online_choice = (online_choice + 1) % ONLINE_OPTIONS.size()
@@ -1666,7 +1734,7 @@ func leave_online() -> void:
 func _client_tick(delta: float) -> void:
 	mode_time += delta
 	Net.client_tick()
-	if _esc_just and mode in ["connecting", "title"]:
+	if _esc_just and mode in ["connecting", "title", "modes", "options"]:
 		Net.close()
 		leave_online()
 		return
