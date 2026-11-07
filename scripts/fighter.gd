@@ -20,6 +20,8 @@ var state_time := 0.0
 var anim_t := 0.0
 var invuln := 0.0
 var flash := 0.0
+var down_time := 0.8   # quanto tempo fica caído no chão (inimigos: metade, ver enemy.gd)
+var getup_time := 0.4  # quanto leva para levantar
 var fist_glow := 0.0  # > 0: punhos brilhando (inimigo que acabou de acertar uma finalização no jogador)
 const FIST_GLOW_TIME := 0.9
 var hurt_time := 0.3
@@ -216,13 +218,13 @@ func _physics_process(delta: float) -> void:
 			pass
 		"down":
 			vel = Vector2.ZERO
-			if state_time > 0.8:
+			if state_time > down_time:
 				if hp <= 0:
 					_die()
 				else:
 					set_state("getup")
 		"getup":
-			if state_time > 0.4:
+			if state_time > getup_time:
 				set_state("idle")
 				invuln = 0.7
 		"dead":
@@ -844,8 +846,8 @@ func _draw() -> void:
 			rot = -PI * 0.5
 			off.y -= 6.0 * s
 		"getup":
-			rot = -PI * 0.5 * (1.0 - state_time / 0.4)
-			off.y -= 6.0 * s * (1.0 - state_time / 0.4)
+			rot = -PI * 0.5 * (1.0 - clampf(state_time / getup_time, 0.0, 1.0))
+			off.y -= 6.0 * s * (1.0 - clampf(state_time / getup_time, 0.0, 1.0))
 	var net: bool = game != null and game.net_client
 	var pose := net_pose if net else _current_pose()
 	var df := net_df if net else draw_facing()
@@ -910,7 +912,7 @@ func rig_anim() -> Array:
 		"knockdown":
 			return ["fall", clampf(state_time / 0.5, 0.0, 1.0)]
 		"getup":
-			return ["getup", clampf(state_time / 0.4, 0.0, 1.0)]
+			return ["getup", clampf(state_time / getup_time, 0.0, 1.0)]
 		"down", "dead":
 			return ["down", 0.0]
 	return ["idle", -1.0]

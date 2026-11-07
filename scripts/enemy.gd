@@ -20,6 +20,9 @@ var special_attack: Dictionary = {}
 
 func setup(k: String, stage: Dictionary = {}, stage_idx: int = 0) -> void:
 	kind = k
+	# inimigos derrubados levantam no dobro da velocidade dos jogadores (metade do tempo no chão)
+	down_time = 0.4
+	getup_time = 0.2
 	lane_offset = randf_range(-40.0, 40.0)
 	hover_dist = randf_range(140.0, 220.0)
 	attack_cd = randf_range(0.6, 1.4)
