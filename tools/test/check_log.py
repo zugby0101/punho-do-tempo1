@@ -16,7 +16,8 @@ import sys
 # avisos do ambiente (CI sem som, sem controle...) que não são do jogo
 IGNORE = [r"ALSA", r"PulseAudio", r"XOpenIM", r"joypad", r"Joypad", r"udev", r"libdecor", r"Wayland",
           r"No such file or directory.*(pulse|alsa)", r"Couldn't open audio", r"glXCreateContextAttribsARB",
-          r"Shader cache", r"--rendering-driver"]
+          r"Shader cache", r"--rendering-driver",
+          r"resources still in use at exit"]  # aviso do Godot ao fechar (música ainda gerando), não é erro do jogo
 ERR = re.compile(r"(SCRIPT ERROR|Parse Error|^ERROR:|USER ERROR|^\s*ERROR:)")
 AT = re.compile(r"(res://[\w/\.]+\.(?:gd|tscn)):(\d+)")
 
@@ -63,6 +64,9 @@ def main():
         md += ["| %s | %s |" % (e.replace("|", "\\|")[:180], w or "—") for e, w in uniq[:60]]
     if fails:
         md += ["", "### Regras do jogo que falharam (%d)" % len(fails), ""] + ["- %s" % f for f in fails[:80]]
+    sumiu = [l.strip() for l in lines if "[TESTBOT] SUMIU" in l]
+    if sumiu:
+        md += ["", "### Inimigos que sumiram (%d registros)" % len(sumiu), "", "```"] + [l[l.index("SUMIU"):][:240] for l in sumiu[:40]] + ["```"]
     if report is None and need:
         md += ["", "O relatório do agente não apareceu: o jogo travou, fechou antes ou nem abriu (veja os erros acima)."]
     if report:

@@ -6,7 +6,7 @@ const Weapons = preload("res://scripts/weapons.gd")
 
 var weapon: Dictionary = {}
 var white := false
-var glow := false  # aviso de golpe do inimigo (brilho na mão durante a preparação)
+var glow := false  # punho brilhando: inimigo que acabou de acertar uma finalização no jogador
 
 
 func set_weapon(w: Dictionary, flash: bool) -> void:

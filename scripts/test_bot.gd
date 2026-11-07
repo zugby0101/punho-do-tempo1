@@ -392,6 +392,57 @@ func _check_rules() -> void:
 
 
 ## Diário da partida: dano causado e recebido, defesa dos inimigos, armas pegas e chutadas, tipos vistos.
+## Inimigo que some: deixa de ser desenhado dentro da tela, sai da tela depois de ter entrado, ou pula de lugar.
+var enemy_pos := {}
+var enemy_in := {}
+var vanish_logs := 0
+var enemy_hidden := {}
+var enemy_hidden_inv := {}
+
+
+func _watch_vanish(e, id: int) -> void:
+	var k := String(e.kind)
+	var inside: bool = e.position.x > game.cam_left() - 2.0 and e.position.x < game.cam_right() + 2.0
+	if enemy_pos.has(id):
+		var jump: float = (e.position - Vector2(enemy_pos[id])).length()
+		if jump > 40.0:
+			_vanish("pulo", k, e, "andou %.0f px num quadro" % jump)
+		if bool(enemy_in.get(id, false)) and not inside:
+			_vanish("saiu_da_tela", k, e, "saiu da tela")
+	if inside:
+		enemy_in[id] = true
+	elif not bool(enemy_in.get(id, false)):
+		enemy_in[id] = false
+	if not inside and bool(enemy_in.get(id, false)):
+		enemy_in[id] = false
+	enemy_pos[id] = e.position
+	var hidden_n: int = int(enemy_hidden.get(id, 0))
+	if inside and e.state != "dead":
+		var drawn := true
+		if e.rig != null and game.rigs_enabled():
+			drawn = e.rig.visible and e.rig.modulate.a > 0.05 and e.rig.is_visible_in_tree()
+		if not e.is_visible_in_tree() or e.modulate.a < 0.05:
+			drawn = false
+		hidden_n = 0 if drawn else hidden_n + 1
+		enemy_hidden[id] = hidden_n
+		if hidden_n == 1:
+			enemy_hidden_inv[id] = e.invuln
+		# um quadro sem desenho é o pisca-pisca; 6 seguidos (0,1 s) já é sumiço de verdade
+		if hidden_n == 6:
+			_fail("%s vivo na tela ficou 0,1 s sem desenho (estado %s, partida %d)" % [k, e.state, run_idx + 1])
+			_vanish("invisivel" if float(enemy_hidden_inv.get(id, 0.0)) <= 0.0 else "invisivel_piscando", k, e,
+				"vivo na tela mas sem desenho por 0,1 s (invuln ao sumir %.2f)" % float(enemy_hidden_inv.get(id, 0.0)))
+
+
+func _vanish(what: String, k: String, e, why: String) -> void:
+	counts["%s_%s" % [what, k]] = int(counts.get("%s_%s" % [what, k], 0)) + 1
+	if vanish_logs < 40:
+		vanish_logs += 1
+		print("[TESTBOT] SUMIU %s %s: %s | estado=%s agressivo=%s pos=(%.0f,%.0f) cam=[%.0f,%.0f] alvo_jog=(%.0f,%.0f)" % [what, k, why, e.state,
+			str(e.aggressive), e.position.x, e.position.y, game.cam_left(), game.cam_right(),
+			game.players[0].position.x if not game.players.is_empty() else 0.0, game.players[0].position.y if not game.players.is_empty() else 0.0])
+
+
 func _diary() -> void:
 	var p = game.players[0] if not game.players.is_empty() else null
 	for e in game._alive_enemies():
@@ -407,6 +458,7 @@ func _diary() -> void:
 				counts["inimigo_esquivou"] = int(counts.get("inimigo_esquivou", 0)) + 1
 		enemy_hp[id] = e.hp
 		enemy_state[id] = e.state
+		_watch_vanish(e, id)
 	for w in get_tree().get_nodes_in_group("weapons"):
 		var id2: int = w.get_instance_id()
 		var sp: float = w.vel.length()

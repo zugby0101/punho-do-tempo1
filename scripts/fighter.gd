@@ -20,6 +20,10 @@ var state_time := 0.0
 var anim_t := 0.0
 var invuln := 0.0
 var flash := 0.0
+var down_time := 0.8   # quanto tempo fica caído no chão (inimigos: metade, ver enemy.gd)
+var getup_time := 0.4  # quanto leva para levantar
+var fist_glow := 0.0  # > 0: punhos brilhando (inimigo que acabou de acertar uma finalização no jogador)
+const FIST_GLOW_TIME := 0.9
 var hurt_time := 0.3
 var bounced := false
 var lunged := false
@@ -202,6 +206,7 @@ func _physics_process(delta: float) -> void:
 	anim_t += delta
 	invuln = maxf(0.0, invuln - delta)
 	flash = maxf(0.0, flash - delta)
+	fist_glow = maxf(0.0, fist_glow - delta)
 
 	match state:
 		"hurt":
@@ -213,13 +218,13 @@ func _physics_process(delta: float) -> void:
 			pass
 		"down":
 			vel = Vector2.ZERO
-			if state_time > 0.8:
+			if state_time > down_time:
 				if hp <= 0:
 					_die()
 				else:
 					set_state("getup")
 		"getup":
-			if state_time > 0.4:
+			if state_time > getup_time:
 				set_state("idle")
 				invuln = 0.7
 		"dead":
@@ -827,7 +832,11 @@ func _draw() -> void:
 	var use_rig: bool = rig != null and game != null and game.rigs_enabled()
 	if rig != null:
 		rig.visible = false
-	if invuln > 0.0 and not (state in ["attack", "special"]) and int(invuln * 20.0) % 2 == 0:
+	var blink: bool = invuln > 0.0 and not (state in ["attack", "special"]) and int(invuln * 20.0) % 2 == 0
+	if is_in_group("enemies"):
+		# inimigo invencível (levantando, esquivando) pisca transparente, mas nunca some da tela
+		modulate.a = 0.45 if blink else 1.0
+	elif blink:
 		return
 	if state == "dead" and int(state_time * 16.0) % 2 == 0:
 		return
@@ -841,8 +850,8 @@ func _draw() -> void:
 			rot = -PI * 0.5
 			off.y -= 6.0 * s
 		"getup":
-			rot = -PI * 0.5 * (1.0 - state_time / 0.4)
-			off.y -= 6.0 * s * (1.0 - state_time / 0.4)
+			rot = -PI * 0.5 * (1.0 - clampf(state_time / getup_time, 0.0, 1.0))
+			off.y -= 6.0 * s * (1.0 - clampf(state_time / getup_time, 0.0, 1.0))
 	var net: bool = game != null and game.net_client
 	var pose := net_pose if net else _current_pose()
 	var df := net_df if net else draw_facing()
@@ -907,7 +916,7 @@ func rig_anim() -> Array:
 		"knockdown":
 			return ["fall", clampf(state_time / 0.5, 0.0, 1.0)]
 		"getup":
-			return ["getup", clampf(state_time / 0.4, 0.0, 1.0)]
+			return ["getup", clampf(state_time / getup_time, 0.0, 1.0)]
 		"down", "dead":
 			return ["down", 0.0]
 	return ["idle", -1.0]
@@ -1019,11 +1028,11 @@ func _classic_footsteps() -> void:
 	_classic_w = w
 
 
-func _sync_weapon(phase: float) -> void:
+func _sync_weapon(_phase: float) -> void:
 	var slot = rig.get_node_or_null("Parts/WeaponSlot")
 	if slot != null:
 		slot.set_weapon(weapon, flash > 0.0)
-		slot.set_glow(is_in_group("enemies") and state == "attack" and phase < 0.0)
+		slot.set_glow(fist_glow > 0.0)
 
 
 func attach_rig(path: String) -> void:
@@ -1358,8 +1367,8 @@ func _draw_body(pose: String, p: float) -> void:
 	if not weapon.is_empty():
 		Weapons.draw(self, weapon, hf, _weapon_angle(pose, p), flash > 0.0)
 	draw_circle(hf, 5.5, skin_c)
-	# Telegrafa o golpe dos inimigos (brilho na mão)
-	if state == "attack" and p < 0.0 and is_in_group("enemies"):
+	# Punhos brilhando: só quando o inimigo acerta uma finalização no jogador
+	if fist_glow > 0.0:
 		draw_circle(hf, 8.0, Color(1, 0.9, 0.2, 0.35 + 0.3 * sin(anim_t * 40.0)))
 
 
