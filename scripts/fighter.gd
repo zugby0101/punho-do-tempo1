@@ -198,7 +198,7 @@ func _physics_process(delta: float) -> void:
 		queue_redraw()
 		return
 	if game.is_frozen():
-		if game.mode in ["title", "select", "ending"]:
+		if game.mode in ["title", "modes", "options", "select", "ending"]:
 			anim_t += delta
 			queue_redraw()
 		return

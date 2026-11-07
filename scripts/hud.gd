@@ -134,6 +134,8 @@ func _draw_main() -> void:
 	_draw_net_status()
 	match game.mode:
 		"title": _draw_title()
+		"modes": _draw_modes()
+		"options": _draw_options()
 		"online_menu": _draw_online_menu()
 		"ranking": _draw_ranking()
 		"dialog": _draw_dialog()
@@ -276,45 +278,96 @@ func _draw_game_hud() -> void:
 		_center(280, "PAUSADO", 56, Color(1, 1, 1))
 
 
+## Tela de entrada: só o título e o convite para começar.
 func _draw_title() -> void:
 	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.72))
-	_center(110, "PUNHO DO TEMPO", 80, Color(1, 0.3, 0.6))
-	_center(150, "um beat 'em up através de 12 eras — 1 a 4 jogadores", 19, Color(0.6, 0.9, 1))
-	var lines := [
-		"P1: WASD + J soco, K pulo, L especial, U bloqueio      P2: Setas + , soco  . pulo  / especial  N bloqueio",
-		"P3: TFGH + Z soco, X pulo, C especial, Q bloqueio      P4: Numpad 8456 + 7 soco, 9 pulo, + especial, 1 bloqueio",
-		"Controles: X soco, A pulo, Y/B especial, LB/RB bloqueio (cada controle é um jogador)",
-		"Cima + Soco: gancho  |  Pulo + Soco: voadora  |  Bloqueio + Pulo: esquiva  |  Especial armado: arremessar",
-	]
-	for i in lines.size():
-		_center(200 + i * 26, lines[i], 15, Color(1, 1, 1))
-	var vs: bool = game.game_mode == "versus"
+	_center(230, "PUNHO DO TEMPO", 80, Color(1, 0.3, 0.6))
+	if int(t * 2.0) % 2 == 0:
+		_center(380, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
+
+
+## Escolha de modo: [HISTÓRIA] VERSUS SOBREVIVÊNCIA, fase/arena e os outros menus.
+func _draw_modes() -> void:
+	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.8))
+	_center(70, "PUNHO DO TEMPO", 40, Color(1, 0.3, 0.6))
+	_center(118, "ESCOLHA O MODO", 26, Color(1, 0.85, 0.3))
 	var gm: String = game.game_mode
+	var vs: bool = gm == "versus"
 	var names := {"story": "HISTÓRIA", "versus": "VERSUS", "survival": "SOBREVIVÊNCIA"}
+	var row: String = game.MODE_ROWS[game.menu_row]
+	# linha do modo
+	_row_box(150, 58, row == "modo")
 	var parts: Array = []
 	for k in ["story", "versus", "survival"]:
 		parts.append("[ %s ]" % names[k] if k == gm else names[k])
-	_center(318, "Modo (▲ ▼):   " + "    ".join(parts), 19, Color(1, 0.6, 0.8))
-	_center(342, "Arena (◄ ►):" if vs or gm == "survival" else "Fase inicial (◄ ►):", 15, Color(0.8, 0.8, 0.9))
-	_center(372, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 26, Color(0.5, 1, 0.6))
-	if int(t * 2.0) % 2 == 0:
-		_center(450, "Aperte SOCO ou ENTER para começar", 28, Color(1, 0.9, 0.3))
+	_center(186, "     ".join(parts), 28, Color(1, 0.9, 0.3) if row == "modo" else Color(1, 1, 1))
+	var desc := "Siga pelas 12 eras, sozinho ou com até 4 jogadores."
+	if vs:
+		desc = "2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds."
+	elif gm == "survival":
+		desc = "Ondas infinitas que ficam cada vez mais difíceis. Até onde você chega?"
+	_center(228, desc, 15, Color(0.8, 0.8, 0.9))
+	# linha da fase/arena
+	_row_box(242, 58, row == "fase")
+	_center(260, "Arena" if vs or gm == "survival" else "Fase inicial", 14, Color(0.8, 0.8, 0.9))
+	_center(288, "◄  %d. %s  (%s)  ►" % [game.stage_idx + 1, game.stage.name, game.stage.year], 24, Color(0.5, 1, 0.6))
 	if game.fragments() > 0:
 		var ftxt := "✦ Fragmentos do Tempo: %d/12" % game.fragments()
 		if game.secret_unlocked():
 			ftxt += " — FASE SECRETA DESBLOQUEADA (13ª na lista de fases)"
-		_center(395, ftxt, 14, Color(1, 0.85, 0.4))
-	_center(415, "ONLINE: O = criar/entrar numa sala  •  R = ranking  •  M = conquistas (%d/%d)" % [Ach.unlocked_count(), Ach.LIST.size()], 16, Color(0.5, 0.9, 1))
-	_center(507, "V: visual — %s   P: partículas %s   Y: sangue %s   E: tremor %s   B: vibração %s" % [("[ RIG DEFINITIVO ]" if game.model_detail else "[ RIG SIMPLES ]") if game.rig_mode else "[ CLÁSSICO ]",
-		"[ LIGADAS ]" if game.fx_enabled else "[ DESLIGADAS ]", "[ LIGADO ]" if game.blood_enabled else "[ DESLIGADO ]",
-		["[ DESLIGADO ]", "[ 50% ]", "[ 100% ]"][game.shake_level],
-		"[ LIGADA ]" if game.vibration else "[ DESLIGADA ]"], 13, Color(0.75, 0.75, 0.85))
-	if gm == "survival":
-		_center(485, "Sobrevivência: ondas infinitas que ficam cada vez mais difíceis. Até onde você chega?", 15, Color(0.8, 0.8, 0.9))
-	elif vs:
-		_center(485, "Versus: 2 a 4 jogadores, todos contra todos. Vence quem ganhar 2 rounds.", 15, Color(0.8, 0.8, 0.9))
-	else:
-		_center(485, "Os outros jogadores entram na tela de seleção apertando SOCO", 15, Color(0.8, 0.8, 0.9))
+		_center(318, ftxt, 13, Color(1, 0.85, 0.4))
+	# outros menus
+	var others := [["comandos", "COMANDOS E OPÇÕES (C)"], ["online", "JOGAR ONLINE (O)"], ["ranking", "RANKING (R)"],
+		["conquistas", "CONQUISTAS (M)  %d/%d" % [Ach.unlocked_count(), Ach.LIST.size()]]]
+	for i in others.size():
+		var y := 350.0 + i * 34.0
+		var sel: bool = row == others[i][0]
+		if sel:
+			draw_rect(Rect2(300, y - 22, 360, 30), Color(0.3, 0.6, 1, 0.25))
+		_center(y, ("► " if sel else "") + String(others[i][1]), 18, Color(1, 0.9, 0.3) if sel else Color(0.75, 0.85, 1))
+	_center(512, "▲▼ escolher   •   ◄► mudar   •   SOCO/ENTER confirmar   •   ESC/PULO voltar", 14, Color(0.8, 0.8, 0.9))
+
+
+func _row_box(y: float, h: float, sel: bool) -> void:
+	if sel:
+		draw_rect(Rect2(120, y, 720, h), Color(0.3, 0.6, 1, 0.22))
+		draw_rect(Rect2(120, y, 720, h), Color(0.5, 0.9, 1), false, 2.0)
+
+
+## Menu separado com os comandos de cada jogador e as opções de jogo.
+func _draw_options() -> void:
+	draw_rect(Rect2(0, 0, W, 540), Color(0.03, 0.0, 0.08, 0.9))
+	_center(56, "COMANDOS E OPÇÕES", 36, Color(1, 0.85, 0.3))
+	var lines := [
+		["P1", "WASD + J soco, K pulo, L especial, U bloqueio"],
+		["P2", "Setas + , soco  . pulo  / especial  N bloqueio"],
+		["P3", "TFGH + Z soco, X pulo, C especial, Q bloqueio"],
+		["P4", "Numpad 8456 + 7 soco, 9 pulo, + especial, 1 bloqueio"],
+		["Controle", "X soco, A pulo, Y/B especial, LB/RB bloqueio (cada controle é um jogador)"],
+	]
+	for i in lines.size():
+		var y := 104.0 + i * 25.0
+		_text(Vector2(110, y), lines[i][0], 15, PLAYER_COLORS[i] if i < 4 else Color(0.6, 0.9, 1))
+		_text(Vector2(200, y), lines[i][1], 15, Color(1, 1, 1))
+	_center(242, "Cima + Soco: gancho  •  Pulo + Soco: voadora  •  Bloqueio + Pulo: esquiva  •  Especial armado: arremessar", 14, Color(0.8, 0.9, 0.8))
+	var vals := {
+		"visual": ["Visual (V)", ("RIG DEFINITIVO" if game.model_detail else "RIG SIMPLES") if game.rig_mode else "CLÁSSICO"],
+		"particulas": ["Partículas (P)", "LIGADAS" if game.fx_enabled else "DESLIGADAS"],
+		"sangue": ["Sangue (Y)", "LIGADO" if game.blood_enabled else "DESLIGADO"],
+		"tremor": ["Tremor de tela (E)", ["DESLIGADO", "50%", "100%"][game.shake_level]],
+		"vibracao": ["Vibração (B)", "LIGADA" if game.vibration else "DESLIGADA"],
+	}
+	var rows: Array = game.OPTION_ROWS
+	for i in rows.size():
+		var y := 292.0 + i * 36.0
+		var sel: bool = i == game.option_row
+		if sel:
+			draw_rect(Rect2(230, y - 24, 500, 32), Color(0.3, 0.6, 1, 0.25))
+			draw_rect(Rect2(230, y - 24, 500, 32), Color(0.5, 0.9, 1), false, 2.0)
+		var v: Array = vals[rows[i]]
+		_text(Vector2(250, y), ("► " if sel else "") + String(v[0]), 18, Color(1, 0.9, 0.3) if sel else Color(1, 1, 1))
+		_text(Vector2(250, y), "◄ %s ►" % v[1] if sel else String(v[1]), 18, Color(0.5, 1, 0.6), HORIZONTAL_ALIGNMENT_RIGHT, 460)
+	_center(512, "▲▼ escolher   •   ◄► ou SOCO mudar   •   ESC/PULO/ENTER voltar", 14, Color(0.8, 0.8, 0.9))
 
 
 func _draw_select() -> void:
@@ -443,6 +496,7 @@ func _draw_net_status() -> void:
 			"play": sy = 160.0
 			"select": sy = 290.0
 			"title": sy = 180.0
+			"modes": sy = 330.0
 		_text(Vector2(0, sy), Net.status, 15, Color(0.5, 0.9, 1), HORIZONTAL_ALIGNMENT_CENTER, W)
 	if not Net.online() or game.mode in ["connecting", "join_input"]:
 		return

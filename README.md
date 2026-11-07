@@ -42,6 +42,15 @@ python -m http.server 8000 -d build/web
 e abra http://localhost:8000. Para testar como o CI: `pip install playwright && playwright install chromium`
 e `python tools/web/smoke_test.py build/web` (com `--bot`, o agente de teste joga no navegador).
 
+## Telas iniciais
+
+1. **Entrada:** só o título *Punho do Tempo* e "Aperte SOCO ou ENTER para começar".
+2. **Escolha de modo:** `[ HISTÓRIA ]  VERSUS  SOBREVIVÊNCIA` (◄ ►), a fase/arena na linha de baixo e,
+   abaixo, *Comandos e opções* (C), *Jogar online* (O), *Ranking* (R) e *Conquistas* (M).
+   ▲ ▼ escolhe a linha, SOCO/ENTER confirma, ESC ou PULO volta para a entrada.
+3. **Comandos e opções:** os controles de cada jogador e as opções (visual, partículas, sangue,
+   tremor, vibração) — ▲ ▼ escolhe, ◄ ► ou SOCO muda; ESC, PULO ou ENTER volta.
+
 ## Controles e co-op (1 a 4 jogadores)
 
 Até 4 pessoas jogam juntas no mesmo computador. Na tela de seleção, cada jogador
@@ -58,12 +67,12 @@ O jogo começa quando todos estão prontos.
 | Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ | LB / RB |
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
-Enter confirma nos menus (no Teclado 3, a tecla 5), Esc ou P pausa. No título: O = online, R = ranking, M = conquistas;
+Enter confirma nos menus (no Teclado 3, a tecla 5), Esc ou P pausa. Na escolha de modo: O = online, R = ranking, M = conquistas, C = comandos e opções;
 V = visual (rig definitivo / rig simples / clássico), P = partículas, Y = sangue, E = tremor da câmera (100% / 50% / desligado), B = vibração. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 Segurar **Bloqueio** ergue a guarda (para golpes de frente; os fortes tiram só um pouco de vida) e
 **Bloqueio + Pulo** é uma esquiva: um passo rápido para trás, invencível enquanto está no ar. Quando um
 golpe do combo derrubaria de vez um inimigo à frente, sai a **finalização** no lugar dele.
-No título, ◄ ► escolhe a fase inicial.
+Na escolha de modo, a linha *Fase inicial* (◄ ►) escolhe a fase.
 
 Detalhes do co-op:
 - Os inimigos ficam mais fortes e mais numerosos conforme o número de jogadores.
@@ -75,7 +84,7 @@ Detalhes do co-op:
 
 ## Modo Versus (2 a 4 jogadores)
 
-No título, use **▲ ▼ para escolher o modo** (História ou Versus) e **◄ ► para escolher a arena**
+Na escolha de modo, deixe **VERSUS** marcado (◄ ► na linha do modo) e escolha a **arena** na linha de baixo
 (qualquer uma das 12 eras). Os jogadores entram na seleção como no co-op.
 
 - Todos contra todos: socos, combos, golpes especiais, projéteis e armas acertam os outros jogadores.
@@ -85,7 +94,7 @@ No título, use **▲ ▼ para escolher o modo** (História ou Versus) e **◄ �
 
 ## Modo Sobrevivência (1 a 4 jogadores)
 
-No título, escolha **SOBREVIVÊNCIA** com ▲ ▼ e a era inicial com ◄ ►. Ondas infinitas de inimigos:
+Na escolha de modo, marque **SOBREVIVÊNCIA** (◄ ►) e a era inicial na linha de baixo. Ondas infinitas de inimigos:
 
 - Cada onda traz **mais inimigos**, com **mais vida e mais dano**, e os tiers difíceis ficam mais frequentes.
 - **Sub-chefe a cada 5 ondas** e **chefe a cada 10**.
@@ -98,7 +107,7 @@ No título, escolha **SOBREVIVÊNCIA** com ▲ ▼ e a era inicial com ◄ ►. 
 
 Funciona com o modo História (co-op) e com o Versus, para até 4 jogadores no total
 (dá para misturar jogadores no mesmo computador com jogadores online).
-No título, escolha o modo e a fase/arena e aperte **O** para abrir o menu online:
+Na escolha de modo, escolha o modo e a fase/arena e aperte **O** (ou a linha *Jogar online*) para abrir o menu online:
 
 | Opção | Para quê |
 |---|---|
@@ -124,7 +133,7 @@ Os menus entre as fases podem ser confirmados por qualquer jogador.
 ## Conquistas
 
 São **37 conquistas desbloqueáveis**, salvas no computador de cada jogador. Um aviso aparece
-na tela quando uma é desbloqueada. No título, **M** (ou **Tab**) mostra todas, com o progresso
+na tela quando uma é desbloqueada. Na escolha de modo, **M** (ou **Tab**) mostra todas, com o progresso
 das que faltam.
 
 | Categoria | Exemplos |
@@ -142,7 +151,7 @@ Online, cada convidado desbloqueia as conquistas do próprio lutador no próprio
 
 São dois rankings: **História** e **Sobrevivência** (na tela do ranking, ◄ ► troca entre eles).
 No fim de jogo ou no final da história, aperte **R** para enviar a pontuação: cada jogador
-digita o nome (no co-op, cada um entra com a própria pontuação). No título, **R** mostra o
+digita o nome (no co-op, cada um entra com a própria pontuação). Na escolha de modo, **R** mostra o
 **Top 10** com nome, lutador, pontos, até onde chegou e quantos jogadores eram.
 
 O ranking fica no mesmo servidor do modo online. Para que ele não seja zerado quando o servidor
@@ -339,7 +348,7 @@ funciona no renderizador Compatibility e na web):
 | nocaute | explosão grande (maior e rosa nos chefes) com poeira no chão |
 
 Golpes pesados e lutadores grandes geram efeitos maiores; no co-op as faíscas têm a cor do jogador.
-No online, o host manda os efeitos para todos. **P** no título liga/desliga as partículas e os rastros.
+No online, o host manda os efeitos para todos. **P** em *Comandos e opções* liga/desliga as partículas e os rastros.
 
 **Impacto, sangue e o material de cada personagem.** Além das partículas do golpe, quem apanha solta
 o que é feito o corpo dele (`scripts/materials.gd`, os 79 personagens), saindo do **ponto exato do
@@ -359,7 +368,7 @@ A quantidade acompanha o dano, e o golpe que derruba de vez solta bem mais. As m
 aparecem quando as gotas chegam ao chão, ficam ~9 s numa camada abaixo dos lutadores e somem devagar
 (no máximo 90 na tela; trocar de era limpa o chão). Golpe bloqueado não fere. As faíscas do golpe têm a
 **assinatura** de quem bate: a cor do especial de cada lutador, ou a cor do material dos inimigos
-(máquinas azuis, sombras roxas, Cronos e ÉON dourados). **Y** no título liga/desliga o sangue
+(máquinas azuis, sombras roxas, Cronos e ÉON dourados). **Y** em *Comandos e opções* liga/desliga o sangue
 (desligado, carne, ciborgue e mutante soltam só um sopro de poeira, sem manchas).
 
 **Rastro de movimento nos especiais** (`scripts/trail.gd`): durante os 14 golpes especiais — e nas
@@ -390,7 +399,7 @@ gigantes — brutos, sub-chefes, chefes —, na pisada do haka do Tama e quando 
 câmera lenta dos chefes, o zoom dela manda. Online, os convidados recebem inclinação, zoom e tranco do
 anfitrião.
 
-**E** no título troca o **tremor** entre 100%, 50% e desligado (fica salvo). Vale para o tremor, a
+**E** em *Comandos e opções* troca o **tremor** entre 100%, 50% e desligado (fica salvo). Vale para o tremor, a
 inclinação, o zoom de impacto e o tranco vertical — para quem se incomoda com a tela mexendo; online,
 cada um usa o próprio ajuste. A câmera lenta do golpe final nos chefes não muda.
 
@@ -405,7 +414,7 @@ cada um usa o próprio ajuste. A câmera lenta do golpe final nos chefes não mu
 | chefe entrando em cena | todos | média, longa |
 | nocaute de sub-chefe / chefe | todos | forte / máxima |
 
-Teclado não vibra; no online o convidado recebe a vibração no controle dele. **B** no título
+Teclado não vibra; no online o convidado recebe a vibração no controle dele. **B** em *Comandos e opções*
 liga/desliga a vibração (salvo nas configurações).
 
 ## Câmera lenta no golpe final
@@ -442,7 +451,7 @@ script Python (armature com IK para mãos e pés e animações de combate com an
 sincronizado com o acerto, excesso e personalidade por estilo de luta) e convertido em cenas do Godot
 (`Skeleton2D` + `Polygon2D` com skinning + `AnimationPlayer`). Os modelos têm contorno, luz e sombra,
 rosto e, nos 14 lutadores, os detalhes do estilo de luta (luvas, faixas, cordão, joelheiras, tatuagens,
-mongkol...). No título, **V** alterna entre o rig definitivo, o rig simples (sem o acabamento, mais leve)
+mongkol...). Em *Comandos e opções*, **V** alterna entre o rig definitivo, o rig simples (sem o acabamento, mais leve)
 e o visual clássico. Como gerar e editar: [`tools/rig/README.md`](tools/rig/README.md).
 
 Cada rig tem também um **`AnimationTree`** com máquina de estados e **BlendSpaces**:
