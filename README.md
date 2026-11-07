@@ -50,6 +50,8 @@ e `python tools/web/smoke_test.py build/web` (com `--bot`, o agente de teste jog
    ▲ ▼ escolhe a linha, SOCO/ENTER confirma, ESC ou PULO volta para a entrada.
 3. **Comandos e opções:** os controles de cada jogador e as opções (visual, partículas, sangue,
    tremor, vibração) — ▲ ▼ escolhe, ◄ ► ou SOCO muda; ESC, PULO ou ENTER volta.
+4. **Pausa** (ESC ou P durante a partida; Back no controle): *Continuar*, *Comandos e opções* e
+   *Voltar ao menu* (pede confirmação e volta para a escolha de modo; no online, fecha a sala).
 
 ## Controles e co-op (1 a 4 jogadores)
 
@@ -67,7 +69,7 @@ O jogo começa quando todos estão prontos.
 | Cada controle | Analógico / D-pad | X / □ | A / ✕ | Y / △ ou B / ○ | LB / RB |
 
 Jogando sozinho, qualquer teclado ou controle comanda o P1.
-Enter confirma nos menus (no Teclado 3, a tecla 5), Esc ou P pausa. Na escolha de modo: O = online, R = ranking, M = conquistas, C = comandos e opções;
+Enter confirma nos menus (no Teclado 3, a tecla 5), Esc ou P (Back no controle) abre a **pausa**: Continuar, Comandos e opções, Voltar ao menu. Na escolha de modo: O = online, R = ranking, M = conquistas, C = comandos e opções;
 V = visual (rig definitivo / rig simples / clássico), P = partículas, Y = sangue, E = tremor da câmera (100% / 50% / desligado), B = vibração. Cima + Soco faz um gancho; Pulo + Soco, uma voadora.
 Segurar **Bloqueio** ergue a guarda (para golpes de frente; os fortes tiram só um pouco de vida) e
 **Bloqueio + Pulo** é uma esquiva: um passo rápido para trás, invencível enquanto está no ar. Quando um

@@ -274,8 +274,33 @@ func _draw_game_hud() -> void:
 	if game.show_go and int(t * 3.0) % 2 == 0:
 		_text(Vector2(W - 170, 270), "VAI ►", 44, Color(1, 0.95, 0.3))
 	if game.paused:
-		draw_rect(Rect2(0, 0, W, 540), Color(0, 0, 0, 0.5))
-		_center(280, "PAUSADO", 56, Color(1, 1, 1))
+		_draw_pause()
+
+
+## Tela de pausa: continuar, comandos e opções, voltar ao menu (com confirmação).
+func _draw_pause() -> void:
+	draw_rect(Rect2(0, 0, W, 540), Color(0, 0, 0, 0.6))
+	_center(150, "PAUSADO", 56, Color(1, 1, 1))
+	if game.net_client:
+		_center(230, "O anfitrião pausou a partida", 20, Color(0.8, 0.8, 0.9))
+		return
+	if game.pause_confirm:
+		draw_rect(Rect2(190, 210, 580, 170), Color(0.08, 0.02, 0.12, 0.95))
+		draw_rect(Rect2(190, 210, 580, 170), Color(1, 0.5, 0.5), false, 2.0)
+		_center(255, "Voltar ao menu?", 30, Color(1, 0.85, 0.3))
+		_center(292, "O progresso desta partida será perdido." + (" A sala online será fechada." if Net.online() else ""), 15, Color(1, 0.7, 0.7))
+		_center(345, "SOCO/ENTER: sim   •   PULO/ESC: não", 18, Color(1, 1, 1))
+		return
+	var labels := {"continuar": "CONTINUAR", "comandos": "COMANDOS E OPÇÕES", "menu": "VOLTAR AO MENU"}
+	var rows: Array = game.PAUSE_ROWS
+	for i in rows.size():
+		var y := 240.0 + i * 52.0
+		var sel: bool = i == game.pause_row
+		if sel:
+			draw_rect(Rect2(260, y - 32, 440, 46), Color(0.3, 0.6, 1, 0.25))
+			draw_rect(Rect2(260, y - 32, 440, 46), Color(0.5, 0.9, 1), false, 2.0)
+		_center(y, ("► " if sel else "") + String(labels[rows[i]]), 26, Color(1, 0.9, 0.3) if sel else Color(1, 1, 1))
+	_center(480, "▲▼ escolher   •   SOCO/ENTER confirmar   •   ESC/P/PULO continuar", 15, Color(0.8, 0.8, 0.9))
 
 
 ## Tela de entrada: só o título e o convite para começar.
