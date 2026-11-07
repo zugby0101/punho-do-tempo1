@@ -68,11 +68,15 @@ def main():
     if report:
         rg = report.get("rigs", {})
         md += ["", "Rigs conferidos: %s, animações: %s · duração: %s s · %s" % (rg.get("rigs"), rg.get("animacoes"), report.get("duracao_s"), report.get("godot", ""))]
-        md += ["", "| # | Lutador | Era | Fim | Luta (s) | Pontos | Golpes no ar | Acertos | Passos | Derrubados |", "|---|---|---|---|---|---|---|---|---|---|"]
+        md += ["", "| # | Lutador | Era | Fim | Luta (s) | Pontos | Golpes no ar | Acertos | Passos | Derrubados | Dano causado | Inim. bloq./esq. | Armas pegas/chutadas | Tempo: luta/arma/defesa/caixa/sem alvo |",
+               "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for p in report.get("partidas", []):
-            md.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s |" % (
+            md.append("| %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s | %s/%s | %s/%s | %s/%s/%s/%s/%s |" % (
                 p.get("partida"), p.get("lutador"), p.get("era"), p.get("fim"), p.get("tempo_de_luta"), p.get("pontos"),
-                p.get("som_w", 0), p.get("som_i", 0), p.get("som_st", 0), p.get("inimigos_derrubados", 0)))
+                p.get("som_w", 0), p.get("som_i", 0), p.get("som_st", 0), p.get("inimigos_derrubados", 0),
+                p.get("dano_causado", 0), p.get("inimigo_bloqueou", 0), p.get("inimigo_esquivou", 0),
+                p.get("armas_pegas", 0), p.get("armas_chutadas", 0),
+                p.get("t_luta", 0), p.get("t_arma", 0), p.get("t_defesa", 0), p.get("t_caixa", 0), p.get("t_sem_alvo", 0)))
     text = "\n".join(md)
     print(text)
     if os.environ.get("GITHUB_STEP_SUMMARY"):

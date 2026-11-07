@@ -11,6 +11,14 @@ on:
         description: "Só 3 partidas curtas"
         type: boolean
         default: false
+      partida:
+        description: "Só esta partida (1 a 14; vazio = todas)"
+        type: string
+        default: ""
+      rastrear:
+        description: "Linha do tempo desta partida no log (1 a 14; vazio = nenhuma)"
+        type: string
+        default: ""
 
 jobs:
   testar:
@@ -43,7 +51,11 @@ jobs:
         env:
           GODOT: ${{ github.workspace }}/godot
           LIBGL_ALWAYS_SOFTWARE: "1"
-        run: python tools/test/run_game_tests.py ${{ inputs.rapido && '--quick' || '' }}
+        run: >
+          python tools/test/run_game_tests.py
+          ${{ inputs.rapido && '--quick' || '' }}
+          ${{ inputs.partida && format('--only={0}', inputs.partida) || '' }}
+          ${{ inputs.rastrear && format('--trace={0}', inputs.rastrear) || '' }}
 
       - name: Guardar capturas, relatório e log
         if: always()

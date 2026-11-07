@@ -1,0 +1,95 @@
+# Versão web do Punho do Tempo: exporta para o navegador, testa num Chromium e publica no GitHub Pages.
+# Para publicar, ative uma vez: Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Endereço: https://<usuário>.github.io/<repositório>/
+name: Versão web
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      agente:
+        description: "Também deixar o agente de teste jogar no navegador (mais lento)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exportar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GODOT_VERSION: 4.3-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Baixar o Godot e o modelo de exportação web
+        run: |
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+          curl -sSL -o godot.zip "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip && mv "Godot_v${GODOT_VERSION}_linux.x86_64" godot && chmod +x godot && rm godot.zip
+          curl -sSL -o templates.tpz "$base/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          tdir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION/-/.}"
+          mkdir -p "$tdir"
+          unzip -q -j templates.tpz "templates/web_nothreads_release.zip" "templates/web_nothreads_debug.zip" "templates/version.txt" -d "$tdir"
+          rm templates.tpz
+          ls -la "$tdir"
+
+      - name: Importar e exportar para a web
+        run: |
+          ./godot --headless --path . --import > import.log 2>&1 || true
+          mkdir -p build/web
+          ./godot --headless --path . --export-release "Web" build/web/index.html 2>&1 | tee export.log
+          test -f build/web/index.html && test -f build/web/index.pck && test -f build/web/index.wasm
+          if grep -E "SCRIPT ERROR|Parse Error" import.log export.log; then exit 1; fi
+          ls -la build/web
+          du -sh build/web
+
+      - name: Instalar o Chromium para o teste
+        run: |
+          pip install -q playwright
+          python -m playwright install --with-deps chromium > /dev/null
+
+      - name: Testar no navegador (abre, tela de título, começa a jogar)
+        run: python tools/web/smoke_test.py build/web
+
+      - name: Agente de teste jogando no navegador
+        if: github.event_name != 'workflow_dispatch' || inputs.agente
+        continue-on-error: true
+        run: python tools/web/smoke_test.py build/web --bot
+
+      - name: Guardar capturas e console
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teste-web
+          path: test_output/web/
+          if-no-files-found: warn
+
+      - name: Preparar o site
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  publicar:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: exportar
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

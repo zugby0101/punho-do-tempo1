@@ -10,6 +10,38 @@ gerados por código.
 2. Abra o Godot → **Importar** → selecione `project.godot` desta pasta.
 3. Aperte **F5**.
 
+## Versão web (jogar no navegador)
+
+O jogo também roda no navegador (Chrome, Edge, Firefox e Safari, no computador), sem instalar nada.
+O workflow [`.github/workflows/web.yml`](.github/workflows/web.yml) exporta a versão web a cada push,
+testa num Chromium (abre, chega à tela de título, começa a jogar e deixa o agente de teste jogar) e,
+na `main`, publica no **GitHub Pages**:
+
+1. Ative uma vez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. Depois de um push na `main` (ou em **Actions → Versão web → Run workflow**), o jogo fica em
+   `https://<usuário>.github.io/<repositório>/` — aqui: https://zugby0101.github.io/punho-do-tempo1/
+
+Diferenças em relação à versão para computador:
+
+- **Online só por sala** (código de 4 letras): navegador não abre conexão UDP, então
+  *Hospedar direto* / *Entrar direto por IP* não funcionam na web (a sala funciona, inclusive
+  misturando quem joga no navegador com quem joga no computador).
+- Exportada **sem threads** (roda em qualquer servidor, sem cabeçalhos especiais): a música de cada
+  fase é composta na hora em que começa a tocar, o que dá uma pausa curta na troca de fase.
+- Progresso, conquistas e opções ficam salvos no próprio navegador.
+- Clique no jogo antes de jogar: o navegador só libera teclado, som e controle depois de um clique.
+
+Exportar à mão: no Godot, **Editor → Gerenciar modelos de exportação** (baixe os do 4.3), depois
+**Projeto → Exportar → Web → Exportar projeto** (a predefinição já está em `export_presets.cfg`).
+Para testar no computador, sirva a pasta por HTTP (abrir o `index.html` direto não funciona):
+
+```bash
+python -m http.server 8000 -d build/web
+```
+
+e abra http://localhost:8000. Para testar como o CI: `pip install playwright && playwright install chromium`
+e `python tools/web/smoke_test.py build/web` (com `--bot`, o agente de teste joga no navegador).
+
 ## Controles e co-op (1 a 4 jogadores)
 
 Até 4 pessoas jogam juntas no mesmo computador. Na tela de seleção, cada jogador

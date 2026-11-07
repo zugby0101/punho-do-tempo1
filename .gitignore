@@ -6,3 +6,4 @@
 __pycache__/
 art/rigs/json/
 test_output/
+build/

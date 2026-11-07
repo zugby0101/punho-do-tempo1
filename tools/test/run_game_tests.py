@@ -4,6 +4,7 @@
     python tools/test/run_game_tests.py --godot /caminho/godot
     python tools/test/run_game_tests.py --quick              # 3 partidas curtas em vez de 14
     python tools/test/run_game_tests.py --sem-godot          # só as verificações em Python
+    python tools/test/run_game_tests.py --only=5 --trace=5   # só a partida 5, com a linha do tempo no log
 
 Etapas:
   1. verificações em Python (sem Godot): hitboxes/hurtboxes dos 79 rigs, resolvedor de animações,
@@ -87,7 +88,8 @@ def main():
     run([godot, "--headless", "--path", str(ROOT), "--import"], log, timeout=900)
     print("== 3. o agente joga ==", flush=True)
     game = [godot, "--path", str(ROOT), "--fixed-fps", "60", "--audio-driver", "Dummy", "--resolution", "960x540",
-            "--", "--test-bot", "--out=res://test_output"] + (["--quick"] if quick else [])
+            "--", "--test-bot", "--out=res://test_output"] + (["--quick"] if quick else []) + \
+        [a for a in sys.argv[1:] if a.startswith(("--only=", "--trace=", "--seed="))]
     if platform.system() == "Linux" and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         if shutil.which("xvfb-run"):
             game = ["xvfb-run", "-a", "-s", "-screen 0 1280x720x24"] + game[:1] + ["--rendering-driver", "opengl3"] + game[1:]

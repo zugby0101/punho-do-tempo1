@@ -105,14 +105,28 @@ func has_relay() -> bool:
 
 
 # ---------------- Conexão direta (ENet) ----------------
+# No navegador não existe UDP: a conexão direta não funciona e o ENet nem sempre vem no pacote web.
+# Por isso o ENet é criado pelo nome (sem citar a classe no código) e, na web, só as salas (relay) valem.
+const ENET_COMPRESS_RANGE_CODER := 1  # ENetConnection.COMPRESS_RANGE_CODER
+
+
+func _direct_available() -> bool:
+	if OS.has_feature("web") or not ClassDB.class_exists("ENetMultiplayerPeer"):
+		set_status("No navegador, jogue online pelas salas (código de sala); a conexão direta por IP só existe na versão para computador.", 7.0)
+		return false
+	return true
+
+
 func host() -> bool:
 	close()
-	var p := ENetMultiplayerPeer.new()
-	var err := p.create_server(PORT, MAX_CLIENTS)
+	if not _direct_available():
+		return false
+	var p = ClassDB.instantiate("ENetMultiplayerPeer")
+	var err: int = p.create_server(PORT, MAX_CLIENTS)
 	if err != OK:
 		set_status("Não foi possível abrir a porta %d (erro %d)" % [PORT, err], 6.0)
 		return false
-	p.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
+	p.host.compress(ENET_COMPRESS_RANGE_CODER)
 	multiplayer.multiplayer_peer = p
 	role = "host"
 	transport = "enet"
@@ -122,12 +136,14 @@ func host() -> bool:
 
 func join(ip: String) -> void:
 	close()
-	var p := ENetMultiplayerPeer.new()
-	var err := p.create_client(ip.strip_edges(), PORT)
+	if not _direct_available():
+		return
+	var p = ClassDB.instantiate("ENetMultiplayerPeer")
+	var err: int = p.create_client(ip.strip_edges(), PORT)
 	if err != OK:
 		set_status("Endereço inválido: %s" % ip, 5.0)
 		return
-	p.host.compress(ENetConnection.COMPRESS_RANGE_CODER)
+	p.host.compress(ENET_COMPRESS_RANGE_CODER)
 	multiplayer.multiplayer_peer = p
 	role = "client"
 	transport = "enet"
